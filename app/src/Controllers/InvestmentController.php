@@ -41,10 +41,13 @@ final class InvestmentController
             $result = $this->service->contribute(
                 $user,
                 $amount,
-                (string) input('instrumento', ''),
+                trim((string) input('instrumento_nuevo', '')) !== ''
+                    ? InvestmentService::NEW_INSTRUMENT
+                    : (string) input('instrumento', ''),
                 (string) input('fecha', 'now'),
                 !empty($_POST['es_extra']),
-                (string) input('moneda', '')
+                (string) input('moneda', ''),
+                (string) input('instrumento_nuevo', '')
             );
             Flash::success('investment.flash.contributed');
 
@@ -80,6 +83,58 @@ final class InvestmentController
         }
 
         redirect('/inversion');
+    }
+
+    public function instruments(): void
+    {
+        $user = $this->user();
+
+        echo View::render('investment/instruments', [
+            'title' => __('investment.custom.title'),
+            'customInstruments' => $this->service->customInstrumentList((int) $user['id']),
+        ], 'layouts/app');
+    }
+
+    public function storeInstrument(): void
+    {
+        $user = $this->user();
+
+        try {
+            $this->service->createInstrument($user, (string) input('nombre', ''));
+            Flash::success('investment.flash.instrument_created');
+        } catch (Throwable $exception) {
+            $this->flashFinanceError($exception);
+        }
+
+        redirect('/inversion/tipos');
+    }
+
+    public function updateInstrument(): void
+    {
+        $user = $this->user();
+
+        try {
+            $this->service->renameInstrument($user, (int) ($_POST['id'] ?? 0), (string) input('nombre', ''));
+            Flash::success('investment.flash.instrument_updated');
+        } catch (Throwable $exception) {
+            $this->flashFinanceError($exception);
+        }
+
+        redirect('/inversion/tipos');
+    }
+
+    public function deleteInstrument(): void
+    {
+        $user = $this->user();
+
+        try {
+            $this->service->deleteInstrument($user, (int) ($_POST['id'] ?? 0));
+            Flash::success('investment.flash.instrument_deleted');
+        } catch (Throwable $exception) {
+            $this->flashFinanceError($exception);
+        }
+
+        redirect('/inversion/tipos');
     }
 
     public function pause(): void

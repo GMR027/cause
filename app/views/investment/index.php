@@ -9,6 +9,8 @@ $portfolioCost = (int) ($portfolio_cost_centavos ?? 0);
 $portfolioUnassigned = (int) ($portfolio_unassigned_centavos ?? 0);
 $portfolioDifference = (int) ($portfolio_difference_centavos ?? 0);
 $instruments = $instruments ?? [];
+$instrumentLabels = $instrument_labels ?? [];
+$instrumentName = static fn (string $key): string => (string) ($instrumentLabels[$key] ?? __('investment.instruments.' . $key));
 $currency = (string) ($currency ?? 'MXN');
 $timezone = new DateTimeZone((string) ($currentUser['zona_horaria'] ?? config('app.timezone', 'UTC')));
 $today = (new DateTimeImmutable('now', $timezone))->format('Y-m-d');
@@ -108,7 +110,7 @@ $consecutive = $consecutive ?? [];
                     <?= money_html((int) $last_contribution['monto_centavos'], $currency) ?>
                 </span>
                 <span class="small text-secondary">
-                    <?= e(__('investment.instruments.' . (string) $last_contribution['instrumento'])) ?>
+                    <?= e($instrumentName((string) $last_contribution['instrumento'])) ?>
                     · <?= e(format_date($last_contribution['fecha'] ?? null)) ?>
                 </span>
             <?php else: ?>
@@ -252,7 +254,7 @@ $consecutive = $consecutive ?? [];
     <?php foreach ($instruments as $instrument): ?>
         <div class="col-6 col-lg-4 col-xl-2">
             <div class="instrument-card">
-                <span class="instrument-name"><?= e(__('investment.instruments.' . (string) $instrument)) ?></span>
+                <span class="instrument-name"><?= e($instrumentName((string) $instrument)) ?></span>
                 <span class="instrument-value">
                     <?= money_html((int) ($byInstrument[$instrument] ?? 0), $currency) ?>
                 </span>
@@ -274,7 +276,7 @@ $consecutive = $consecutive ?? [];
                             <div class="flex-grow-1">
                                 <span class="fw-semibold d-block"><?= money_html((int) $row['monto_centavos'], $currency) ?></span>
                                 <span class="small text-secondary">
-                                    <?= e(__('investment.instruments.' . (string) $row['instrumento'])) ?>
+                                    <?= e($instrumentName((string) $row['instrumento'])) ?>
                                     · <?= e(format_date($row['fecha'] ?? null)) ?>
                                     <?php if ((int) $row['es_extra'] === 1): ?>
                                         · <?= e(__('investment.extra_short')) ?>
@@ -318,7 +320,7 @@ $consecutive = $consecutive ?? [];
                             <div class="flex-grow-1">
                                 <span class="fw-semibold d-block"><?= money_html((int) $row['monto_centavos'], $currency) ?></span>
                                 <span class="small text-secondary">
-                                    <?= e(__('investment.instruments.' . (string) $row['instrumento'])) ?>
+                                    <?= e($instrumentName((string) $row['instrumento'])) ?>
                                     · <?= e(__('investment.reasons.' . (string) $row['motivo_catalogo'])) ?>
                                     · <?= e(format_date($row['fecha'] ?? null)) ?>
                                 </span>
@@ -352,6 +354,7 @@ $consecutive = $consecutive ?? [];
 
 <?= partial('investment/sheets', [
     'instruments' => $instruments,
+    'instrumentLabels' => $instrumentLabels,
     'withdrawReasons' => $withdraw_reasons ?? [],
     'currency' => $currency,
     'today' => $today,

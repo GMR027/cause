@@ -16,6 +16,13 @@ use Throwable;
 final class InvestmentService
 {
     public const INSTRUMENTS = ['fondo', 'cripto', 'cetes', 'acciones', 'otro'];
+    /** Valor del select que indica "crear un tipo nuevo" al aportar. */
+    public const NEW_INSTRUMENT = '__nuevo';
+    /** Prefijo de la clave de un tipo de inversión propio: `u<id>`. */
+    private const CUSTOM_PREFIX = 'u';
+    private const CUSTOM_LIMIT = 30;
+    private const NAME_MIN = 2;
+    private const NAME_MAX = 60;
     private const WITHDRAW_REASONS = ['liquidez', 'meta_cumplida', 'rebalanceo', 'otro'];
 
     private InvestmentRepository $repo;
@@ -38,9 +45,11 @@ final class InvestmentService
         $status = $pauses->status($user);
         $consecutive = $pauses->consecutive($user);
         $totals = $this->repo->totalsByInstrument((int) $user['id']);
+        $custom = $this->customInstruments((int) $user['id']);
+        $instruments = $this->instrumentKeys(array_keys($custom));
         $byInstrument = [];
 
-        foreach (self::INSTRUMENTS as $instrument) {
+        foreach ($instruments as $instrument) {
             $byInstrument[$instrument] = (int) ($totals[$instrument] ?? 0);
         }
 
@@ -80,7 +89,8 @@ final class InvestmentService
             'pause' => $status['pause'],
             'consecutive' => $consecutive,
             'can_adjust' => (new FinanceSupportService())->categoryNamesByType($user, 'inversion') !== [],
-            'instruments' => self::INSTRUMENTS,
+            'instruments' => $instruments,
+            'instrument_labels' => $custom,
             'withdraw_reasons' => self::WITHDRAW_REASONS,
             'currency' => (string) ($user['moneda_activa'] ?? 'MXN'),
         ];
@@ -399,14 +409,17 @@ final class InvestmentService
         string $instrument,
         string $date,
         bool $extra,
-        ?string $currency = null
+        ?string $currency = null,
+        string $newInstrumentName = ''
     ): array {
         if ($amount <= 0) {
             throw new InvalidArgumentException('El monto debe ser mayor que cero.');
         }
 
-        if (!in_array($instrument, self::INSTRUMENTS, true)) {
-            throw new InvalidArgumentException('Instrumento inválido.');
+        $newName = $instrument === self::NEW_INSTRUMENT ? $this->normalizeName($newInstrumentName) : null;
+
+        if ($newName === null) {
+            $this->assertInstrument((int) $user['id'], $instrument);
         }
 
         $support = new FinanceSupportService();
@@ -421,6 +434,13 @@ final class InvestmentService
         $currency = (new CurrencyService())->validateCode(
             $currencyInput !== '' ? $currencyInput : (string) ($user['moneda_activa'] ?? 'MXN')
         );
+
+        if ($newName !== null) {
+            // Se crea al final, cuando el resto de la aportación ya es válido,
+            // para no dejar tipos huérfanos si algo falla antes.
+            $instrument = $this->findOrCreateInstrument((int) $user['id'], $newName);
+        }
+
         $this->repo->createContribution(
             (int) $user['id'],
             $amount,
@@ -444,9 +464,7 @@ final class InvestmentService
             throw new InvalidArgumentException('El monto debe ser mayor que cero.');
         }
 
-        if (!in_array($instrument, self::INSTRUMENTS, true)) {
-            throw new InvalidArgumentException('Instrumento inválido.');
-        }
+        $this->assertInstrument((int) $user['id'], $instrument);
 
         $reason = (string) ($data['motivo'] ?? '');
 
@@ -471,7 +489,7 @@ final class InvestmentService
         $target = trim((string) ($data['destino_instrumento'] ?? ''));
 
         if ($reason === 'rebalanceo') {
-            if (!in_array($target, self::INSTRUMENTS, true)) {
+            if (!$this->isValidInstrument((int) $user['id'], $target)) {
                 throw new InvalidArgumentException('Elige un instrumento de destino válido.');
             }
 
@@ -684,6 +702,170 @@ final class InvestmentService
             'available_centavos' => $status['available'],
             'over_percentage' => $status['normal'] > ($status['assigned'] + $status['carry']),
         ];
+    }
+
+    /**
+     * Tipos propios del usuario como mapa clave => nombre.
+     *
+     * @return array<string, string>
+     */
+    public function customInstruments(int $userId): array
+    {
+        $map = [];
+
+        foreach ($this->repo->customInstruments($userId) as $row) {
+            $map[self::CUSTOM_PREFIX . (int) $row['id']] = (string) $row['nombre'];
+        }
+
+        return $map;
+    }
+
+    /**
+     * Lista para la vista de administración de tipos propios.
+     *
+     * @return list<array{id: int, key: string, nombre: string}>
+     */
+    public function customInstrumentList(int $userId): array
+    {
+        $list = [];
+
+        foreach ($this->repo->customInstruments($userId) as $row) {
+            $list[] = [
+                'id' => (int) $row['id'],
+                'key' => self::CUSTOM_PREFIX . (int) $row['id'],
+                'nombre' => (string) $row['nombre'],
+            ];
+        }
+
+        return $list;
+    }
+
+    /**
+     * @param array<string, mixed> $user
+     */
+    public function createInstrument(array $user, string $name): string
+    {
+        $userId = (int) $user['id'];
+        $name = $this->normalizeName($name);
+
+        if ($this->repo->findCustomInstrumentByName($userId, $name) !== null) {
+            throw new InvalidArgumentException('investment.errors.instrument_duplicate');
+        }
+
+        return $this->insertInstrument($userId, $name);
+    }
+
+    /**
+     * @param array<string, mixed> $user
+     */
+    public function renameInstrument(array $user, int $id, string $name): void
+    {
+        $userId = (int) $user['id'];
+
+        if ($this->repo->findCustomInstrument($userId, $id) === null) {
+            throw new RuntimeException('investment.errors.instrument_not_found');
+        }
+
+        $name = $this->normalizeName($name);
+        $existing = $this->repo->findCustomInstrumentByName($userId, $name);
+
+        if ($existing !== null && (int) $existing['id'] !== $id) {
+            throw new InvalidArgumentException('investment.errors.instrument_duplicate');
+        }
+
+        $this->repo->renameCustomInstrument($userId, $id, $name);
+    }
+
+    /**
+     * @param array<string, mixed> $user
+     */
+    public function deleteInstrument(array $user, int $id): void
+    {
+        $userId = (int) $user['id'];
+
+        if ($this->repo->findCustomInstrument($userId, $id) === null) {
+            throw new RuntimeException('investment.errors.instrument_not_found');
+        }
+
+        if ($this->repo->instrumentUsage($userId, self::CUSTOM_PREFIX . $id) > 0) {
+            throw new RuntimeException('investment.errors.instrument_in_use');
+        }
+
+        $this->repo->deleteCustomInstrument($userId, $id);
+    }
+
+    /**
+     * Predefinidos, luego los propios y "otro" al final.
+     *
+     * @param list<string> $customKeys
+     * @return list<string>
+     */
+    private function instrumentKeys(array $customKeys): array
+    {
+        $builtIn = array_values(array_diff(self::INSTRUMENTS, ['otro']));
+
+        return array_merge($builtIn, $customKeys, ['otro']);
+    }
+
+    private function isValidInstrument(int $userId, string $instrument): bool
+    {
+        if (in_array($instrument, self::INSTRUMENTS, true)) {
+            return true;
+        }
+
+        if (preg_match('/^' . self::CUSTOM_PREFIX . '([1-9][0-9]*)$/', $instrument, $match) !== 1) {
+            return false;
+        }
+
+        return $this->repo->findCustomInstrument($userId, (int) $match[1]) !== null;
+    }
+
+    private function assertInstrument(int $userId, string $instrument): void
+    {
+        if (!$this->isValidInstrument($userId, $instrument)) {
+            throw new InvalidArgumentException('Instrumento inválido.');
+        }
+    }
+
+    private function normalizeName(string $name): string
+    {
+        $name = preg_replace('/[\p{C}]+/u', '', $name) ?? '';
+        $name = trim(preg_replace('/\s+/u', ' ', $name) ?? '');
+        $length = mb_strlen($name);
+
+        if ($length < self::NAME_MIN || $length > self::NAME_MAX) {
+            throw new InvalidArgumentException('investment.errors.instrument_name');
+        }
+
+        return $name;
+    }
+
+    private function findOrCreateInstrument(int $userId, string $name): string
+    {
+        $existing = $this->repo->findCustomInstrumentByName($userId, $name);
+
+        if ($existing !== null) {
+            return self::CUSTOM_PREFIX . (int) $existing['id'];
+        }
+
+        return $this->insertInstrument($userId, $name);
+    }
+
+    private function insertInstrument(int $userId, string $name): string
+    {
+        if ($this->repo->countCustomInstruments($userId) >= self::CUSTOM_LIMIT) {
+            throw new RuntimeException('investment.errors.instrument_limit');
+        }
+
+        try {
+            return self::CUSTOM_PREFIX . $this->repo->createCustomInstrument($userId, $name);
+        } catch (\PDOException $exception) {
+            if ((string) $exception->getCode() === '23000') {
+                throw new InvalidArgumentException('investment.errors.instrument_duplicate');
+            }
+
+            throw $exception;
+        }
     }
 
     private function accumulated(int $userId, string $instrument): int

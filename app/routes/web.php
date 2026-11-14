@@ -250,6 +250,10 @@ $router->group('', static function (Router $routes): void {
     $routes->post('/inversion/aportar', [InvestmentController::class, 'contribute']);
     $routes->post('/inversion/retirar', [InvestmentController::class, 'withdraw']);
     $routes->post('/inversion/pausar', [InvestmentController::class, 'pause']);
+    $routes->get('/inversion/tipos', [InvestmentController::class, 'instruments']);
+    $routes->post('/inversion/tipos', [InvestmentController::class, 'storeInstrument']);
+    $routes->post('/inversion/tipos/editar', [InvestmentController::class, 'updateInstrument']);
+    $routes->post('/inversion/tipos/eliminar', [InvestmentController::class, 'deleteInstrument']);
     $routes->post('/inversion/porcentaje', [InvestmentController::class, 'adjustPercentage']);
     $routes->post('/inversion/posiciones', [InvestmentController::class, 'storePosition']);
     $routes->post('/inversion/posiciones/editar', [InvestmentController::class, 'updatePosition']);

@@ -203,6 +203,7 @@ return [
             'confirmacion' => 'Escribe exactamente la palabra indicada para confirmar la eliminación.',
             'efectivo' => 'Dinero en efectivo que tienes fuera de bancos y bolsas.',
             'instrumento' => 'Tipo de inversión: acciones, ETF, cripto, fondo, etc.',
+            'instrumento_nuevo' => 'Escribe un nombre para crear tu propio tipo de inversión.',
             'new_password_confirmation' => 'Repite la nueva contraseña.',
             'nueva_deuda_fecha_limite' => 'Fecha límite del próximo pago de la nueva deuda.',
             'nueva_deuda_minimo' => 'Pago mínimo mensual de la nueva deuda, si lo tiene.',

@@ -444,4 +444,93 @@ final class InvestmentRepository
         );
         $stmt->execute([$providerSymbol, $market, $currency, $price, $date, $source]);
     }
+
+    /**
+     * Tipos de inversión creados por el usuario.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function customInstruments(int $userId): array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT id, nombre FROM instrumentos_inversion WHERE user_id = ? ORDER BY nombre'
+        );
+        $stmt->execute([$userId]);
+
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function findCustomInstrument(int $userId, int $id): ?array
+    {
+        $stmt = $this->db->prepare('SELECT id, nombre FROM instrumentos_inversion WHERE id = ? AND user_id = ?');
+        $stmt->execute([$id, $userId]);
+        $row = $stmt->fetch();
+
+        return $row === false ? null : $row;
+    }
+
+    /**
+     * Busca un tipo propio por nombre (sin distinguir mayúsculas, según la collation).
+     *
+     * @return array<string, mixed>|null
+     */
+    public function findCustomInstrumentByName(int $userId, string $name): ?array
+    {
+        $stmt = $this->db->prepare('SELECT id, nombre FROM instrumentos_inversion WHERE user_id = ? AND nombre = ?');
+        $stmt->execute([$userId, $name]);
+        $row = $stmt->fetch();
+
+        return $row === false ? null : $row;
+    }
+
+    public function countCustomInstruments(int $userId): int
+    {
+        $stmt = $this->db->prepare('SELECT COUNT(*) FROM instrumentos_inversion WHERE user_id = ?');
+        $stmt->execute([$userId]);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    public function createCustomInstrument(int $userId, string $name): int
+    {
+        $stmt = $this->db->prepare(
+            'INSERT INTO instrumentos_inversion (user_id, nombre, created_at, updated_at) VALUES (?, ?, NOW(), NOW())'
+        );
+        $stmt->execute([$userId, $name]);
+
+        return (int) $this->db->lastInsertId();
+    }
+
+    public function renameCustomInstrument(int $userId, int $id, string $name): void
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE instrumentos_inversion SET nombre = ?, updated_at = NOW() WHERE id = ? AND user_id = ?'
+        );
+        $stmt->execute([$name, $id, $userId]);
+    }
+
+    public function deleteCustomInstrument(int $userId, int $id): void
+    {
+        $stmt = $this->db->prepare('DELETE FROM instrumentos_inversion WHERE id = ? AND user_id = ?');
+        $stmt->execute([$id, $userId]);
+    }
+
+    /**
+     * Cuántos movimientos o fondos usan una clave de instrumento.
+     */
+    public function instrumentUsage(int $userId, string $instrument): int
+    {
+        $total = 0;
+
+        foreach (['aportaciones_inversion', 'retiros_inversion', 'inversiones_fondos'] as $table) {
+            $stmt = $this->db->prepare("SELECT COUNT(*) FROM {$table} WHERE user_id = ? AND instrumento = ?");
+            $stmt->execute([$userId, $instrument]);
+            $total += (int) $stmt->fetchColumn();
+        }
+
+        return $total;
+    }
 }

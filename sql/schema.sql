@@ -702,13 +702,26 @@ CREATE TABLE `transferencias_ahorro` (
 -- Inversión y donación
 -- ============================================================================
 
+-- Tipos de inversión propios del usuario; los movimientos los referencian
+-- con la clave `u<id>` en la columna `instrumento`.
+CREATE TABLE `instrumentos_inversion` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `user_id` BIGINT UNSIGNED NOT NULL,
+    `nombre` VARCHAR(60) NOT NULL,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uniq_instrumentos_inversion_user_nombre` (`user_id`, `nombre`),
+    CONSTRAINT `fk_instrumentos_inversion_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE `aportaciones_inversion` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     `user_id` BIGINT UNSIGNED NOT NULL,
     `monto_centavos` BIGINT NOT NULL,
     `moneda` CHAR(3) NOT NULL DEFAULT 'MXN',
     `monto_principal_centavos` BIGINT NULL,
-    `instrumento` ENUM('fondo', 'cripto', 'cetes', 'acciones', 'otro') NOT NULL,
+    `instrumento` VARCHAR(40) NOT NULL,
     `es_extra` TINYINT(1) NOT NULL DEFAULT 0,
     `fecha` DATETIME NOT NULL,
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -725,7 +738,7 @@ CREATE TABLE `retiros_inversion` (
     `monto_centavos` BIGINT NOT NULL,
     `moneda` CHAR(3) NOT NULL DEFAULT 'MXN',
     `monto_principal_centavos` BIGINT NULL,
-    `instrumento` ENUM('fondo', 'cripto', 'cetes', 'acciones', 'otro') NOT NULL,
+    `instrumento` VARCHAR(40) NOT NULL,
     `motivo_catalogo` ENUM('liquidez', 'meta_cumplida', 'rebalanceo', 'otro') NOT NULL,
     `motivo_texto` VARCHAR(255) NULL,
     `fecha` DATETIME NOT NULL,
@@ -776,7 +789,7 @@ CREATE TABLE `inversiones_fondos` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     `user_id` BIGINT UNSIGNED NOT NULL,
     `nombre` VARCHAR(120) NOT NULL,
-    `instrumento` ENUM('fondo', 'cripto', 'cetes', 'acciones', 'otro') NOT NULL,
+    `instrumento` VARCHAR(40) NOT NULL,
     `moneda` CHAR(3) NOT NULL DEFAULT 'MXN',
     `valor_actual_centavos` BIGINT NULL,
     `valor_actual_principal_centavos` BIGINT NULL,

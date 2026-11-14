@@ -16,6 +16,8 @@ trait FinanceErrorTrait
 
         $key = match (true) {
             $message === 'sin_tasa' => 'currency.errors.no_rate',
+            // Los servicios nuevos lanzan directamente la clave de traducción.
+            str_starts_with($message, 'investment.errors.') => $message,
             str_contains($lower, 'período actual') => 'finance.errors.closed',
             str_contains($lower, 'fecha no es válida') => 'finance.errors.date',
             str_contains($lower, 'movimiento no existe'),

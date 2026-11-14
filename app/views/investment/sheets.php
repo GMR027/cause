@@ -1,6 +1,8 @@
 <?php
 
 $instruments = $instruments ?? [];
+$instrumentLabels = $instrumentLabels ?? [];
+$instrumentName = static fn (string $key): string => (string) ($instrumentLabels[$key] ?? __('investment.instruments.' . $key));
 $withdrawReasons = $withdrawReasons ?? [];
 $currency = (string) ($currency ?? 'MXN');
 $today = (string) ($today ?? date('Y-m-d'));
@@ -35,9 +37,19 @@ $today = (string) ($today ?? date('Y-m-d'));
                 <label class="form-label" for="investment_instrument"><?= e(__('investment.instrument')) ?></label>
                 <select class="form-select" id="investment_instrument" name="instrumento" required>
                     <?php foreach ($instruments as $instrument): ?>
-                        <option value="<?= e((string) $instrument) ?>"><?= e(__('investment.instruments.' . (string) $instrument)) ?></option>
+                        <option value="<?= e((string) $instrument) ?>"><?= e($instrumentName((string) $instrument)) ?></option>
                     <?php endforeach; ?>
                 </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="investment_new_instrument"><?= e(__('investment.custom.new_label')) ?></label>
+                <input type="text" class="form-control" id="investment_new_instrument" name="instrumento_nuevo"
+                       maxlength="60" placeholder="<?= e(__('investment.custom.placeholder')) ?>">
+                <div class="form-text">
+                    <?= e(__('investment.custom.new_hint')) ?>
+                    <a href="/inversion/tipos"><?= e(__('investment.custom.manage')) ?></a>
+                </div>
             </div>
 
             <div class="mb-3">
@@ -70,7 +82,7 @@ $today = (string) ($today ?? date('Y-m-d'));
                 <label class="form-label" for="investment_withdraw_instrument"><?= e(__('investment.instrument')) ?></label>
                 <select class="form-select" id="investment_withdraw_instrument" name="instrumento" required>
                     <?php foreach ($instruments as $instrument): ?>
-                        <option value="<?= e((string) $instrument) ?>"><?= e(__('investment.instruments.' . (string) $instrument)) ?></option>
+                        <option value="<?= e((string) $instrument) ?>"><?= e($instrumentName((string) $instrument)) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -105,7 +117,7 @@ $today = (string) ($today ?? date('Y-m-d'));
                 <label class="form-label" for="investment_target"><?= e(__('investment.rebalance_target')) ?></label>
                 <select class="form-select" id="investment_target" name="destino_instrumento">
                     <?php foreach ($instruments as $instrument): ?>
-                        <option value="<?= e((string) $instrument) ?>"><?= e(__('investment.instruments.' . (string) $instrument)) ?></option>
+                        <option value="<?= e((string) $instrument) ?>"><?= e($instrumentName((string) $instrument)) ?></option>
                     <?php endforeach; ?>
                 </select>
                 <div class="form-text"><?= e(__('investment.rebalance_hint')) ?></div>

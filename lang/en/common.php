@@ -203,6 +203,7 @@ return [
             'confirmacion' => 'Type the exact word shown to confirm the deletion.',
             'efectivo' => 'Cash you hold outside banks and savings bags.',
             'instrumento' => 'Type of investment: stocks, ETF, crypto, fund, etc.',
+            'instrumento_nuevo' => 'Type a name to create your own investment type.',
             'new_password_confirmation' => 'Repeat the new password.',
             'nueva_deuda_fecha_limite' => 'Due date for the new debt\'s next payment.',
             'nueva_deuda_minimo' => 'Minimum monthly payment for the new debt, if any.',
