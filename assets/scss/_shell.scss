@@ -283,11 +283,13 @@ body {
 .app-sidebar-brand {
     display: flex;
     align-items: center;
-    gap: .6rem;
+    gap: .7rem;
     padding: .25rem .5rem 1rem;
     text-decoration: none;
     color: var(--bs-body-color);
-    font-weight: 700;
+    font-size: 1.3rem;
+    font-weight: 800;
+    letter-spacing: -.01em;
 }
 
 .app-nav {
@@ -608,6 +610,25 @@ $preview: ".theme-preview";
     );
 }
 
+// Garabatos financieros: mosaicos SVG teñidos desde JS (ver partials/theme-boot.php).
+$doodle-sizes: (finanzas: 280px, simbolos: 240px);
+
+@each $name, $size in $doodle-sizes {
+    [data-fondo="textura"][data-textura="#{$name}"] body,
+    [data-fondo="textura"][data-textura="#{$name}"]#{$preview} {
+        background-image: var(--cauce-doodle-#{$name}, none);
+        background-size: $size $size;
+    }
+
+    [data-fondo="radial_textura"][data-textura="#{$name}"] body,
+    [data-fondo="radial_textura"][data-textura="#{$name}"]#{$preview} {
+        background-image:
+            radial-gradient(1000px 520px at 12% -10%, rgba(var(--cauce-primary-rgb), .22), transparent 62%),
+            var(--cauce-doodle-#{$name}, none);
+        background-size: auto, $size $size;
+    }
+}
+
 .theme-preview {
     background-attachment: local;
 }
@@ -796,7 +817,8 @@ $preview: ".theme-preview";
 .app-brand {
     display: inline-flex;
     align-items: center;
-    gap: .6rem;
+    gap: .7rem;
+    font-size: 1.2rem;
     color: inherit;
     text-decoration: none;
     font-weight: 700;

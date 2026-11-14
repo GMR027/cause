@@ -54,6 +54,7 @@ final class AccountDeletionService
         // quedan huérfanos y se registra para limpieza manual.
         try {
             Storage::deleteDirectory(base_path('storage/uploads/gastos/' . $userId));
+            Storage::deleteDirectory(CoverService::userDirectory($userId));
             (new StatementService())->purge($user);
         } catch (Throwable $exception) {
             Logger::warning('No se pudieron borrar todos los archivos de la cuenta', [

@@ -30,7 +30,7 @@ $flashes = Flash::pull();
 <header class="landing-header">
     <div class="container landing-header-inner">
         <a class="landing-brand" href="/" aria-label="<?= e($appName) ?>">
-            <img class="landing-logo-img" src="<?= asset_versioned('img/icon-192.png') ?>" alt="" width="40" height="40" aria-hidden="true">
+            <img class="landing-logo-img" src="<?= asset_versioned('img/logo-animated.svg') ?>" alt="" width="40" height="40" aria-hidden="true">
             <span class="landing-brand-text">
                 <strong><?= e($appName) ?></strong>
                 <small><?= e(__('landing.brand_tag')) ?></small>
@@ -92,7 +92,7 @@ $flashes = Flash::pull();
         <div class="landing-footer-grid">
             <div class="landing-footer-brand">
                 <a class="landing-brand" href="/">
-                    <img class="landing-logo-img" src="<?= asset_versioned('img/icon-192.png') ?>" alt="" width="40" height="40" aria-hidden="true">
+                    <img class="landing-logo-img" src="<?= asset_versioned('img/logo-animated.svg') ?>" alt="" width="40" height="40" aria-hidden="true">
                     <span class="landing-brand-text">
                         <strong><?= e($appName) ?></strong>
                         <small><?= e(__('landing.brand_tag')) ?></small>

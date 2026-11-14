@@ -116,8 +116,15 @@ $dateLabel = static function (?string $value): string {
             $balanceRaw = number_format((int) $debt['saldo_actual_centavos'] / 100, 2, '.', '');
             ?>
             <article class="debt-card <?= $active ? '' : 'is-closed' ?>">
-                <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
-                    <div>
+                <div class="card-head mb-2">
+                    <?= partial('partials/cover', [
+                        'target' => 'deuda',
+                        'id' => (int) $debt['id'],
+                        'path' => $debt['portada_path'] ?? null,
+                        'name' => (string) $debt['nombre'],
+                        'icon' => 'credit-card',
+                    ]) ?>
+                    <div class="card-head-body">
                         <h2 class="h6 mb-1"><?= e((string) $debt['nombre']) ?></h2>
                         <div class="d-flex flex-wrap gap-1">
                             <?php if (!empty($debt['prioritaria'])): ?>

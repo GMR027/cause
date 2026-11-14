@@ -7,6 +7,7 @@ namespace Cauce\Controllers;
 use Cauce\Controllers\Concerns\FinanceErrorTrait;
 use Cauce\Helpers\Flash;
 use Cauce\Helpers\View;
+use Cauce\Services\MoneyFxService;
 use Cauce\Services\AuthService;
 use Cauce\Services\InvestmentService;
 use Throwable;
@@ -50,6 +51,7 @@ final class InvestmentController
                 (string) input('instrumento_nuevo', '')
             );
             Flash::success('investment.flash.contributed');
+            MoneyFxService::queue($user, 'invest', $amount, (string) input('moneda', ''));
 
             if (!empty($result['over_percentage'])) {
                 Flash::warning('finance.flash.over_percentage');
@@ -77,6 +79,8 @@ final class InvestmentController
 
             if (!empty($result['rebalanced'])) {
                 Flash::info('investment.flash.rebalanced');
+            } else {
+                MoneyFxService::queue($user, 'out', $amount, (string) input('moneda', ''));
             }
         } catch (Throwable $exception) {
             $this->flashFinanceError($exception);

@@ -5,7 +5,7 @@ $appName = $appName ?? 'Cauce';
 ?>
 <aside class="app-sidebar d-none d-xl-flex" id="appSidebar">
     <a class="app-sidebar-brand" href="/inicio">
-        <img class="brand-icon" src="<?= asset_versioned('img/icon-192.png') ?>" alt="" width="32" height="32" aria-hidden="true">
+        <img class="brand-icon" src="<?= asset_versioned('img/logo-animated.svg') ?>" alt="" width="48" height="48" aria-hidden="true">
         <span class="app-sidebar-brand-name"><?= e($appName) ?></span>
     </a>
 

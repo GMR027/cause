@@ -45,6 +45,27 @@ return [
         'updated' => 'Donation updated.',
         'deleted' => 'Donation deleted.',
     ],
+    'celebration' => [
+        'thanks' => [
+            'Thank you for your generosity!',
+            'What a great gesture!',
+            'Your help is on its way',
+            'You make a difference!',
+            'Giving is growing too',
+            'A generous heart!',
+        ],
+        'body' => 'You donated :amount. That makes :total across :count donations.',
+        'body_one' => 'You donated :amount. The start of something beautiful!',
+        'record_title' => 'New record!',
+        'records' => [
+            'first' => 'Your first donation',
+            'biggest' => 'Your biggest donation',
+            'best_month' => 'Your best month of giving',
+            'milestone' => ':count donations recorded',
+        ],
+        'close' => 'Keep going',
+        'dismiss' => 'Close',
+    ],
     'errors' => [
         'no_category' => 'Your method has no active giving. Activate it or record an extra donation.',
         'invalid_percent' => 'Enter a valid giving percentage.',

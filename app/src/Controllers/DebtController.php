@@ -7,6 +7,7 @@ namespace Cauce\Controllers;
 use Cauce\Helpers\Flash;
 use Cauce\Helpers\Logger;
 use Cauce\Helpers\View;
+use Cauce\Services\MoneyFxService;
 use Cauce\Services\AuthService;
 use Cauce\Services\DebtService;
 use Throwable;
@@ -104,6 +105,12 @@ final class DebtController
                 input('parte_metodo')
             );
             Flash::success('debts.flash.payment_saved');
+            MoneyFxService::queue(
+                $user,
+                'out',
+                (int) ($result['amount_centavos'] ?? 0),
+                (string) ($result['debt']['moneda'] ?? '')
+            );
 
             if (!empty($result['expense']['excedido'])) {
                 Flash::warning('debts.flash.payment_excess');

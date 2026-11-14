@@ -45,6 +45,27 @@ return [
         'updated' => 'Donación actualizada.',
         'deleted' => 'Donación eliminada.',
     ],
+    'celebration' => [
+        'thanks' => [
+            '¡Gracias por tu generosidad!',
+            '¡Qué gran gesto!',
+            'Tu ayuda ya está en camino',
+            '¡Haces la diferencia!',
+            'Dar también es crecer',
+            '¡Un corazón generoso!',
+        ],
+        'body' => 'Donaste :amount. Llevas :total en :count donaciones.',
+        'body_one' => 'Donaste :amount. ¡Es el comienzo de algo bonito!',
+        'record_title' => '¡Nuevo récord!',
+        'records' => [
+            'first' => 'Tu primera donación',
+            'biggest' => 'Tu donación más grande',
+            'best_month' => 'Tu mejor mes donando',
+            'milestone' => ':count donaciones registradas',
+        ],
+        'close' => 'Seguir',
+        'dismiss' => 'Cerrar',
+    ],
     'errors' => [
         'no_category' => 'Tu método no tiene donación activa. Actívala o registra una donación extra.',
         'invalid_percent' => 'Ingresa un porcentaje de donación válido.',

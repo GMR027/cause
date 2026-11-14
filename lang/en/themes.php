@@ -7,6 +7,8 @@ return [
         'dots' => 'Dots',
         'grid' => 'Grid',
         'waves' => 'Waves',
+        'finanzas' => 'Money doodles',
+        'simbolos' => 'Money symbols',
     ],
     'errors' => [
         'mode' => 'Choose a valid mode.',

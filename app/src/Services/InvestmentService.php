@@ -396,6 +396,7 @@ final class InvestmentService
             throw new RuntimeException('investment.errors.position_not_found');
         }
 
+        (new CoverService())->forget((int) $user['id'], 'posicion', $id);
         $this->repo->deletePosition($id, (int) $user['id']);
     }
 

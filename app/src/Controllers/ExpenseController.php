@@ -14,6 +14,7 @@ use Cauce\Repositories\PlantillaRepository;
 use Cauce\Repositories\RecurringExpenseRepository;
 use Cauce\Repositories\SubcategoriaRepository;
 use Cauce\Repositories\TagRepository;
+use Cauce\Services\MoneyFxService;
 use Cauce\Services\AuthService;
 use Cauce\Services\GastoService;
 use Cauce\Services\PhotoService;
@@ -70,6 +71,7 @@ final class ExpenseController
         }
 
         Flash::success('expenses.flash.created');
+        MoneyFxService::queue($user, 'out', (int) $datos['monto_centavos'], (string) $datos['moneda']);
 
         if (!empty($result['excedido'])) {
             Flash::warning('expenses.flash.excess', [

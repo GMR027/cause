@@ -2,7 +2,7 @@
 
 /* Cauce · service worker de Web Push y shell offline. */
 
-const SHELL_CACHE = 'cauce-shell-v4';
+const SHELL_CACHE = 'cauce-shell-v5';
 const SHELL_ASSETS = [
     '/assets/css/app.min.css',
     '/assets/js/app.min.js',

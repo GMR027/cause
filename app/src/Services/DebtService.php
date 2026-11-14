@@ -125,6 +125,7 @@ final class DebtService
     public function delete(array $user, int $id): void
     {
         $this->requireDebt($user, $id);
+        (new CoverService())->forget((int) $user['id'], 'deuda', $id);
         $this->db->beginTransaction();
 
         try {

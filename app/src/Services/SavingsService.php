@@ -17,7 +17,7 @@ use Throwable;
  */
 final class SavingsService
 {
-    private const META_TYPES = ['ahorro', 'retiro', 'casa', 'educacion', 'otro'];
+    private const META_TYPES = ['ahorro', 'retiro', 'casa', 'educacion', 'otro', 'deseo'];
     private const WITHDRAW_REASONS = ['emergencia', 'meta_cumplida', 'reasignacion', 'otro'];
 
     private SavingsRepository $repo;
@@ -299,12 +299,12 @@ final class SavingsService
             $utc->format('Y-m-d H:i:s')
         );
 
-        return $this->periodStatus($user);
+        return $this->periodStatus($user) + ['currency' => $currency];
     }
 
     /**
      * @param array<string, mixed> $user
-     * @return array<string, mixed>
+     * @return string moneda de la bolsa
      */
     public function withdraw(
         array $user,
@@ -314,7 +314,7 @@ final class SavingsService
         string $reason,
         ?string $text,
         string $date
-    ): void {
+    ): string {
         if ($amount <= 0) {
             throw new InvalidArgumentException('El monto debe ser mayor que cero.');
         }
@@ -370,6 +370,8 @@ final class SavingsService
             $text !== null && trim($text) !== '' ? mb_substr(trim($text), 0, 255) : null,
             $utc->format('Y-m-d H:i:s')
         );
+
+        return $currency;
     }
 
     /**
@@ -898,6 +900,214 @@ final class SavingsService
 
             throw $exception;
         }
+    }
+
+    /**
+     * Crea la bolsa propia de un deseo y su meta. El llamador controla la
+     * transacción.
+     *
+     * @param array<string, mixed> $user
+     */
+    public function createWishGoal(
+        array $user,
+        string $bagName,
+        string $goalName,
+        int $objective,
+        string $currency,
+        ?string $targetDate
+    ): int {
+        if ($objective <= 0) {
+            throw new InvalidArgumentException('El objetivo debe ser mayor que cero.');
+        }
+
+        $currency = (new CurrencyService())->validateCode($currency);
+        // La bolsa del deseo nunca debe quedar como predeterminada.
+        $this->repo->ensureDefaultAccount((int) $user['id'], (string) ($user['moneda_activa'] ?? 'MXN'));
+        $accountId = $this->repo->createAccount(
+            (int) $user['id'],
+            mb_substr($bagName, 0, 120),
+            'otro',
+            null,
+            $currency,
+            false
+        );
+
+        return $this->repo->createMeta(
+            (int) $user['id'],
+            $accountId,
+            mb_substr($goalName, 0, 120),
+            'deseo',
+            $objective,
+            $currency,
+            $targetDate,
+            null
+        );
+    }
+
+    /**
+     * Mantiene la meta de un deseo alineada con el deseo editado.
+     *
+     * @param array<string, mixed> $user
+     */
+    public function syncWishGoal(
+        array $user,
+        int $metaId,
+        string $name,
+        int $objective,
+        string $currency,
+        ?string $targetDate
+    ): void {
+        $meta = $this->repo->findMeta($metaId, (int) $user['id']);
+
+        if ($meta === null || $objective <= 0) {
+            return;
+        }
+
+        $metaCurrency = (string) ($meta['moneda'] ?? $currency);
+
+        if ($metaCurrency !== $currency) {
+            try {
+                $objective = (new CurrencyService())->convert($user, $objective, $currency, $metaCurrency, gmdate('Y-m-d'))['centavos'];
+            } catch (RuntimeException) {
+                $objective = (int) $meta['objetivo_centavos'];
+            }
+        }
+
+        $this->repo->updateMeta(
+            $metaId,
+            (int) $user['id'],
+            mb_substr($name, 0, 120),
+            (string) $meta['tipo'],
+            max(1, $objective),
+            $targetDate,
+            $meta['plazo_meses'] !== null ? (int) $meta['plazo_meses'] : null,
+            (int) $meta['activa'] === 1
+        );
+    }
+
+    /**
+     * Renombra la bolsa de un deseo solo si conserva el nombre automático.
+     *
+     * @param array<string, mixed> $user
+     */
+    public function renameWishBag(array $user, int $metaId, string $oldName, string $newName): void
+    {
+        $meta = $this->repo->findMeta($metaId, (int) $user['id']);
+        $account = $meta !== null && !empty($meta['cuenta_id'])
+            ? $this->repo->findAccount((int) $meta['cuenta_id'], (int) $user['id'])
+            : null;
+
+        if ($account === null || (string) $account['nombre'] !== mb_substr($oldName, 0, 120) || $oldName === $newName) {
+            return;
+        }
+
+        $this->repo->updateAccount(
+            (int) $account['id'],
+            (int) $user['id'],
+            mb_substr($newName, 0, 120),
+            (string) $account['tipo'],
+            $account['institucion'] !== null ? (string) $account['institucion'] : null,
+            (int) $account['activa'] === 1,
+            (int) $account['es_predeterminada'] === 1
+        );
+    }
+
+    /**
+     * Reactiva la meta de un deseo si el usuario la desactivó desde /ahorro.
+     *
+     * @param array<string, mixed> $user
+     */
+    public function reactivateMeta(array $user, int $metaId): void
+    {
+        $meta = $this->requireMeta($user, $metaId);
+
+        if ((int) $meta['activa'] === 1) {
+            return;
+        }
+
+        $this->repo->updateMeta(
+            $metaId,
+            (int) $user['id'],
+            (string) $meta['nombre'],
+            (string) $meta['tipo'],
+            (int) $meta['objetivo_centavos'],
+            $meta['fecha_objetivo'] !== null ? (string) $meta['fecha_objetivo'] : null,
+            $meta['plazo_meses'] !== null ? (int) $meta['plazo_meses'] : null,
+            true
+        );
+    }
+
+    /**
+     * Acumulado de una meta en la moneda principal del usuario.
+     *
+     * @param array<string, mixed> $user
+     */
+    public function metaBalance(array $user, int $metaId): int
+    {
+        return $this->accumulated((int) $user['id'], $metaId);
+    }
+
+    /**
+     * Al comprar un deseo: retira de su meta hasta $maxPrincipal (moneda
+     * principal), desactiva la meta si queda en cero y archiva la bolsa si
+     * ya no tiene saldo. Devuelve lo retirado en moneda principal.
+     *
+     * @param array<string, mixed> $user
+     */
+    public function spendWishGoal(array $user, int $metaId, int $maxPrincipal, string $note): int
+    {
+        $meta = $this->requireMeta($user, $metaId);
+        $account = $this->requireAccount($user, (int) ($meta['cuenta_id'] ?? 0));
+        $available = $this->accumulated((int) $user['id'], $metaId);
+        $target = min($available, max(0, $maxPrincipal));
+        $withdrawn = 0;
+
+        if ($target > 0 && (int) $account['activa'] === 1) {
+            $principal = (string) ($user['moneda_activa'] ?? 'MXN');
+            $currency = (string) $account['moneda'];
+            $amount = $target;
+            $today = gmdate('Y-m-d');
+
+            if ($currency !== $principal) {
+                $currencyService = new CurrencyService();
+                $amount = $currencyService->convert($user, $target, $principal, $currency, $today)['centavos'];
+
+                // El redondeo de ida y vuelta no debe pasar del acumulado.
+                for ($i = 0; $i < 100 && $amount > 0
+                    && $currencyService->toPrincipal($user, $amount, $currency, $today)['centavos'] > $target; $i++) {
+                    $amount--;
+                }
+            }
+
+            if ($amount > 0) {
+                $this->withdraw($user, null, $metaId, $amount, 'meta_cumplida', $note, 'now');
+                $withdrawn = $target;
+            }
+        }
+
+        if ($this->accumulated((int) $user['id'], $metaId) <= 0) {
+            $this->repo->deactivateMeta($metaId, (int) $user['id']);
+        }
+
+        $summary = $this->accountSummary($user, (int) $account['id']);
+
+        if (
+            (int) $summary['saldo_principal_centavos'] === 0
+            && (int) ($account['es_predeterminada'] ?? 0) !== 1
+            && (int) $account['activa'] === 1
+        ) {
+            $this->repo->updateAccount(
+                (int) $account['id'],
+                (int) $user['id'],
+                (string) $account['nombre'],
+                (string) $account['tipo'],
+                $account['institucion'] !== null ? (string) $account['institucion'] : null,
+                false,
+                false
+            );
+        }
+
+        return $withdrawn;
     }
 
     /**

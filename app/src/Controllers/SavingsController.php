@@ -7,6 +7,7 @@ namespace Cauce\Controllers;
 use Cauce\Controllers\Concerns\FinanceErrorTrait;
 use Cauce\Helpers\Flash;
 use Cauce\Helpers\View;
+use Cauce\Services\MoneyFxService;
 use Cauce\Services\AuthService;
 use Cauce\Services\SavingsService;
 use Throwable;
@@ -84,6 +85,7 @@ final class SavingsController
         try {
             $result = $this->service->contribute($user, $accountId, $metaId, $amount, (string) input('fecha', 'now'));
             Flash::success('savings.flash.contributed');
+            MoneyFxService::queue($user, 'save', $amount, (string) ($result['currency'] ?? ''));
 
             if (!empty($result['over_percentage'])) {
                 Flash::warning('finance.flash.over_percentage');
@@ -103,7 +105,7 @@ final class SavingsController
         $amount = parse_money_cents((string) input('monto', '')) ?? 0;
 
         try {
-            $this->service->withdraw(
+            $currency = $this->service->withdraw(
                 $user,
                 $accountId,
                 $metaId,
@@ -113,6 +115,7 @@ final class SavingsController
                 (string) input('fecha', 'now')
             );
             Flash::success('savings.flash.withdrawn');
+            MoneyFxService::queue($user, 'out', $amount, $currency);
         } catch (Throwable $exception) {
             $this->flashFinanceError($exception);
         }

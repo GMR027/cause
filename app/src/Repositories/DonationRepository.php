@@ -50,6 +50,38 @@ final class DonationRepository
     }
 
     /**
+     * Cifras históricas para detectar récords al registrar una donación.
+     *
+     * @return array{count: int, max: int, months: array<string, int>}
+     */
+    public function recordStats(int $userId): array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT COUNT(*) AS total, COALESCE(MAX(monto_principal_centavos), 0) AS maximo
+             FROM donaciones WHERE user_id = ?'
+        );
+        $stmt->execute([$userId]);
+        $row = $stmt->fetch() ?: [];
+
+        $stmt = $this->db->prepare(
+            "SELECT DATE_FORMAT(fecha, '%Y-%m') AS mes, SUM(monto_principal_centavos) AS total
+             FROM donaciones WHERE user_id = ? GROUP BY mes"
+        );
+        $stmt->execute([$userId]);
+        $months = [];
+
+        foreach ($stmt->fetchAll() as $month) {
+            $months[(string) $month['mes']] = (int) $month['total'];
+        }
+
+        return [
+            'count' => (int) ($row['total'] ?? 0),
+            'max' => (int) ($row['maximo'] ?? 0),
+            'months' => $months,
+        ];
+    }
+
+    /**
      * @return list<array<string, mixed>>
      */
     public function forPeriod(int $userId, string $inicio, string $fin): array

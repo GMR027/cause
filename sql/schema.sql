@@ -594,6 +594,7 @@ CREATE TABLE `cuentas_ahorro` (
     `moneda` CHAR(3) NOT NULL DEFAULT 'MXN',
     `es_predeterminada` TINYINT(1) NOT NULL DEFAULT 0,
     `activa` TINYINT(1) NOT NULL DEFAULT 1,
+    `portada_path` VARCHAR(80) NULL,
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
@@ -607,7 +608,7 @@ CREATE TABLE `metas_ahorro` (
     `user_id` BIGINT UNSIGNED NOT NULL,
     `cuenta_id` BIGINT UNSIGNED NULL,
     `nombre` VARCHAR(120) NOT NULL,
-    `tipo` ENUM('ahorro', 'retiro', 'casa', 'educacion', 'otro') NOT NULL DEFAULT 'ahorro',
+    `tipo` ENUM('ahorro', 'retiro', 'casa', 'educacion', 'otro', 'deseo') NOT NULL DEFAULT 'ahorro',
     `objetivo_centavos` BIGINT NOT NULL,
     `moneda` CHAR(3) NOT NULL DEFAULT 'MXN',
     `objetivo_principal_centavos` BIGINT NULL,
@@ -616,6 +617,7 @@ CREATE TABLE `metas_ahorro` (
     `es_emergencia` TINYINT(1) NOT NULL DEFAULT 0,
     `meses_objetivo` TINYINT NOT NULL DEFAULT 3,
     `activa` TINYINT(1) NOT NULL DEFAULT 1,
+    `portada_path` VARCHAR(80) NULL,
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
@@ -818,6 +820,7 @@ CREATE TABLE `inversiones_posiciones` (
     `valor_manual_principal_centavos` BIGINT NULL,
     `fecha_valor_manual` DATETIME NULL,
     `activo` TINYINT(1) NOT NULL DEFAULT 1,
+    `portada_path` VARCHAR(80) NULL,
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
@@ -993,6 +996,7 @@ CREATE TABLE `deudas` (
     `pago_minimo_centavos` BIGINT NULL,
     `fecha_limite` DATE NULL,
     `activa` TINYINT(1) NOT NULL DEFAULT 1,
+    `portada_path` VARCHAR(80) NULL,
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
@@ -1058,6 +1062,8 @@ CREATE TABLE `lista_deseos` (
     `estado` ENUM('activo', 'comprado', 'descartado') NOT NULL DEFAULT 'activo',
     `nota` VARCHAR(255) NULL,
     `gasto_id` BIGINT UNSIGNED NULL,
+    `meta_id` BIGINT UNSIGNED NULL,
+    `portada_path` VARCHAR(80) NULL,
     `comprado_at` DATETIME NULL,
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -1065,8 +1071,10 @@ CREATE TABLE `lista_deseos` (
     KEY `idx_lista_deseos_user_estado` (`user_id`, `estado`),
     KEY `idx_lista_deseos_user_prioridad` (`user_id`, `prioridad`),
     KEY `idx_lista_deseos_gasto_id` (`gasto_id`),
+    KEY `idx_lista_deseos_meta_id` (`meta_id`),
     CONSTRAINT `fk_lista_deseos_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `fk_lista_deseos_gasto` FOREIGN KEY (`gasto_id`) REFERENCES `gastos` (`id`) ON DELETE SET NULL
+    CONSTRAINT `fk_lista_deseos_gasto` FOREIGN KEY (`gasto_id`) REFERENCES `gastos` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_lista_deseos_meta` FOREIGN KEY (`meta_id`) REFERENCES `metas_ahorro` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================================

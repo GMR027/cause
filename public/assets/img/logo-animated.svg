@@ -1,0 +1,149 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#17a98b"/>
+      <stop offset="0.5" stop-color="#0e7f6a"/>
+      <stop offset="1" stop-color="#05493f"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.25" cy="0.15" r="0.8">
+      <stop offset="0" stop-color="#7cf0d2" stop-opacity="0.55"/>
+      <stop offset="0.5" stop-color="#7cf0d2" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#7cf0d2" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0.15" y1="0" x2="0.75" y2="1">
+      <stop offset="0" stop-color="#fff2bf"/>
+      <stop offset="0.45" stop-color="#f6c64f"/>
+      <stop offset="1" stop-color="#d08f12"/>
+    </linearGradient>
+    <linearGradient id="pig" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0" stop-color="#fffdf8"/>
+      <stop offset="1" stop-color="#efe3cc"/>
+    </linearGradient>
+    <linearGradient id="pigFar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e3d4b8"/>
+      <stop offset="1" stop-color="#d2c0a0"/>
+    </linearGradient>
+    <linearGradient id="flow" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#9ff3dc" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#9ff3dc" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#9ff3dc" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="8" stdDeviation="9" flood-color="#022a23" flood-opacity="0.32"/>
+    </filter>
+    <clipPath id="aboveSlot">
+      <rect x="0" y="0" width="512" height="183"/>
+    </clipPath>
+  </defs>
+
+  <style>
+    .coin, .pig, .spark, .flow { transform-box: fill-box; transform-origin: 50% 50%; }
+    .pig { transform-origin: 50% 100%; }
+    .coin { animation: coin 6s cubic-bezier(.45,.05,.4,1) infinite; }
+    .coin-face { transform-box: fill-box; transform-origin: 50% 50%; animation: flip 6s ease-in-out infinite; }
+    .pig { animation: bounce 6s ease-out infinite; }
+    .spark { opacity: 0; animation: spark 6s ease-out infinite; }
+    .spark.s2 { animation-delay: .12s; }
+    .spark.s3 { animation-delay: .24s; }
+    .flow { animation: flow 6s ease-in-out infinite; }
+    .flow.f2 { animation-delay: -3s; }
+    @keyframes coin {
+      0%, 30% { transform: translateY(0); opacity: 1; }
+      15% { transform: translateY(-8px); }
+      42% { transform: translateY(-14px); opacity: 1; }
+      54% { transform: translateY(96px); opacity: 1; }
+      55% { transform: translateY(96px); opacity: 0; }
+      70% { transform: translateY(-60px); opacity: 0; }
+      82% { transform: translateY(4px); opacity: 1; }
+      88%, 100% { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes flip {
+      0%, 34% { transform: scaleX(1); }
+      46%, 55% { transform: scaleX(.22); }
+      70%, 100% { transform: scaleX(1); }
+    }
+    @keyframes bounce {
+      0%, 53% { transform: scale(1, 1); }
+      57% { transform: scale(1.04, .95); }
+      62% { transform: scale(.98, 1.03); }
+      67%, 100% { transform: scale(1, 1); }
+    }
+    @keyframes spark {
+      0%, 54% { opacity: 0; transform: scale(.2); }
+      60% { opacity: 1; transform: scale(1.1); }
+      72%, 100% { opacity: 0; transform: scale(.4); }
+    }
+    @keyframes flow {
+      0%, 100% { transform: translateX(-18px); }
+      50% { transform: translateX(18px); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .coin, .coin-face, .pig, .spark, .flow { animation: none; }
+    }
+  </style>
+
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="112" fill="url(#glow)"/>
+
+  <!-- Cauce: corrientes suaves al pie -->
+  <g fill="none" stroke="url(#flow)" stroke-linecap="round">
+    <path class="flow" d="M60 458 q 49 -16 98 0 t 98 0 t 98 0 t 98 0" stroke-width="7"/>
+    <path class="flow f2" d="M90 484 q 41 -12 82 0 t 82 0 t 82 0 t 82 0" stroke-width="5" opacity=".7"/>
+  </g>
+
+  <ellipse cx="258" cy="420" rx="150" ry="13" fill="#022a23" opacity=".22"/>
+
+  <!-- Cerdito -->
+  <g class="pig" filter="url(#soft)">
+    <!-- patas lejanas -->
+    <rect x="190" y="350" width="40" height="60" rx="18" fill="url(#pigFar)"/>
+    <rect x="326" y="350" width="40" height="60" rx="18" fill="url(#pigFar)"/>
+    <!-- cola -->
+    <path d="M392 262 c 18 -12 40 -6 38 12 c -2 15 -22 15 -22 3 c 0 -10 14 -14 26 -6"
+          fill="none" stroke="#efe3cc" stroke-width="9" stroke-linecap="round"/>
+    <g fill="url(#pig)">
+      <!-- oreja -->
+      <path d="M168 196 C 160 166 166 140 178 128 C 196 134 222 156 232 180 Z" stroke="#f6eedf" stroke-width="8" stroke-linejoin="round"/>
+      <!-- cuerpo -->
+      <ellipse cx="262" cy="282" rx="146" ry="114"/>
+      <!-- hocico -->
+      <rect x="88" y="252" width="62" height="72" rx="26"/>
+      <!-- patas cercanas -->
+      <rect x="152" y="346" width="46" height="70" rx="20"/>
+      <rect x="288" y="346" width="46" height="70" rx="20"/>
+    </g>
+    <!-- interior de la oreja -->
+    <path d="M182 186 C 178 168 181 154 186 146 C 198 152 210 164 216 178 Z" fill="#f4b9a9" opacity=".55"/>
+    <!-- detalles -->
+    <rect x="88" y="252" width="62" height="72" rx="26" fill="none" stroke="#e2d3b6" stroke-width="3"/>
+    <ellipse cx="108" cy="288" rx="6" ry="10" fill="#0b5d4f" opacity=".55"/>
+    <ellipse cx="130" cy="288" rx="6" ry="10" fill="#0b5d4f" opacity=".55"/>
+    <circle cx="186" cy="248" r="10" fill="#0b4d42"/>
+    <circle cx="189" cy="245" r="3.2" fill="#ffffff"/>
+    <ellipse cx="178" cy="296" rx="18" ry="11" fill="#f4a998" opacity=".45"/>
+    <!-- ranura -->
+    <rect x="226" y="178" width="84" height="14" rx="7" fill="#0b4d42" opacity=".7"/>
+    <!-- brillo -->
+    <path d="M300 196 C 344 204 378 232 392 262" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" opacity=".55"/>
+  </g>
+
+  <!-- chispas -->
+  <g fill="#fff4c9">
+    <path class="spark s1" d="M206 150 l5 -14 l5 14 l14 5 l-14 5 l-5 14 l-5 -14 l-14 -5 z"/>
+    <path class="spark s2" d="M328 140 l4 -11 l4 11 l11 4 l-11 4 l-4 11 l-4 -11 l-11 -4 z"/>
+    <path class="spark s3" d="M352 186 l3 -8 l3 8 l8 3 l-8 3 l-3 8 l-3 -8 l-8 -3 z"/>
+  </g>
+
+  <!-- moneda -->
+  <g clip-path="url(#aboveSlot)">
+    <g class="coin">
+      <g class="coin-face" filter="url(#soft)">
+        <circle cx="268" cy="100" r="46" fill="url(#gold)"/>
+        <circle cx="268" cy="100" r="37" fill="none" stroke="#a96d05" stroke-opacity=".45" stroke-width="3.5"/>
+        <path d="M268 72 v56 M283 84 c -3 -6 -9 -9 -16 -9 c -9 0 -16 5 -16 12 c 0 16 34 9 34 26 c 0 7 -8 12 -18 12 c -8 0 -15 -3 -18 -10"
+              fill="none" stroke="#0b5d4f" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M240 84 a 32 32 0 0 1 18 -18" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" opacity=".7"/>
+      </g>
+    </g>
+  </g>
+</svg>

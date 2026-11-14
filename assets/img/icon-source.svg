@@ -1,35 +1,103 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="884" height="884" viewBox="0 0 884 884">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#12a184"/>
-      <stop offset="0.5" stop-color="#0d7d68"/>
-      <stop offset="1" stop-color="#064e43"/>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#17a98b"/>
+      <stop offset="0.5" stop-color="#0e7f6a"/>
+      <stop offset="1" stop-color="#05493f"/>
     </linearGradient>
-    <radialGradient id="glow" cx="0.28" cy="0.2" r="0.75">
-      <stop offset="0" stop-color="#5fe3c2" stop-opacity="0.5"/>
-      <stop offset="0.55" stop-color="#5fe3c2" stop-opacity="0.1"/>
-      <stop offset="1" stop-color="#5fe3c2" stop-opacity="0"/>
+    <radialGradient id="glow" cx="0.25" cy="0.15" r="0.8">
+      <stop offset="0" stop-color="#7cf0d2" stop-opacity="0.55"/>
+      <stop offset="0.5" stop-color="#7cf0d2" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#7cf0d2" stop-opacity="0"/>
     </radialGradient>
-    <linearGradient id="gold" x1="0" y1="0" x2="0.7" y2="1">
-      <stop offset="0" stop-color="#ffeeb4"/>
-      <stop offset="0.45" stop-color="#f4c455"/>
-      <stop offset="1" stop-color="#cf9418"/>
+    <linearGradient id="gold" x1="0.15" y1="0" x2="0.75" y2="1">
+      <stop offset="0" stop-color="#fff2bf"/>
+      <stop offset="0.45" stop-color="#f6c64f"/>
+      <stop offset="1" stop-color="#d08f12"/>
     </linearGradient>
-    <linearGradient id="cream" x1="0" y1="0" x2="0.4" y2="1">
-      <stop offset="0" stop-color="#fffdf7"/>
-      <stop offset="1" stop-color="#f1e6d2"/>
+    <linearGradient id="pig" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0" stop-color="#fffdf8"/>
+      <stop offset="1" stop-color="#efe3cc"/>
     </linearGradient>
-    <filter id="soft" x="-15%" y="-15%" width="130%" height="130%">
-      <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#032f28" flood-opacity="0.28"/>
+    <linearGradient id="pigFar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e3d4b8"/>
+      <stop offset="1" stop-color="#d2c0a0"/>
+    </linearGradient>
+    <linearGradient id="flow" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#9ff3dc" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#9ff3dc" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#9ff3dc" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="8" stdDeviation="9" flood-color="#022a23" flood-opacity="0.32"/>
     </filter>
+    <clipPath id="aboveSlot">
+      <rect x="0" y="0" width="512" height="183"/>
+    </clipPath>
   </defs>
-  <rect width="884" height="884" rx="190" fill="url(#bg)"/>
-  <rect width="884" height="884" rx="190" fill="url(#glow)"/>
-  <g transform="translate(0 28)">
-  <g filter="url(#soft)">
-    <circle cx="472.5" cy="195.5" r="66" fill="url(#gold)"/>
-    <circle cx="472.5" cy="195.5" r="57" fill="none" stroke="#a86c06" stroke-opacity="0.45" stroke-width="3"/>
-    <text x="472.5" y="225.5" text-anchor="middle" font-family="DejaVu Sans" font-weight="bold" font-size="88" fill="#0a5a4c">$</text>
-  </g><g fill="url(#cream)" filter="url(#soft)"><path d="M 240.5 236 L 261.5 238 L 273.5 243 L 281.5 244 L 305.5 256 L 329 273.5 L 336.5 282 L 339 283.5 L 350 297.5 L 357 311.5 L 363.5 320 L 367 318.5 L 366 310.5 L 358 296.5 L 357 291.5 L 363.5 287 L 373.5 286 L 395.5 281 L 415.5 279 L 416.5 278 L 424.5 278 L 425.5 277 L 471.5 277 L 472.5 278 L 482.5 278 L 488.5 280 L 506.5 282 L 522.5 287 L 532.5 288 L 544.5 293 L 551.5 294 L 573.5 304 L 578.5 305 L 600.5 316 L 605.5 320 L 611.5 322 L 622.5 331 L 628.5 334 L 661 363.5 L 680 388.5 L 692 408.5 L 703 434.5 L 710 460.5 L 713.5 465 L 721.5 466 L 726 462.5 L 727 457.5 L 720 448.5 L 716 437.5 Q 717.5 432 715 430.5 L 721 412.5 L 727.5 406 L 737.5 402 L 746.5 402 Q 759.3 404.3 765 413.5 L 771 425.5 L 771 442.5 L 768 450.5 L 768 456.5 Q 769.9 460.1 775.5 460 L 787.5 455 L 792.5 455 Q 799.4 457.1 798 467.5 L 795.5 471 L 778.5 477 L 762.5 477 Q 757.9 474.1 749.5 475 L 734.5 483 L 717.5 485 L 713 489.5 L 709 526.5 L 698 559.5 L 686 584.5 L 672 604.5 L 649.5 630 L 611 659.5 Q 608.2 662.2 609 668.5 L 613 688.5 L 613 698.5 L 614 699.5 L 614 707.5 L 615 708.5 L 617 729.5 L 615 736.5 L 611.5 741 L 601.5 743 L 540.5 743 L 530 738.5 L 525 729.5 L 523 714.5 Q 520 711.5 520 705.5 L 515.5 701 L 497.5 703 L 485.5 706 L 475.5 706 L 474.5 707 L 419.5 707 L 391.5 702 L 382.5 702 L 380 703.5 L 374 721.5 L 373 731.5 L 367.5 740 L 358.5 743 L 296.5 743 L 288.5 741 L 284 737.5 L 282 727.5 L 282 720.5 L 284 709.5 L 284 697.5 L 288 676.5 L 288 665.5 L 281.5 658 L 255.5 640 L 229 614.5 L 212 592.5 L 206 583.5 L 205 579.5 L 194.5 566 L 191.5 565 L 153.5 564 L 145 558.5 L 140 550.5 L 138 542.5 L 138 489.5 L 139 488.5 L 139 450.5 Q 141.1 442.1 147.5 438 L 151.5 436 L 164.5 435 Q 166.2 437.7 172.5 436 L 182.5 434 L 187 430.5 L 189 423.5 L 201 399.5 Q 212.9 378.4 228.5 361 L 233 357.5 L 240.5 349 L 251.5 340 L 254.5 340 L 257 343.5 Q 256.3 349.7 259.5 352 Q 264.5 352.5 265 348.5 L 266 344.5 L 264 337.5 L 264 323.5 L 261 310.5 L 260 298.5 L 256 291.5 L 255 281.5 Q 250.3 274.7 249 264.5 L 239 244.5 L 238 238.5 L 240.5 236 Z M 441 299 L 440 300 L 418 301 L 408 304 L 403 304 L 397 307 Q 396 316 400 320 L 404 322 L 412 322 L 439 317 L 471 317 L 486 320 L 507 322 L 516 326 L 526 328 L 530 327 L 535 320 L 533 314 L 526 309 L 507 304 L 501 304 L 492 301 L 473 300 L 472 299 L 441 299 Z M 243 404 L 239 406 Q 233 410 231 417 L 231 423 L 233 431 L 243 438 L 252 438 L 259 434 L 262 431 L 265 423 Q 266 413 261 410 Q 256 402 243 404 Z M 742 422 L 740 423 L 736 429 Q 735 437 738 442 L 746 447 L 748 446 L 752 438 Q 753 429 750 426 Q 749 421 742 422 Z "/><path d="M 189.5 259 L 203.5 260 L 224.5 266 L 230.5 270 L 239.5 273 L 245 278.5 L 254 307.5 L 255 324.5 Q 247.7 335.2 235.5 341 L 232 337.5 L 226 320.5 L 214 296.5 L 191.5 266 L 188 263.5 Q 187.3 259.8 189.5 259 Z "/></g></g>
+
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="112" fill="url(#glow)"/>
+
+  <!-- Cauce: corrientes suaves al pie -->
+  <g fill="none" stroke="url(#flow)" stroke-linecap="round">
+    <path class="flow" d="M60 458 q 49 -16 98 0 t 98 0 t 98 0 t 98 0" stroke-width="7"/>
+    <path class="flow f2" d="M90 484 q 41 -12 82 0 t 82 0 t 82 0 t 82 0" stroke-width="5" opacity=".7"/>
+  </g>
+
+  <ellipse cx="258" cy="420" rx="150" ry="13" fill="#022a23" opacity=".22"/>
+
+  <!-- Cerdito -->
+  <g class="pig" filter="url(#soft)">
+    <!-- patas lejanas -->
+    <rect x="190" y="350" width="40" height="60" rx="18" fill="url(#pigFar)"/>
+    <rect x="326" y="350" width="40" height="60" rx="18" fill="url(#pigFar)"/>
+    <!-- cola -->
+    <path d="M392 262 c 18 -12 40 -6 38 12 c -2 15 -22 15 -22 3 c 0 -10 14 -14 26 -6"
+          fill="none" stroke="#efe3cc" stroke-width="9" stroke-linecap="round"/>
+    <g fill="url(#pig)">
+      <!-- oreja -->
+      <path d="M168 196 C 160 166 166 140 178 128 C 196 134 222 156 232 180 Z" stroke="#f6eedf" stroke-width="8" stroke-linejoin="round"/>
+      <!-- cuerpo -->
+      <ellipse cx="262" cy="282" rx="146" ry="114"/>
+      <!-- hocico -->
+      <rect x="88" y="252" width="62" height="72" rx="26"/>
+      <!-- patas cercanas -->
+      <rect x="152" y="346" width="46" height="70" rx="20"/>
+      <rect x="288" y="346" width="46" height="70" rx="20"/>
+    </g>
+    <!-- interior de la oreja -->
+    <path d="M182 186 C 178 168 181 154 186 146 C 198 152 210 164 216 178 Z" fill="#f4b9a9" opacity=".55"/>
+    <!-- detalles -->
+    <rect x="88" y="252" width="62" height="72" rx="26" fill="none" stroke="#e2d3b6" stroke-width="3"/>
+    <ellipse cx="108" cy="288" rx="6" ry="10" fill="#0b5d4f" opacity=".55"/>
+    <ellipse cx="130" cy="288" rx="6" ry="10" fill="#0b5d4f" opacity=".55"/>
+    <circle cx="186" cy="248" r="10" fill="#0b4d42"/>
+    <circle cx="189" cy="245" r="3.2" fill="#ffffff"/>
+    <ellipse cx="178" cy="296" rx="18" ry="11" fill="#f4a998" opacity=".45"/>
+    <!-- ranura -->
+    <rect x="226" y="178" width="84" height="14" rx="7" fill="#0b4d42" opacity=".7"/>
+    <!-- brillo -->
+    <path d="M300 196 C 344 204 378 232 392 262" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" opacity=".55"/>
+  </g>
+
+  <!-- chispas -->
+  <g fill="#fff4c9">
+    <path class="spark s1" d="M206 150 l5 -14 l5 14 l14 5 l-14 5 l-5 14 l-5 -14 l-14 -5 z"/>
+    <path class="spark s2" d="M328 140 l4 -11 l4 11 l11 4 l-11 4 l-4 11 l-4 -11 l-11 -4 z"/>
+    <path class="spark s3" d="M352 186 l3 -8 l3 8 l8 3 l-8 3 l-3 8 l-3 -8 l-8 -3 z"/>
+  </g>
+
+  <!-- moneda -->
+  <g clip-path="url(#aboveSlot)">
+    <g class="coin">
+      <g class="coin-face" filter="url(#soft)">
+        <circle cx="268" cy="100" r="46" fill="url(#gold)"/>
+        <circle cx="268" cy="100" r="37" fill="none" stroke="#a96d05" stroke-opacity=".45" stroke-width="3.5"/>
+        <path d="M268 72 v56 M283 84 c -3 -6 -9 -9 -16 -9 c -9 0 -16 5 -16 12 c 0 16 34 9 34 26 c 0 7 -8 12 -18 12 c -8 0 -15 -3 -18 -10"
+              fill="none" stroke="#0b5d4f" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M240 84 a 32 32 0 0 1 18 -18" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" opacity=".7"/>
+      </g>
+    </g>
+  </g>
 </svg>

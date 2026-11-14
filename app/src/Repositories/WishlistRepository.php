@@ -131,6 +131,14 @@ final class WishlistRepository
         $stmt->execute([$gastoId, $purchasedAt, $id, $userId]);
     }
 
+    public function setMeta(int $id, int $userId, ?int $metaId): void
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE lista_deseos SET meta_id = ?, updated_at = NOW() WHERE id = ? AND user_id = ?'
+        );
+        $stmt->execute([$metaId, $id, $userId]);
+    }
+
     public function discard(int $id, int $userId): void
     {
         $stmt = $this->db->prepare(

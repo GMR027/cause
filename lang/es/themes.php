@@ -7,6 +7,8 @@ return [
         'dots' => 'Puntos',
         'grid' => 'Cuadrícula',
         'waves' => 'Ondas',
+        'finanzas' => 'Garabatos financieros',
+        'simbolos' => 'Símbolos de dinero',
     ],
     'errors' => [
         'mode' => 'Elige un modo válido.',

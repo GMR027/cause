@@ -13,6 +13,9 @@ use RuntimeException;
  */
 final class DonationService
 {
+    /** Cantidad de donaciones que merece festejo. */
+    private const COUNT_MILESTONES = [5, 10, 25, 50, 100, 250, 500, 1000];
+
     private DonationRepository $repo;
 
     public function __construct(?DonationRepository $repo = null)
@@ -85,7 +88,8 @@ final class DonationService
         $currency = (new CurrencyService())->validateCode(
             $currencyInput !== '' ? $currencyInput : (string) ($user['moneda_activa'] ?? 'MXN')
         );
-        $this->repo->create(
+        $before = $this->repo->recordStats((int) $user['id']);
+        $id = $this->repo->create(
             (int) $user['id'],
             $amount,
             $currency,
@@ -97,13 +101,59 @@ final class DonationService
         $period = $support->period($user);
         $assigned = $support->assignedForType($user, 'donacion');
         $normal = $this->repo->sumPeriodNormal((int) $user['id'], $period['inicio'], $period['fin']);
+        $created = $this->repo->find($id, (int) $user['id']);
+        $principal = (int) ($created['monto_principal_centavos'] ?? $amount);
 
         return [
             'assigned_centavos' => $assigned,
             'normal_centavos' => $normal,
             'available_centavos' => max(0, $assigned - $normal),
             'over_percentage' => $normal > $assigned,
+            'celebration' => [
+                'amount_centavos' => $amount,
+                'currency' => $currency,
+                'count' => $before['count'] + 1,
+                'total_centavos' => $this->repo->sumTotal((int) $user['id']),
+                'records' => self::records($before, $principal, $utc->format('Y-m')),
+            ],
         ];
+    }
+
+    /**
+     * Récords que rompe una donación nueva, comparada con el historial previo.
+     *
+     * @param array{count: int, max: int, months: array<string, int>} $before
+     * @return list<string>
+     */
+    public static function records(array $before, int $principal, string $month): array
+    {
+        $count = $before['count'] + 1;
+
+        if ($before['count'] === 0) {
+            return ['first'];
+        }
+
+        $records = [];
+
+        if ($principal > $before['max']) {
+            $records[] = 'biggest';
+        }
+
+        $monthBefore = $before['months'][$month] ?? 0;
+        $others = $before['months'];
+        unset($others[$month]);
+        $bestOther = $others === [] ? 0 : max($others);
+
+        // Solo al cruzar la marca: las donaciones siguientes del mismo mes no repiten el festejo.
+        if ($bestOther > 0 && $monthBefore <= $bestOther && $monthBefore + $principal > $bestOther) {
+            $records[] = 'best_month';
+        }
+
+        if (in_array($count, self::COUNT_MILESTONES, true)) {
+            $records[] = 'milestone';
+        }
+
+        return $records;
     }
 
     /**

@@ -1,0 +1,371 @@
+// Cauce · animación del cerdito al mover dinero (ver assets/js/84-money-fx.js).
+//
+// Verde al ahorrar, azul al invertir y rojo roto en gastos, pagos y retiros.
+// --fx-level (1-5) escala tamaño, intensidad y duración.
+
+.money-fx {
+    --fx-pig: min(calc(12rem + var(--fx-level) * 1.5rem), 72vw);
+
+    position: fixed;
+    inset: 0;
+    z-index: 2100;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    overflow: hidden;
+    cursor: pointer;
+    animation: money-fx-in .25s ease-out both;
+
+    &.is-leaving {
+        animation: money-fx-out .4s ease-in forwards;
+    }
+}
+
+.money-fx-backdrop {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+        circle at 50% 50%,
+        color-mix(in srgb, var(--fx-color) calc(10% + var(--fx-level) * 6%), transparent) 0%,
+        color-mix(in srgb, var(--fx-color) calc(4% + var(--fx-level) * 3%), transparent) 45%,
+        rgba(0, 0, 0, calc(.08 + var(--fx-level) * .05)) 100%
+    );
+    backdrop-filter: blur(calc(var(--fx-level) * 1px));
+}
+
+.money-fx-stage {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .6rem;
+    text-align: center;
+}
+
+.money-fx-pig {
+    position: relative;
+    width: var(--fx-pig);
+    aspect-ratio: 240 / 200;
+    filter: drop-shadow(0 .9rem 1.4rem rgba(0, 0, 0, .28));
+    animation: money-fx-pop .55s cubic-bezier(.2, 1.6, .4, 1) both;
+}
+
+.money-fx-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.money-fx-whole {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    animation: money-fx-gulp .45s ease-out .55s 2 both;
+}
+
+.money-fx--l2 .money-fx-whole { animation-iteration-count: 3; }
+.money-fx--l3 .money-fx-whole { animation-iteration-count: 4; }
+.money-fx--l4 .money-fx-whole { animation-iteration-count: 5; }
+.money-fx--l5 .money-fx-whole { animation-iteration-count: 6; }
+
+.money-fx-label {
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+    max-width: min(90vw, 26rem);
+    padding: .55rem 1.3rem .65rem;
+    border: 1px solid rgba(255, 255, 255, .25);
+    border-radius: 1.25rem;
+    background: color-mix(in srgb, var(--fx-dark) 90%, transparent);
+    box-shadow: 0 .6rem 1.6rem rgba(0, 0, 0, .25);
+    animation: money-fx-label .5s cubic-bezier(.2, 1.5, .4, 1) .45s both;
+
+    strong {
+        color: #fff;
+        font-size: calc(1.5rem + var(--fx-level) * .32rem);
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+        line-height: 1.1;
+        text-shadow: 0 0 1rem var(--fx-color);
+    }
+
+    span {
+        color: #fff;
+        font-size: calc(.95rem + var(--fx-level) * .06rem);
+        font-weight: 600;
+        opacity: .92;
+    }
+}
+
+// Anillos y resplandor (niveles altos).
+.money-fx-rings,
+.money-fx-glow {
+    position: absolute;
+    top: calc(var(--fx-pig) * .42);
+    left: 50%;
+    pointer-events: none;
+}
+
+.money-fx-glow {
+    width: calc(var(--fx-pig) * 1.5);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(circle, color-mix(in srgb, var(--fx-light) 70%, transparent) 0%, transparent 65%);
+    opacity: calc(.15 + var(--fx-level) * .12);
+    transform: translate(-50%, -50%);
+    animation: money-fx-glow 1.6s ease-in-out infinite;
+}
+
+.money-fx-rings span {
+    position: absolute;
+    width: var(--fx-pig);
+    aspect-ratio: 1;
+    border: .25rem solid var(--fx-light);
+    border-radius: 50%;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(.3);
+}
+
+.money-fx--l4 .money-fx-rings span,
+.money-fx--l5 .money-fx-rings span {
+    animation: money-fx-ring 1.4s ease-out infinite;
+
+    &:nth-child(2) { animation-delay: .45s; }
+    &:nth-child(3) { animation-delay: .9s; }
+}
+
+// Partículas: se anclan al contenedor del cerdito.
+.money-fx-particle {
+    position: absolute;
+    pointer-events: none;
+    font-size: var(--size, 1.6rem);
+    line-height: 1;
+    will-change: transform, opacity;
+}
+
+.money-fx-coin {
+    top: 23%;
+    left: 58%;
+    color: #f4b81f;
+    filter: drop-shadow(0 .15rem .2rem rgba(0, 0, 0, .3));
+    opacity: 0;
+    animation: money-fx-coin .8s cubic-bezier(.5, 0, .9, .5) var(--delay) both;
+}
+
+.money-fx-rise {
+    top: 70%;
+    left: 50%;
+    color: var(--fx-light);
+    opacity: 0;
+    animation: money-fx-rise 1.6s ease-out var(--delay) both;
+}
+
+.money-fx-spark {
+    top: 45%;
+    left: 50%;
+    color: #ffe58a;
+    opacity: 0;
+    animation: money-fx-spark 1s ease-out var(--delay) both;
+}
+
+.money-fx-bill {
+    top: -3rem;
+    left: 50%;
+    color: #4fbf6b;
+    filter: drop-shadow(0 .2rem .3rem rgba(0, 0, 0, .25));
+    animation: money-fx-bill 2.6s linear var(--delay) both;
+}
+
+// Cerdito roto.
+.money-fx--out {
+    .money-fx-svg {
+        animation: money-fx-shake .6s linear .35s both;
+    }
+
+    .money-fx-label {
+        animation-delay: 1.05s;
+    }
+
+    .money-fx-glow,
+    .money-fx-rings {
+        display: none;
+    }
+}
+
+.money-fx-crack {
+    stroke-dasharray: 260;
+    stroke-dashoffset: 260;
+    animation: money-fx-crack .4s ease-in .55s forwards, money-fx-fade .2s ease .95s forwards;
+}
+
+.money-fx-half {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+}
+
+.money-fx-half-left {
+    animation: money-fx-split-left 1.4s cubic-bezier(.3, .6, .4, 1) .95s forwards;
+}
+
+.money-fx-half-right {
+    animation: money-fx-split-right 1.4s cubic-bezier(.3, .6, .4, 1) .95s forwards;
+}
+
+.money-fx-shard {
+    top: 50%;
+    left: 50%;
+    width: var(--size);
+    height: calc(var(--size) * .8);
+    background: var(--fx-color);
+    clip-path: polygon(50% 0, 100% 70%, 30% 100%, 0 40%);
+    opacity: 0;
+    animation: money-fx-shard 1.3s cubic-bezier(.2, .7, .5, 1) var(--delay) both;
+
+    &.is-coin {
+        width: auto;
+        height: auto;
+        background: none;
+        clip-path: none;
+        color: #f4b81f;
+        font-size: calc(var(--size) * 2);
+    }
+}
+
+// Destello rojo y sacudida de pantalla en las salidas grandes.
+.money-fx--out.money-fx--l3 .money-fx-backdrop,
+.money-fx--out.money-fx--l4 .money-fx-backdrop,
+.money-fx--out.money-fx--l5 .money-fx-backdrop {
+    animation: money-fx-flash .5s ease-out .95s;
+}
+
+.money-fx--out.money-fx--l4 .money-fx-stage,
+.money-fx--out.money-fx--l5 .money-fx-stage {
+    animation: money-fx-quake .45s linear .95s;
+}
+
+// Movimiento reducido: solo el cerdito y el monto.
+.money-fx.is-reduced {
+    *,
+    .money-fx-pig {
+        animation: none !important;
+    }
+
+    .money-fx-crack {
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes money-fx-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes money-fx-out {
+    to { opacity: 0; transform: scale(1.04); }
+}
+
+@keyframes money-fx-fade {
+    to { opacity: 0; }
+}
+
+@keyframes money-fx-pop {
+    0% { transform: scale(.25) rotate(-8deg); opacity: 0; }
+    70% { transform: scale(1.08) rotate(2deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0); }
+}
+
+@keyframes money-fx-gulp {
+    0%, 100% { transform: scale(1, 1); }
+    35% { transform: scale(1.06, .92); }
+    70% { transform: scale(.97, 1.05) translateY(-4%); }
+}
+
+@keyframes money-fx-label {
+    from { opacity: 0; transform: translateY(1rem) scale(.7); }
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes money-fx-glow {
+    0%, 100% { transform: translate(-50%, -50%) scale(.92); }
+    50% { transform: translate(-50%, -50%) scale(1.06); }
+}
+
+@keyframes money-fx-ring {
+    0% { opacity: .8; transform: translate(-50%, -50%) scale(.3); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.9); }
+}
+
+@keyframes money-fx-coin {
+    0% { opacity: 0; transform: translate(calc(-50% + var(--x)), -42vh) rotate(0); }
+    12% { opacity: 1; }
+    88% { opacity: 1; transform: translate(-50%, -10%) rotate(var(--spin)) scale(.9); }
+    100% { opacity: 0; transform: translate(-50%, 25%) rotate(var(--spin)) scale(.4, .2); }
+}
+
+@keyframes money-fx-rise {
+    0% { opacity: 0; transform: translate(calc(-50% + var(--x)), 0) scale(.6); }
+    25% { opacity: 1; }
+    100% { opacity: 0; transform: translate(calc(-50% + var(--x)), -38vh) scale(1.1); }
+}
+
+@keyframes money-fx-spark {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(.2); }
+    30% { opacity: 1; }
+    100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.2) rotate(90deg); }
+}
+
+@keyframes money-fx-bill {
+    0% { opacity: 0; transform: translate(var(--x), 0) rotate(0); }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { opacity: 0; transform: translate(calc(var(--x) + 4vw), 110vh) rotate(var(--spin)); }
+}
+
+@keyframes money-fx-shake {
+    0%, 100% { transform: translateX(0) rotate(0); }
+    10% { transform: translateX(calc(var(--fx-level) * -2px)) rotate(calc(var(--fx-level) * -1deg)); }
+    20% { transform: translateX(calc(var(--fx-level) * 2px)) rotate(calc(var(--fx-level) * 1deg)); }
+    30% { transform: translateX(calc(var(--fx-level) * -3px)) rotate(calc(var(--fx-level) * -1.2deg)); }
+    40% { transform: translateX(calc(var(--fx-level) * 3px)) rotate(calc(var(--fx-level) * 1.2deg)); }
+    50% { transform: translateX(calc(var(--fx-level) * -3px)) rotate(calc(var(--fx-level) * -1deg)); }
+    60% { transform: translateX(calc(var(--fx-level) * 3px)) rotate(calc(var(--fx-level) * 1deg)); }
+    70% { transform: translateX(calc(var(--fx-level) * -2px)); }
+    80% { transform: translateX(calc(var(--fx-level) * 2px)); }
+}
+
+@keyframes money-fx-crack {
+    to { stroke-dashoffset: 0; }
+}
+
+@keyframes money-fx-split-left {
+    0% { transform: none; opacity: 1; }
+    25% { transform: translate(calc(-6% - var(--fx-level) * 2%), -4%) rotate(calc(-10deg - var(--fx-level) * 3deg)); opacity: 1; }
+    100% { transform: translate(calc(-14% - var(--fx-level) * 3%), 40%) rotate(calc(-28deg - var(--fx-level) * 5deg)); opacity: 0; }
+}
+
+@keyframes money-fx-split-right {
+    0% { transform: none; opacity: 1; }
+    25% { transform: translate(calc(6% + var(--fx-level) * 2%), -4%) rotate(calc(10deg + var(--fx-level) * 3deg)); opacity: 1; }
+    100% { transform: translate(calc(14% + var(--fx-level) * 3%), 40%) rotate(calc(28deg + var(--fx-level) * 5deg)); opacity: 0; }
+}
+
+@keyframes money-fx-shard {
+    0% { opacity: 0; transform: translate(-50%, -50%) rotate(0); }
+    10% { opacity: 1; }
+    55% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(calc(var(--rot) * .6)); opacity: 1; }
+    100% { opacity: 0; transform: translate(calc(-50% + var(--dx) * 1.15), calc(-50% + var(--dy) + var(--fall))) rotate(var(--rot)); }
+}
+
+@keyframes money-fx-flash {
+    0% { background-color: rgba(229, 72, 77, 0); }
+    25% { background-color: rgba(229, 72, 77, .35); }
+    100% { background-color: rgba(229, 72, 77, 0); }
+}
+
+@keyframes money-fx-quake {
+    0%, 100% { transform: translate(0, 0); }
+    20% { transform: translate(-8px, 4px); }
+    40% { transform: translate(7px, -5px); }
+    60% { transform: translate(-5px, 3px); }
+    80% { transform: translate(4px, -2px); }
+}

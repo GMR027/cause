@@ -35,5 +35,5 @@ return [
     'modes' => ['claro', 'oscuro', 'auto'],
     'focus' => ['iconos', 'botones', 'mixto'],
     'backgrounds' => ['ninguno', 'radial', 'textura', 'radial_textura'],
-    'textures' => ['dots', 'grid', 'waves'],
+    'textures' => ['dots', 'grid', 'waves', 'finanzas', 'simbolos'],
 ];

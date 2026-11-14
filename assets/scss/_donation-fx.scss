@@ -1,0 +1,349 @@
+// ---------------------------------------------------------------------------
+// Donación: festejo al donar y al romper récords
+// ---------------------------------------------------------------------------
+
+.donation-fx {
+    position: fixed;
+    z-index: 1060;
+    pointer-events: none;
+}
+
+.donation-fx-card {
+    position: relative;
+    pointer-events: auto;
+    background: var(--bs-body-bg);
+    border: 1px solid rgba(var(--cauce-primary-rgb), .18);
+    border-radius: 1.1rem;
+    box-shadow: 0 1.2rem 3rem rgba(0, 0, 0, .22);
+    overflow: hidden;
+}
+
+.donation-fx-dismiss {
+    position: absolute;
+    top: .7rem;
+    right: .7rem;
+    z-index: 1;
+    font-size: .7rem;
+}
+
+.donation-fx-icon {
+    position: relative;
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: var(--cauce-primary-soft);
+    color: var(--cauce-primary);
+
+    &::before,
+    &::after {
+        content: "";
+        position: absolute;
+        inset: -.4rem;
+        border: 2px solid rgba(var(--cauce-primary-rgb), .35);
+        border-radius: 999px;
+        opacity: 0;
+    }
+}
+
+// Agradecimiento: tarjeta que sube desde abajo y se va sola.
+.donation-fx-thanks {
+    right: 1rem;
+    bottom: calc(var(--cauce-dock-height) + 1rem + env(safe-area-inset-bottom));
+    left: 1rem;
+    display: flex;
+    justify-content: center;
+
+    .donation-fx-card {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        width: 100%;
+        max-width: 26rem;
+        padding: 1rem 2.4rem 1.1rem 1rem;
+        transform: translateY(140%);
+        opacity: 0;
+        transition: transform .5s cubic-bezier(.2, 1.3, .4, 1), opacity .3s ease;
+    }
+
+    .donation-fx-icon {
+        width: 3.2rem;
+        height: 3.2rem;
+        font-size: 1.45rem;
+        color: #e0457b;
+        background: rgba(224, 69, 123, .12);
+
+        &::before,
+        &::after {
+            border-color: rgba(224, 69, 123, .35);
+        }
+    }
+
+    &.is-visible .donation-fx-card {
+        transform: none;
+        opacity: 1;
+    }
+
+    &.is-visible .donation-fx-icon {
+        i {
+            animation: donation-fx-beat 1.2s ease-in-out .4s 3;
+        }
+
+        &::before,
+        &::after {
+            animation: donation-fx-ring 1.2s ease-out .4s 3;
+        }
+
+        &::after {
+            animation-delay: .7s;
+        }
+    }
+
+    &.is-leaving .donation-fx-card {
+        transform: translateY(140%);
+        opacity: 0;
+        transition-timing-function: ease-in;
+    }
+}
+
+@media (min-width: 1200px) {
+    .donation-fx-thanks {
+        bottom: 1.5rem;
+        left: auto;
+        right: 1.5rem;
+    }
+}
+
+.donation-fx-timer {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--cauce-primary);
+    opacity: .55;
+    transform-origin: left center;
+    transform: scaleX(0);
+
+    .is-visible & {
+        animation: donation-fx-timer var(--donation-fx-duration, 6s) linear both;
+    }
+
+    .donation-fx-card:hover & {
+        animation-play-state: paused;
+    }
+}
+
+// Récord: diálogo centrado con confeti.
+.donation-fx-record {
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    pointer-events: auto;
+
+    .donation-fx-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(8, 20, 18, .45);
+        backdrop-filter: blur(3px);
+        opacity: 0;
+        transition: opacity .35s ease;
+    }
+
+    .donation-fx-card {
+        width: 100%;
+        max-width: 22rem;
+        padding: 2rem 1.5rem 1.5rem;
+        text-align: center;
+        transform: scale(.7) translateY(2rem);
+        opacity: 0;
+        transition: transform .55s cubic-bezier(.2, 1.4, .4, 1), opacity .3s ease;
+
+        &::before {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto;
+            height: 7rem;
+            background: radial-gradient(18rem 7rem at 50% 0, rgba(var(--cauce-primary-rgb), .22), transparent 70%);
+            pointer-events: none;
+        }
+    }
+
+    .donation-fx-icon {
+        width: 5rem;
+        height: 5rem;
+        margin-bottom: 1rem;
+        font-size: 2.3rem;
+        color: #d99a0b;
+        background: radial-gradient(circle at 35% 30%, #fff6d6, #ffe08a 55%, #f6c64f);
+        box-shadow: 0 .6rem 1.4rem rgba(217, 154, 11, .35);
+
+        &::before,
+        &::after {
+            border-color: rgba(217, 154, 11, .45);
+        }
+    }
+
+    .donation-fx-eyebrow {
+        display: block;
+        margin-bottom: .25rem;
+        font-size: .78rem;
+        font-weight: 600;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color: var(--cauce-primary);
+    }
+
+    &.is-visible {
+        .donation-fx-backdrop {
+            opacity: 1;
+        }
+
+        .donation-fx-card {
+            transform: none;
+            opacity: 1;
+        }
+
+        .donation-fx-icon {
+            i {
+                animation: donation-fx-trophy 1.6s ease-in-out .45s infinite;
+            }
+
+            &::before,
+            &::after {
+                animation: donation-fx-ring 1.6s ease-out .45s infinite;
+            }
+
+            &::after {
+                animation-delay: .85s;
+            }
+        }
+
+        .donation-fx-records li {
+            animation: donation-fx-pop .5s cubic-bezier(.2, 1.5, .4, 1) both;
+            animation-delay: calc(.55s + var(--i, 0) * .15s);
+        }
+    }
+
+    &.is-leaving {
+        .donation-fx-backdrop,
+        .donation-fx-card {
+            opacity: 0;
+        }
+
+        .donation-fx-card {
+            transform: scale(.92);
+        }
+    }
+}
+
+.donation-fx-records {
+    display: grid;
+    gap: .5rem;
+    margin: 1.1rem 0 1.25rem;
+    padding: 0;
+    list-style: none;
+
+    li {
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        padding: .55rem .8rem;
+        border-radius: .75rem;
+        background: var(--cauce-primary-soft);
+        font-weight: 600;
+        font-size: .9rem;
+        text-align: left;
+    }
+
+    i {
+        color: var(--cauce-primary);
+        font-size: 1.05rem;
+    }
+}
+
+// Partículas (corazones y monedas) y confeti.
+.donation-fx-particle {
+    position: fixed;
+    z-index: 1061;
+    pointer-events: none;
+    font-size: var(--size, 1.2rem);
+    color: var(--color, #e0457b);
+    animation: donation-fx-float var(--dur, 2.4s) cubic-bezier(.25, .6, .4, 1) var(--delay, 0s) both;
+    will-change: transform, opacity;
+}
+
+.donation-fx-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 1061;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+@keyframes donation-fx-beat {
+    0%, 100% { transform: scale(1); }
+    20% { transform: scale(1.25); }
+    40% { transform: scale(.95); }
+    60% { transform: scale(1.12); }
+}
+
+@keyframes donation-fx-ring {
+    0% { transform: scale(.75); opacity: .7; }
+    100% { transform: scale(1.55); opacity: 0; }
+}
+
+@keyframes donation-fx-trophy {
+    0%, 100% { transform: rotate(0) scale(1); }
+    25% { transform: rotate(-10deg) scale(1.08); }
+    50% { transform: rotate(0) scale(1.12); }
+    75% { transform: rotate(10deg) scale(1.08); }
+}
+
+@keyframes donation-fx-pop {
+    0% { transform: scale(.6); opacity: 0; }
+    100% { transform: none; opacity: 1; }
+}
+
+@keyframes donation-fx-timer {
+    from { transform: scaleX(1); }
+    to { transform: scaleX(0); }
+}
+
+@keyframes donation-fx-float {
+    0% {
+        transform: translate(0, 0) scale(.4) rotate(0);
+        opacity: 0;
+    }
+
+    15% {
+        opacity: 1;
+    }
+
+    100% {
+        transform: translate(var(--dx, 0), var(--dy, -180px)) scale(1) rotate(var(--rot, 0deg));
+        opacity: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .donation-fx-card,
+    .donation-fx-backdrop {
+        transition: none !important;
+    }
+
+    .donation-fx *,
+    .donation-fx *::before,
+    .donation-fx *::after {
+        animation: none !important;
+    }
+
+    .donation-fx-particle,
+    .donation-fx-canvas {
+        display: none;
+    }
+}

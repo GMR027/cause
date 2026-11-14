@@ -145,3 +145,8 @@ $byCause = $by_cause ?? [];
     'currency' => $currency,
     'today' => $today,
 ]) ?>
+
+<?= partial('donation/celebration', [
+    'celebration' => $celebration ?? null,
+    'currency' => $currency,
+]) ?>

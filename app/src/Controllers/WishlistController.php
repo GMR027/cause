@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Cauce\Controllers;
 
+use Cauce\Controllers\Concerns\FinanceErrorTrait;
 use Cauce\Helpers\Flash;
 use Cauce\Helpers\View;
+use Cauce\Services\MoneyFxService;
 use Cauce\Services\AuthService;
 use Cauce\Services\WishlistService;
 use DateTimeImmutable;
@@ -17,6 +19,8 @@ use Throwable;
  */
 final class WishlistController
 {
+    use FinanceErrorTrait;
+
     private WishlistService $service;
 
     public function __construct()
@@ -77,9 +81,27 @@ final class WishlistController
                 'parte_metodo' => (string) input('parte_metodo', ''),
                 'register_expense' => !empty($_POST['registrar_gasto']),
                 'skip_cooling' => !empty($_POST['saltar_enfriamiento']),
+                'use_savings' => !empty($_POST['usar_ahorro']),
             ]);
 
             Flash::success('wishlist.flash.purchased');
+
+            if (!empty($result['gasto_id']) || (int) ($result['used_savings_centavos'] ?? 0) > 0) {
+                MoneyFxService::queue(
+                    $user,
+                    'out',
+                    (int) ($result['amount_centavos'] ?? 0),
+                    (string) ($result['item']['moneda'] ?? '')
+                );
+            }
+
+            if (!empty($result['savings_failed'])) {
+                Flash::warning('wishlist.flash.savings_failed');
+            } elseif ((int) ($result['used_savings_centavos'] ?? 0) > 0) {
+                Flash::info('wishlist.flash.savings_used', [
+                    ':amount' => format_money((int) $result['used_savings_centavos'], (string) ($user['moneda_activa'] ?? 'MXN')),
+                ]);
+            }
 
             if (($result['expense']['estado'] ?? '') === 'pendiente_asignacion') {
                 Flash::warning('wishlist.flash.pending');
@@ -88,6 +110,33 @@ final class WishlistController
             }
         } catch (Throwable $exception) {
             $this->flashError($exception);
+        }
+
+        redirect('/deseos');
+    }
+
+    public function contribute(): void
+    {
+        $user = $this->user();
+        $id = (int) input('id', '0');
+        $amount = parse_money_cents((string) input('monto', '')) ?? 0;
+
+        try {
+            $result = $this->service->contribute($user, $id, $amount, (string) input('fecha', 'now'));
+            Flash::success($result['created'] ? 'wishlist.flash.contributed_first' : 'wishlist.flash.contributed');
+            MoneyFxService::queue($user, 'save', $amount, (string) ($result['status']['currency'] ?? ''));
+
+            if (!empty($result['status']['over_percentage'])) {
+                Flash::warning('finance.flash.over_percentage');
+            }
+        } catch (Throwable $exception) {
+            $message = $exception->getMessage();
+
+            if (in_array($message, ['El deseo no existe.', 'Ese deseo ya está cerrado.'], true)) {
+                $this->flashError($exception);
+            } else {
+                $this->flashFinanceError($exception);
+            }
         }
 
         redirect('/deseos');

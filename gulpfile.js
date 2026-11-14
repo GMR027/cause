@@ -28,7 +28,10 @@ const paths = {
         'assets/js/70-finance.js',
         'assets/js/75-moves.js',
         'assets/js/80-notifications.js',
+        'assets/js/84-money-fx.js',
         'assets/js/85-wishlist.js',
+        'assets/js/87-covers.js',
+        'assets/js/86-donation-fx.js',
         'assets/js/88-debts.js',
         'assets/js/89-reports.js',
         'assets/js/90-calendar.js',
@@ -39,6 +42,8 @@ const paths = {
     qrSrc: 'node_modules/qrcode-generator/qrcode.js',
     qrDir: 'public/assets/js',
     imgSrc: 'assets/img/**/*.{jpg,jpeg,png,gif,svg,webp}',
+    // SVG animados: svgo reescribe su <style> (keyframes y clases), se copian tal cual.
+    imgAnimated: 'assets/img/**/*-animated.svg',
     imgDir: 'public/assets/img',
     iconsCss: 'node_modules/bootstrap-icons/font/bootstrap-icons.min.css',
     iconsFonts: 'node_modules/bootstrap-icons/font/fonts/*',
@@ -97,9 +102,13 @@ async function images() {
         imageminPlugin = (await import('gulp-imagemin')).default;
     }
 
-    return src(paths.imgSrc, { allowEmpty: true })
+    return src([paths.imgSrc, '!' + paths.imgAnimated], { allowEmpty: true })
         .pipe(imageminPlugin())
         .pipe(dest(paths.imgDir));
+}
+
+function animatedImages() {
+    return src(paths.imgAnimated, { allowEmpty: true }).pipe(dest(paths.imgDir));
 }
 
 function reload(done) {
@@ -126,17 +135,17 @@ function serve(done) {
 function watchFiles() {
     watch(paths.scss, series(styles, css, reload));
     watch(paths.jsApp, series(scripts, reload));
-    watch(paths.imgSrc, series(images, reload));
+    watch(paths.imgSrc, series(images, animatedImages, reload));
     watch(paths.php, reload);
 }
 
-const build = series(styles, css, scripts, qr, images, icons);
+const build = series(styles, css, scripts, qr, images, animatedImages, icons);
 const dev = series(build, parallel(watchFiles, serve));
 
 exports.styles = styles;
 exports.css = css;
 exports.js = scripts;
-exports.images = images;
+exports.images = series(images, animatedImages);
 exports.icons = icons;
 exports.qr = qr;
 exports.watch = watchFiles;

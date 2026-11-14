@@ -150,7 +150,15 @@ $activeMetas = array_values(array_filter($metas, static fn (array $m): bool => (
             <?php else: ?>
                 <div class="finance-list">
                     <?php foreach ($accounts as $account): ?>
-                        <div class="finance-row align-items-start">
+                        <div class="finance-row align-items-start gap-2">
+                            <?= partial('partials/cover', [
+                                'target' => 'bolsa',
+                                'id' => (int) $account['id'],
+                                'path' => $account['portada_path'] ?? null,
+                                'name' => (string) $account['nombre'],
+                                'icon' => 'piggy-bank',
+                                'small' => true,
+                            ]) ?>
                             <div class="flex-grow-1">
                                 <span class="fw-semibold d-block">
                                     <?= e((string) $account['nombre']) ?>
@@ -222,7 +230,15 @@ $activeMetas = array_values(array_filter($metas, static fn (array $m): bool => (
         <div class="col-12 col-md-6 col-xl-4">
             <div class="goal-card <?= (int) $meta['activa'] === 1 ? '' : 'is-inactive' ?>">
                 <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
-                    <div>
+                    <div class="card-head">
+                        <?= partial('partials/cover', [
+                            'target' => 'meta',
+                            'id' => (int) $meta['id'],
+                            'path' => $meta['portada_path'] ?? null,
+                            'name' => (string) $meta['nombre'],
+                            'icon' => (string) $meta['tipo'] === 'deseo' ? 'gift' : 'bullseye',
+                        ]) ?>
+                        <div class="card-head-body">
                         <span class="fw-semibold d-block"><?= e((string) $meta['nombre']) ?></span>
                         <span class="small text-secondary">
                             <?= e(__('savings.types.' . (string) $meta['tipo'])) ?>
@@ -233,6 +249,7 @@ $activeMetas = array_values(array_filter($metas, static fn (array $m): bool => (
                         <?php if (!empty($meta['cumplida'])): ?>
                             <span class="badge text-bg-success mt-1"><?= e(__('savings.meta.completed')) ?></span>
                         <?php endif; ?>
+                        </div>
                     </div>
                     <div class="d-flex gap-1">
                         <button type="button" class="btn btn-sm btn-outline-secondary" data-meta-edit

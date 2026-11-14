@@ -104,7 +104,7 @@
     const MODES = ['claro', 'oscuro', 'auto'];
     const FOCUS = ['iconos', 'botones', 'mixto'];
     const BACKGROUNDS = ['ninguno', 'radial', 'textura', 'radial_textura'];
-    const TEXTURES = ['dots', 'grid', 'waves'];
+    const TEXTURES = ['dots', 'grid', 'waves', 'finanzas', 'simbolos'];
 
     const hexToRgb = (hex) => {
         if (!/^#[0-9a-f]{6}$/i.test(hex || '')) {
@@ -172,6 +172,10 @@
         element.style.setProperty('--cauce-primary-hover', shade(color, 0.88));
         element.style.setProperty('--cauce-primary-active', shade(color, 0.78));
         element.style.setProperty('--cauce-primary-soft', 'rgba(' + r + ', ' + g + ', ' + b + ', 0.12)');
+
+        if (window.CauceDoodles) {
+            window.CauceDoodles.apply(element, color);
+        }
     };
 
     let currentTheme = null;

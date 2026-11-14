@@ -15,6 +15,8 @@ final class DonationController
 {
     use FinanceErrorTrait;
 
+    private const CELEBRATION_KEY = '_donation_celebration';
+
     private DonationService $service;
 
     public function __construct()
@@ -26,9 +28,15 @@ final class DonationController
     {
         $user = $this->user();
 
+        $celebration = $_SESSION[self::CELEBRATION_KEY] ?? null;
+        unset($_SESSION[self::CELEBRATION_KEY]);
+
         echo View::render('donation/index', array_merge(
             $this->service->panel($user),
-            ['title' => __('donation.title')]
+            [
+                'title' => __('donation.title'),
+                'celebration' => is_array($celebration) ? $celebration : null,
+            ]
         ), 'layouts/app');
     }
 
@@ -46,7 +54,8 @@ final class DonationController
                 !empty($_POST['es_extra']),
                 (string) input('moneda', '')
             );
-            Flash::success('donation.flash.donated');
+            // El festejo en pantalla sustituye al aviso genérico de "Donación registrada".
+            $_SESSION[self::CELEBRATION_KEY] = $result['celebration'];
 
             if (!empty($result['over_percentage'])) {
                 Flash::warning('finance.flash.over_percentage');

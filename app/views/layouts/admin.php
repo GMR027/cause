@@ -28,7 +28,7 @@ $flashes = Flash::pull();
         <div class="container py-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
             <div class="d-flex align-items-center gap-3">
                 <a href="/admin" class="d-flex align-items-center gap-2 text-decoration-none">
-                    <img class="brand-icon" src="<?= asset_versioned('img/icon-192.png') ?>" alt="" width="32" height="32" aria-hidden="true">
+                    <img class="brand-icon" src="<?= asset_versioned('img/logo-animated.svg') ?>" alt="" width="48" height="48" aria-hidden="true">
                     <span class="fw-semibold"><?= e($appName) ?></span>
                 </a>
                 <span class="badge phase-badge"><?= e(__('common.admin.title')) ?></span>

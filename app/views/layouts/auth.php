@@ -25,7 +25,7 @@ $flashes = Flash::pull();
 <body class="auth-page d-flex flex-column min-vh-100">
     <header class="container py-4 d-flex align-items-center justify-content-between">
         <a href="/" class="d-flex align-items-center gap-2 text-decoration-none">
-            <img class="brand-icon" src="<?= asset_versioned('img/icon-192.png') ?>" alt="" width="32" height="32" aria-hidden="true">
+            <img class="brand-icon" src="<?= asset_versioned('img/logo-animated.svg') ?>" alt="" width="48" height="48" aria-hidden="true">
             <span class="fw-semibold"><?= e($appName) ?></span>
         </a>
 

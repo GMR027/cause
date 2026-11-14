@@ -9,6 +9,7 @@ $priorities = $priorities ?? [];
 $categories = $categories ?? [];
 $currency = (string) ($currency ?? ($currentUser['moneda_activa'] ?? 'MXN'));
 $today = (string) ($today ?? gmdate('Y-m-d'));
+$recurrence = (string) ($recurrence ?? 'mensual');
 $tabs = ['activo', 'comprado', 'descartado', 'todos'];
 $pct = static fn (float $value): string => rtrim(rtrim(number_format($value, 1, '.', ''), '0'), '.');
 $dateOnly = static fn (?string $date): string => $date !== null && trim($date) !== ''
@@ -82,10 +83,26 @@ $dateOnly = static fn (?string $date): string => $date !== null && trim($date) !
             $impact = (array) ($item['impact'] ?? []);
             $coolingActive = !empty($item['cooling_active']);
             $amountRaw = number_format((int) $item['monto_estimado_centavos'] / 100, 2, '.', '');
+            $itemCurrency = (string) ($item['moneda'] ?? $currency);
+            $goal = (array) ($item['goal'] ?? []);
+            $goalLinked = !empty($goal['linked']);
+            $saved = (int) ($goal['saved_centavos'] ?? 0);
+            $suggestion = is_array($goal['suggestion'] ?? null) ? $goal['suggestion'] : null;
+            $suggestedRaw = $suggestion !== null && ($suggestion['status'] ?? '') === 'plan'
+                ? number_format((int) $suggestion['per_period'] / 100, 2, '.', '')
+                : '';
             ?>
             <article class="wishlist-card <?= $isActive ? '' : 'is-closed' ?>">
-                <div class="d-flex align-items-start justify-content-between gap-2">
-                    <div>
+                <div class="card-head">
+                    <?= partial('partials/cover', [
+                        'target' => 'deseo',
+                        'id' => (int) $item['id'],
+                        'path' => $item['portada_path'] ?? null,
+                        'name' => (string) $item['nombre'],
+                        'icon' => 'gift',
+                        'editable' => $isActive,
+                    ]) ?>
+                    <div class="card-head-body">
                         <h2 class="h6 mb-1"><?= e((string) $item['nombre']) ?></h2>
                         <span class="badge priority-<?= $priority ?>">
                             <?= e(__('wishlist.priorities.' . $priority)) ?>
@@ -96,7 +113,7 @@ $dateOnly = static fn (?string $date): string => $date !== null && trim($date) !
                             </span>
                         <?php endif; ?>
                     </div>
-                    <span class="wishlist-amount"><?= money_html((int) $item['monto_estimado_centavos'], (string) $item['moneda']) ?></span>
+                    <span class="wishlist-amount"><?= money_html((int) $item['monto_estimado_centavos'], $itemCurrency) ?></span>
                 </div>
 
                 <div class="wishlist-meta">
@@ -121,6 +138,63 @@ $dateOnly = static fn (?string $date): string => $date !== null && trim($date) !
 
                 <?php if (!empty($item['nota'])): ?>
                     <p class="small text-secondary mb-0"><?= e((string) $item['nota']) ?></p>
+                <?php endif; ?>
+
+                <?php if ($isActive || $goalLinked): ?>
+                    <div class="wishlist-goal">
+                        <?php if ($goalLinked): ?>
+                            <div class="d-flex justify-content-between gap-2 small">
+                                <span class="fw-semibold">
+                                    <?= e(__('wishlist.goal.saved', [
+                                        ':saved' => format_money($saved, $itemCurrency),
+                                        ':goal' => format_money((int) $item['monto_estimado_centavos'], $itemCurrency),
+                                    ])) ?>
+                                </span>
+                                <span><?= (int) ($goal['progress'] ?? 0) ?>%</span>
+                            </div>
+                            <div class="finance-progress" role="progressbar"
+                                 aria-valuenow="<?= (int) ($goal['progress'] ?? 0) ?>" aria-valuemin="0" aria-valuemax="100"
+                                 aria-label="<?= e(__('wishlist.goal.saved', [
+                                     ':saved' => format_money($saved, $itemCurrency),
+                                     ':goal' => format_money((int) $item['monto_estimado_centavos'], $itemCurrency),
+                                 ])) ?>">
+                                <span style="width: <?= (int) ($goal['progress'] ?? 0) ?>%"></span>
+                            </div>
+                            <?php if (!empty($goal['account_name'])): ?>
+                                <a class="small text-secondary" href="/ahorro">
+                                    <i class="bi bi-piggy-bank me-1" aria-hidden="true"></i><?= e(__('wishlist.goal.bag', [':name' => (string) $goal['account_name']])) ?>
+                                </a>
+                            <?php endif; ?>
+                        <?php endif; ?>
+
+                        <?php if ($isActive): ?>
+                            <span class="wishlist-goal-plan">
+                                <?php if ($suggestion === null): ?>
+                                    <span class="text-secondary"><?= e(__('wishlist.goal.no_date')) ?></span>
+                                <?php elseif ($suggestion['status'] === 'done'): ?>
+                                    <span class="text-success fw-semibold"><i class="bi bi-check-circle me-1" aria-hidden="true"></i><?= e(__('wishlist.goal.done')) ?></span>
+                                <?php elseif ($suggestion['status'] === 'overdue'): ?>
+                                    <span class="text-danger"><?= e(__('wishlist.goal.overdue', [
+                                        ':amount' => format_money((int) $suggestion['remaining'], $itemCurrency),
+                                    ])) ?></span>
+                                <?php else: ?>
+                                    <?= __('wishlist.goal.plan_period', [
+                                        ':amount' => '<strong>' . e(format_money((int) $suggestion['per_period'], $itemCurrency)) . '</strong>',
+                                        ':period' => e(__('wishlist.goal.periods.' . (string) $suggestion['recurrence'])),
+                                        ':date' => e($dateOnly($item['fecha_objetivo'] ?? null)),
+                                    ]) ?>
+                                    <?php if ((string) $suggestion['recurrence'] !== 'mensual'): ?>
+                                        <span class="text-secondary d-block small"><?= e(__('wishlist.goal.plan_month', [
+                                            ':amount' => format_money((int) $suggestion['per_month'], $itemCurrency),
+                                        ])) ?></span>
+                                    <?php endif; ?>
+                                    <span class="text-secondary d-block small"><?= e(__('wishlist.goal.remaining', [
+                                        ':amount' => format_money((int) $suggestion['remaining'], $itemCurrency),
+                                    ])) ?></span>
+                                <?php endif; ?>
+                            </span>
+                        <?php endif; ?>
+                    </div>
                 <?php endif; ?>
 
                 <?php if ($isActive): ?>
@@ -157,6 +231,24 @@ $dateOnly = static fn (?string $date): string => $date !== null && trim($date) !
 
                 <?php if ($isActive): ?>
                     <div class="wishlist-actions">
+                        <button type="button" class="btn btn-sm btn-success"
+                                data-wishlist-contribute
+                                data-id="<?= (int) $item['id'] ?>"
+                                data-name="<?= e((string) $item['nombre']) ?>"
+                                data-currency="<?= e($goalLinked ? (string) ($goal['account_currency'] ?? $itemCurrency) : $itemCurrency) ?>"
+                                data-linked="<?= $goalLinked ? '1' : '0' ?>"
+                                data-first-hint="<?= e(__('wishlist.contribute.first_hint', [
+                                    ':bag' => __('wishlist.contribute.bag_name', [':name' => (string) $item['nombre']]),
+                                    ':goal' => format_money((int) $item['monto_estimado_centavos'], $itemCurrency),
+                                ])) ?>"
+                                data-suggested="<?= e($suggestedRaw) ?>"
+                                data-suggested-label="<?= e($suggestedRaw !== '' ? __('wishlist.contribute.suggested_fill', [
+                                    ':amount' => format_money((int) $suggestion['per_period'], $itemCurrency),
+                                ]) : '') ?>"
+                                data-bs-toggle="offcanvas" data-bs-target="#wishlistContribute">
+                            <i class="bi bi-piggy-bank me-1" aria-hidden="true"></i><?= e(__('wishlist.contribute.action')) ?>
+                        </button>
+
                         <button type="button" class="btn btn-sm btn-outline-secondary"
                                 data-wishlist-edit
                                 data-id="<?= (int) $item['id'] ?>"
@@ -179,12 +271,14 @@ $dateOnly = static fn (?string $date): string => $date !== null && trim($date) !
                                 data-cooling-active="<?= $coolingActive ? '1' : '0' ?>"
                                 data-cooling-date="<?= e((string) ($item['fecha_enfriamiento'] ?? '')) ?>"
                                 data-cooling-label="<?= e($dateOnly($item['fecha_enfriamiento'] ?? null)) ?>"
+                                data-saved="<?= $goalLinked && (int) ($goal['saved_principal_centavos'] ?? 0) > 0 ? '1' : '0' ?>"
+                                data-saved-label="<?= e($goalLinked ? format_money($saved, $itemCurrency) : '') ?>"
                                 data-bs-toggle="offcanvas" data-bs-target="#wishlistBuy">
                             <?= e(__('wishlist.actions.buy')) ?>
                         </button>
 
                         <form method="post" action="/deseos/descartar" class="m-0"
-                              onsubmit="return confirm('<?= e(__('wishlist.discard.confirm')) ?>')">
+                              onsubmit="return confirm('<?= e(__($goalLinked && $saved > 0 ? 'wishlist.discard.confirm_saved' : 'wishlist.discard.confirm')) ?>')">
                             <?= csrf_field() ?>
                             <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
                             <button type="submit" class="btn btn-sm btn-outline-danger">
@@ -335,6 +429,50 @@ $dateOnly = static fn (?string $date): string => $date !== null && trim($date) !
     </div>
 </div>
 
+<div class="offcanvas offcanvas-end" tabindex="-1" id="wishlistContribute"
+     aria-labelledby="wishlistContributeTitle">
+    <div class="offcanvas-header">
+        <div>
+            <span class="small text-secondary d-block"><?= e(__('wishlist.contribute.action')) ?></span>
+            <h2 class="offcanvas-title h5 mb-0" id="wishlistContributeTitle"><?= e(__('wishlist.contribute.title')) ?></h2>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"
+                aria-label="<?= e(__('wishlist.actions.cancel')) ?>"></button>
+    </div>
+    <div class="offcanvas-body">
+        <form method="post" action="/deseos/abonar" class="row g-3">
+            <?= csrf_field() ?>
+            <input type="hidden" name="id" id="wishlist-contribute-id" value="0">
+            <div class="col-12">
+                <p class="fw-semibold mb-1" data-wishlist-contribute-name></p>
+                <p class="small text-secondary mb-0"><?= e(__('wishlist.contribute.hint')) ?></p>
+                <p class="small mt-2 mb-0 d-none" data-wishlist-contribute-first></p>
+            </div>
+            <div class="col-12">
+                <label class="form-label" for="wishlist-contribute-amount"><?= e(__('wishlist.contribute.amount')) ?></label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="text" inputmode="decimal" class="form-control" id="wishlist-contribute-amount"
+                           name="monto" placeholder="0.00" required>
+                    <span class="input-group-text" data-wishlist-contribute-currency><?= e($currency) ?></span>
+                </div>
+                <button type="button" class="btn btn-link btn-sm px-0 d-none" data-wishlist-contribute-suggested></button>
+            </div>
+            <div class="col-12">
+                <label class="form-label" for="wishlist-contribute-date"><?= e(__('wishlist.contribute.date')) ?></label>
+                <input type="date" class="form-control" id="wishlist-contribute-date" name="fecha"
+                       value="<?= e($today) ?>" required>
+            </div>
+            <div class="col-12 d-flex gap-2">
+                <button type="submit" class="btn btn-success flex-grow-1"><?= e(__('wishlist.contribute.submit')) ?></button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="offcanvas">
+                    <?= e(__('wishlist.actions.cancel')) ?>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div class="offcanvas offcanvas-end" tabindex="-1" id="wishlistBuy"
      aria-labelledby="wishlistBuyTitle">
     <div class="offcanvas-header">
@@ -385,6 +523,16 @@ $dateOnly = static fn (?string $date): string => $date !== null && trim($date) !
                         <option value="<?= e((string) $category['nombre']) ?>"><?= e((string) $category['nombre']) ?></option>
                     <?php endforeach; ?>
                 </select>
+            </div>
+            <div class="col-12 d-none" data-wishlist-use-savings>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="wishlist-use-savings"
+                           name="usar_ahorro" value="1" checked>
+                    <label class="form-check-label" for="wishlist-use-savings">
+                        <?= e(__('wishlist.buy.use_savings')) ?> (<span data-wishlist-saved-label></span>)
+                    </label>
+                    <div class="form-text"><?= e(__('wishlist.buy.use_savings_hint')) ?></div>
+                </div>
             </div>
             <div class="col-12 d-none" data-wishlist-cooling-warning>
                 <div class="alert alert-warning py-2 small mb-0" data-wishlist-cooling-text></div>

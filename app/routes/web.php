@@ -14,6 +14,7 @@ use Cauce\Controllers\ApiController;
 use Cauce\Controllers\AppController;
 use Cauce\Controllers\AuthController;
 use Cauce\Controllers\CalendarController;
+use Cauce\Controllers\CoverController;
 use Cauce\Controllers\CurrencyController;
 use Cauce\Controllers\DebtController;
 use Cauce\Controllers\DonationController;
@@ -304,6 +305,11 @@ $router->group('', static function (Router $routes): void {
     $routes->post('/deseos/actualizar', [WishlistController::class, 'update']);
     $routes->post('/deseos/comprar', [WishlistController::class, 'purchase']);
     $routes->post('/deseos/descartar', [WishlistController::class, 'discard']);
+    $routes->post('/deseos/abonar', [WishlistController::class, 'contribute']);
+
+    // Portadas de tarjetas (deseos, ahorro, deudas e inversión)
+    $routes->post('/portadas', [CoverController::class, 'update']);
+    $routes->get('/portadas/ver', [CoverController::class, 'show']);
 }, [AuthMiddleware::class, LockMiddleware::class, LegalMiddleware::class, OnboardingMiddleware::class, RecurringExpenseMiddleware::class, NotificationMiddleware::class, GamificationMiddleware::class, AnalyticsMiddleware::class]);
 
 // Administración

@@ -71,6 +71,23 @@
             const amount = button.getAttribute('data-amount') || '';
             const coolingActive = button.getAttribute('data-cooling-active') === '1';
             const coolingLabel = button.getAttribute('data-cooling-label') || '';
+            const savingsBox = document.querySelector('[data-wishlist-use-savings]');
+            const savingsLabel = document.querySelector('[data-wishlist-saved-label]');
+            const savingsInput = document.getElementById('wishlist-use-savings');
+            const hasSavings = button.getAttribute('data-saved') === '1';
+
+            if (savingsBox) {
+                savingsBox.classList.toggle('d-none', !hasSavings);
+            }
+
+            if (savingsInput) {
+                savingsInput.checked = hasSavings;
+                savingsInput.disabled = !hasSavings;
+            }
+
+            if (savingsLabel) {
+                savingsLabel.textContent = button.getAttribute('data-saved-label') || '';
+            }
 
             setValue('wishlist-buy-id', button.getAttribute('data-id') || '0');
             setValue('wishlist-buy-amount', amount);
@@ -95,6 +112,44 @@
 
             updateImpact(impact, amount);
         });
+    });
+
+    document.querySelectorAll('[data-wishlist-contribute]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const nameElement = document.querySelector('[data-wishlist-contribute-name]');
+            const firstElement = document.querySelector('[data-wishlist-contribute-first]');
+            const currencyElement = document.querySelector('[data-wishlist-contribute-currency]');
+            const suggestedButton = document.querySelector('[data-wishlist-contribute-suggested]');
+            const linked = button.getAttribute('data-linked') === '1';
+            const suggested = button.getAttribute('data-suggested') || '';
+
+            setValue('wishlist-contribute-id', button.getAttribute('data-id') || '0');
+            setValue('wishlist-contribute-amount', '');
+
+            if (nameElement) {
+                nameElement.textContent = button.getAttribute('data-name') || '';
+            }
+
+            if (firstElement) {
+                firstElement.textContent = linked ? '' : (button.getAttribute('data-first-hint') || '');
+                firstElement.classList.toggle('d-none', linked);
+            }
+
+            if (currencyElement) {
+                currencyElement.textContent = button.getAttribute('data-currency') || currency;
+            }
+
+            if (suggestedButton) {
+                suggestedButton.textContent = button.getAttribute('data-suggested-label') || '';
+                suggestedButton.setAttribute('data-value', suggested);
+                suggestedButton.classList.toggle('d-none', suggested === '');
+            }
+        });
+    });
+
+    document.querySelector('[data-wishlist-contribute-suggested]')?.addEventListener('click', (event) => {
+        setValue('wishlist-contribute-amount', event.currentTarget.getAttribute('data-value') || '');
+        document.getElementById('wishlist-contribute-amount')?.focus();
     });
 
     const buyAmount = document.getElementById('wishlist-buy-amount');

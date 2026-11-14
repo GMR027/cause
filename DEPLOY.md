@@ -20,6 +20,7 @@
 | `docker/init-db.sh` | Inicializa la base la primera vez y aplica migraciones después |
 | `sql/cluster-seed-rates.sql` | Tasas iniciales USD/EUR solo para una base nueva |
 | `sql/migrations/20261114_savings_bags_investment.sql` | Bolsas de ahorro, transferencias y portafolio |
+| `sql/migrations/20261114_wishlist_goals_covers.sql` | Abonos a deseos y portadas de tarjetas |
 | `bin/quotes.php` | Actualiza cotizaciones de BMV/EUA y cripto |
 | `helm/cause/templates/cronjob-quotes.yaml` | CronJob diario de cotizaciones |
 | `helm/cause/` | Chart con app, MySQL, PVCs, Secret e Ingress/TLS |
@@ -90,6 +91,15 @@ Es idempotente y no modifica datos existentes.
 `transferencias_ahorro` de `RESTRICT` a `CASCADE`. Sin ella, eliminar a un
 usuario que hizo transferencias o movió metas falla con el error 1451.
 No es idempotente; `init-db.sh` la aplica una sola vez.
+
+### Abonos a deseos y portadas
+
+`20261114_wishlist_goals_covers.sql` agrega `lista_deseos.meta_id` (la meta
+de ahorro que se crea con el primer «Abonar» de un deseo), el tipo de meta
+`deseo` y `portada_path` en deseos, bolsas, metas, deudas y posiciones. Las
+portadas (200 × 200 px, JPEG) se guardan en `storage/uploads/portadas/<user_id>/`
+dentro del PVC `cause-storage`. No es idempotente; `init-db.sh` la aplica una
+sola vez.
 
 ### Cotizaciones automáticas
 

@@ -9,7 +9,7 @@ $currentUri = $_SERVER['REQUEST_URI'] ?? '/';
      aria-labelledby="appDrawerLabel">
     <div class="offcanvas-header">
         <a href="/inicio" class="app-brand" id="appDrawerLabel">
-            <img class="brand-icon" src="<?= asset_versioned('img/icon-192.png') ?>" alt="" width="32" height="32" aria-hidden="true">
+            <img class="brand-icon" src="<?= asset_versioned('img/logo-animated.svg') ?>" alt="" width="48" height="48" aria-hidden="true">
             <span class="app-brand-name"><?= e($appName) ?></span>
         </a>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"

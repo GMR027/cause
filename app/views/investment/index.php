@@ -174,7 +174,15 @@ $consecutive = $consecutive ?? [];
     <?php else: ?>
         <div class="finance-list">
             <?php foreach ($positions as $position): ?>
-                <div class="finance-row align-items-start">
+                <div class="finance-row align-items-start gap-2">
+                    <?= partial('partials/cover', [
+                        'target' => 'posicion',
+                        'id' => (int) $position['id'],
+                        'path' => $position['portada_path'] ?? null,
+                        'name' => (string) $position['nombre'],
+                        'icon' => 'graph-up-arrow',
+                        'small' => true,
+                    ]) ?>
                     <div class="flex-grow-1">
                         <span class="fw-semibold d-block">
                             <?= e((string) ($position['ticker'] ?: $position['nombre'])) ?>

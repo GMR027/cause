@@ -7,6 +7,7 @@
  */
 $theme = $theme ?? [];
 $themeColor = (string) ($theme['color'] ?? '#157f6b');
+$doodles = (array) config('doodles', []);
 ?>
 <meta name="theme-color" content="<?= e($themeColor) ?>">
 <script>
@@ -14,6 +15,24 @@ $themeColor = (string) ($theme['color'] ?? '#157f6b');
         $theme,
         JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE
     ) ?>;
+</script>
+<script>
+    // Texturas con garabatos financieros: el SVG se tiñe con el color del tema.
+    window.CauceDoodles = {
+        tiles: <?= json_encode($doodles, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES) ?>,
+        apply: function (element, color) {
+            var tiles = this.tiles;
+
+            Object.keys(tiles).forEach(function (name) {
+                var svg = tiles[name].split('__C__').join(color).split('__A__').join('0.3');
+
+                element.style.setProperty(
+                    '--cauce-doodle-' + name,
+                    'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")'
+                );
+            });
+        }
+    };
 </script>
 <script>
     (function () {
@@ -36,6 +55,8 @@ $themeColor = (string) ($theme['color'] ?? '#157f6b');
         }
 
         if (!stored) {
+            window.CauceDoodles.apply(root, '#157f6b');
+
             return;
         }
 
@@ -63,6 +84,7 @@ $themeColor = (string) ($theme['color'] ?? '#157f6b');
         root.style.setProperty('--cauce-primary-hover', shade(0.88));
         root.style.setProperty('--cauce-primary-active', shade(0.78));
         root.style.setProperty('--cauce-primary-soft', 'rgba(' + r + ', ' + g + ', ' + b + ', 0.12)');
+        window.CauceDoodles.apply(root, color);
 
         var meta = document.querySelector('meta[name="theme-color"]');
 

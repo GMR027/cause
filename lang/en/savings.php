@@ -83,6 +83,7 @@ return [
         'casa' => 'Home',
         'educacion' => 'Education',
         'otro' => 'Other',
+        'deseo' => 'Wish',
     ],
     'errors' => [
         'name' => 'The goal needs a name.',

@@ -75,6 +75,15 @@ $isAdmin = $currentUser !== null && ($currentUser['rol'] ?? 'user') === 'admin';
         'currentUser' => $currentUser,
     ]) ?>
 
+    <?php $moneyFx = \Cauce\Services\MoneyFxService::pull(); ?>
+    <?php if ($moneyFx !== null): ?>
+        <div hidden data-money-fx="<?= e($moneyFx['kind']) ?>"
+             data-level="<?= (int) $moneyFx['level'] ?>"
+             data-label="<?= e($moneyFx['label']) ?>"
+             data-message="<?= e(__('moneyfx.' . $moneyFx['kind'] . ($moneyFx['level'] >= 4 ? '_big' : ''))) ?>"
+             data-close="<?= e(__('common.actions.close')) ?>"></div>
+    <?php endif; ?>
+
     <script>
         window.CauceI18n = <?= json_encode(
             $jsI18n ?? [],

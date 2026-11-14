@@ -83,6 +83,7 @@ return [
         'casa' => 'Casa',
         'educacion' => 'Educación',
         'otro' => 'Otro',
+        'deseo' => 'Deseo',
     ],
     'errors' => [
         'name' => 'La meta necesita un nombre.',
