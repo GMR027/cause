@@ -9,7 +9,8 @@
 # Flujo:
 #   1. Verifica docker, helm, kubectl y sesión de Docker Hub
 #   2. Genera helm/cause/values.local.yaml si no existe (secretos aleatorios)
-#   3. docker build → gmr27/cause:<tag> (+ :latest)
+#   3. npm run build (CSS/JS compilados: no se versionan) y
+#      docker build → gmr27/cause:<tag> (+ :latest)
 #   4. docker push
 #   5. helm upgrade --install en el namespace cause
 #   6. Espera el rollout de MySQL, la app y el certificado TLS
@@ -45,7 +46,7 @@ fi
 verde "==> Tag de esta versión: $TAG"
 
 # --- Requisitos -------------------------------------------------------------
-for cmd in docker helm kubectl openssl; do
+for cmd in docker helm kubectl openssl npm; do
     command -v "$cmd" >/dev/null 2>&1 || { rojo "Falta '$cmd' en el PATH."; exit 1; }
 done
 
@@ -79,6 +80,12 @@ fi
 chmod 600 "$VALUES_LOCAL"
 
 # --- Build ------------------------------------------------------------------
+# public/assets/{css,js} están en .gitignore y la imagen no ejecuta gulp:
+# se compilan aquí para no publicar estilos o scripts desactualizados.
+[[ -d "$ROOT_DIR/node_modules" ]] || { rojo "Faltan las dependencias de Node. Ejecuta: npm ci"; exit 1; }
+verde "==> Compilando assets..."
+npm --prefix "$ROOT_DIR" run build
+
 COMMIT="$(git -C "$ROOT_DIR" rev-parse --short HEAD 2>/dev/null || echo sin-git)"
 FECHA_BUILD="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 

@@ -39,11 +39,13 @@ cd /home/edgar/Documentos/programacion/Cauce
 
 El script:
 
-1. Verifica Docker, Helm, kubectl y Docker Hub.
+1. Verifica Docker, Helm, kubectl, npm y Docker Hub.
 2. Genera `helm/cause/values.local.yaml` con contraseñas aleatorias si no existe.
-3. Construye y publica `gmr27/cause:<tag>` y `:latest`.
-4. Ejecuta `helm upgrade --install` en el namespace `cause`.
-5. Espera MySQL, la app y el certificado TLS.
+3. Compila CSS/JS con `npm run build`. `public/assets/{css,js}` no se versionan
+   y la imagen no ejecuta gulp, así que en un clon nuevo hay que correr `npm ci` antes.
+4. Construye y publica `gmr27/cause:<tag>` y `:latest`.
+5. Ejecuta `helm upgrade --install` en el namespace `cause`.
+6. Espera MySQL, la app y el certificado TLS.
 
 > **Importante:** conserva `helm/cause/values.local.yaml`. Contiene las contraseñas
 > de MySQL. Si lo borras después de inicializar la base, la app no podrá conectarse.
@@ -74,6 +76,13 @@ La migración `20261114_savings_bags_investment.sql` agrega:
 Para usuarios con ahorros existentes crea automáticamente la bolsa
 **“Ahorro general”** y asigna ahí sus metas y movimientos. No se pierde
 historial.
+
+### Tipos de inversión personalizados
+
+La migración `20261114_custom_investment_instruments.sql` crea
+`instrumentos_inversion` y cambia `instrumento` de ENUM a `VARCHAR(40)` en
+aportaciones, retiros y fondos. Los tipos propios se guardan como `u<id>`.
+Es idempotente y no modifica datos existentes.
 
 ### Cotizaciones automáticas
 
