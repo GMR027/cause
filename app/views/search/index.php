@@ -69,13 +69,13 @@ $typeIcons = [
         <div class="col-6 col-md-3 col-xl-2">
             <label class="form-label" for="search-from"><?= e(__('search.filters.from')) ?></label>
             <input type="date" class="form-control" id="search-from" name="desde"
-                   value="<?= e((string) ($_GET['desde'] ?? '')) ?>">
+                   value="<?= e((string) input('desde', '')) ?>">
         </div>
 
         <div class="col-6 col-md-3 col-xl-2">
             <label class="form-label" for="search-to"><?= e(__('search.filters.to')) ?></label>
             <input type="date" class="form-control" id="search-to" name="hasta"
-                   value="<?= e((string) ($_GET['hasta'] ?? '')) ?>">
+                   value="<?= e((string) input('hasta', '')) ?>">
         </div>
 
         <div class="col-12 col-md-6 col-xl-2">

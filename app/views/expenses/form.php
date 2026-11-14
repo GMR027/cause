@@ -90,7 +90,7 @@ $availableJson = json_encode($available, JSON_UNESCAPED_UNICODE);
         <div class="mb-4">
             <?= partial('partials/currency-select', [
                 'name' => 'moneda',
-                'selected' => (string) ($_POST['moneda'] ?? ($gasto['moneda'] ?? ($currentUser['moneda_activa'] ?? 'MXN'))),
+                'selected' => (is_string($_POST['moneda'] ?? null) ? $_POST['moneda'] : (string) ($gasto['moneda'] ?? ($currentUser['moneda_activa'] ?? 'MXN'))),
             ]) ?>
         </div>
 

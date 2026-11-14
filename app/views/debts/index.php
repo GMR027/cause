@@ -265,7 +265,7 @@ $dateLabel = static function (?string $value): string {
             <div class="col-12">
                 <?= partial('partials/currency-select', [
                     'name' => 'moneda',
-                    'selected' => (string) ($_POST['moneda'] ?? ($debt['moneda'] ?? ($currentUser['moneda_activa'] ?? 'MXN'))),
+                    'selected' => (is_string($_POST['moneda'] ?? null) ? $_POST['moneda'] : (string) ($debt['moneda'] ?? ($currentUser['moneda_activa'] ?? 'MXN'))),
                 ]) ?>
             </div>
             <div class="col-12">

@@ -223,7 +223,7 @@ $dateOnly = static fn (?string $date): string => $date !== null && trim($date) !
                 </div>
             </div>
             <div class="col-12">
-                <?= partial('partials/currency-select', ['name' => 'moneda', 'id' => 'wishlist-create-currency', 'selected' => (string) ($_POST['moneda'] ?? ($currency ?? 'MXN'))]) ?>
+                <?= partial('partials/currency-select', ['name' => 'moneda', 'id' => 'wishlist-create-currency', 'selected' => (is_string($_POST['moneda'] ?? null) ? $_POST['moneda'] : (string) ($currency ?? 'MXN'))]) ?>
             </div>
             <div class="col-12">
                 <label class="form-label" for="wishlist-priority"><?= e(__('wishlist.fields.priority')) ?></label>
@@ -294,7 +294,7 @@ $dateOnly = static fn (?string $date): string => $date !== null && trim($date) !
                 </div>
             </div>
             <div class="col-12">
-                <?= partial('partials/currency-select', ['name' => 'moneda', 'id' => 'wishlist-edit-currency', 'selected' => (string) ($_POST['moneda'] ?? ($currency ?? 'MXN'))]) ?>
+                <?= partial('partials/currency-select', ['name' => 'moneda', 'id' => 'wishlist-edit-currency', 'selected' => (is_string($_POST['moneda'] ?? null) ? $_POST['moneda'] : (string) ($currency ?? 'MXN'))]) ?>
             </div>
             <div class="col-12">
                 <label class="form-label" for="wishlist-edit-priority"><?= e(__('wishlist.fields.priority')) ?></label>

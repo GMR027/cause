@@ -50,7 +50,7 @@ $methodName = $methodName === $methodKey ? (string) ($method['nombre'] ?? '') : 
         <div class="mb-4">
             <?= partial('partials/currency-select', [
                 'name' => 'moneda',
-                'selected' => (string) ($_POST['moneda'] ?? ($currentUser['moneda_activa'] ?? 'MXN')),
+                'selected' => (is_string($_POST['moneda'] ?? null) ? $_POST['moneda'] : (string) ($currentUser['moneda_activa'] ?? 'MXN')),
             ]) ?>
         </div>
 

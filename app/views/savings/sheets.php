@@ -303,7 +303,7 @@ $today = (string) ($today ?? date('Y-m-d'));
             <div class="mb-3" data-account-currency-wrap>
                 <?= partial('partials/currency-select', [
                     'name' => 'moneda',
-                    'selected' => (string) ($_POST['moneda'] ?? ($currency ?? 'MXN')),
+                    'selected' => (is_string($_POST['moneda'] ?? null) ? $_POST['moneda'] : (string) ($currency ?? 'MXN')),
                 ]) ?>
             </div>
 
