@@ -41,7 +41,7 @@ final class CurrencyController
             (new CurrencyService())->add($user, (string) input('codigo', ''));
             Flash::success('currency.flash.added');
         } catch (Throwable $exception) {
-            Flash::error('currency.errors.add', [':message' => $exception->getMessage()]);
+            $this->flashCurrencyError($exception);
         }
 
         redirect('/ajustes/monedas');
@@ -55,7 +55,7 @@ final class CurrencyController
             (new CurrencyService())->remove($user, (string) input('codigo', ''));
             Flash::success('currency.flash.removed');
         } catch (Throwable $exception) {
-            Flash::error('currency.errors.remove', [':message' => $exception->getMessage()]);
+            $this->flashCurrencyError($exception);
         }
 
         redirect('/ajustes/monedas');
@@ -83,7 +83,7 @@ final class CurrencyController
             AuthService::refresh();
             Flash::success('currency.flash.principal');
         } catch (Throwable $exception) {
-            Flash::error('currency.errors.principal', [':message' => $exception->getMessage()]);
+            $this->flashCurrencyError($exception);
         }
 
         redirect('/ajustes/monedas');
@@ -101,5 +101,25 @@ final class CurrencyController
         }
 
         return $user;
+    }
+
+    private function flashCurrencyError(Throwable $exception): void
+    {
+        $key = match ($exception->getMessage()) {
+            'Esa moneda ya está activa.' => 'currency.errors.already_active',
+            'No puedes quitar la moneda principal.' => 'currency.errors.remove_principal',
+            'Esa moneda no está activa.' => 'currency.errors.not_active',
+            'Agrega la moneda antes de hacerla principal.' => 'currency.errors.add_first',
+            'Moneda no válida.' => 'currency.errors.invalid',
+            'sin_tasa' => 'currency.errors.no_rate',
+            default => null,
+        };
+
+        if ($key === null) {
+            Logger::warning('No se pudo actualizar la moneda', ['error' => $exception->getMessage()]);
+            $key = 'currency.errors.generic';
+        }
+
+        Flash::error($key);
     }
 }

@@ -415,6 +415,12 @@ final class ExpenseController
             'La deuda seleccionada no existe.' => 'expenses.errors.debt_missing',
             'La fecha no es válida.' => 'expenses.errors.date',
             'El gasto no existe.' => 'expenses.errors.not_found',
+            'La foto supera el tamaño máximo de 10 MB.' => 'expenses.errors.photo_size',
+            'El archivo no es una imagen.',
+            'La foto no es válida.',
+            'Formato de imagen no soportado.' => 'expenses.errors.photo_type',
+            'No se pudo subir la foto.',
+            'No se pudo procesar la imagen.' => 'expenses.errors.photo_upload',
             default => 'expenses.errors.generic',
         };
 

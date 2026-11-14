@@ -56,4 +56,13 @@ return [
         'large_move' => 'Moviste más del 30 % de lo asignado. Revisa que tu presupuesto siga teniendo sentido.',
         'error' => 'No se pudo mover: :message',
     ],
+    'errors' => [
+        'category' => 'la categoría no existe en tu método.',
+        'amount' => 'el monto debe ser mayor que cero.',
+        'same' => 'el origen y el destino deben ser distintos.',
+        'reason' => 'elige un motivo válido.',
+        'exceeds' => 'no puedes mover más que lo disponible en el origen.',
+        'closed' => 'solo puedes mover montos en el período actual.',
+        'generic' => 'inténtalo de nuevo.',
+    ],
 ];

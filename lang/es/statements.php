@@ -59,4 +59,15 @@ return [
         'uploaded' => 'Estado de cuenta guardado.',
         'deleted' => 'Estado de cuenta eliminado.',
     ],
+    'upload_errors' => [
+        'no_file' => 'no se recibió ningún archivo.',
+        'upload' => 'revisa que pese menos de 10 MB e inténtalo de nuevo.',
+        'limit' => 'alcanzaste el límite de 240 estados de cuenta.',
+        'extension' => 'el archivo debe tener extensión .pdf.',
+        'invalid' => 'el archivo no es válido.',
+        'empty' => 'el archivo está vacío.',
+        'size' => 'el archivo supera el tamaño máximo de 10 MB.',
+        'not_pdf' => 'el archivo no es un PDF válido.',
+        'generic' => 'inténtalo de nuevo.',
+    ],
 ];

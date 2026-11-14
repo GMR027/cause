@@ -34,6 +34,11 @@ return [
         'principal' => 'The main currency could not be changed: :message',
         'no_rate' => 'There is no exchange rate for that currency. Ask the administrator to record one.',
         'invalid' => 'That currency is not valid.',
+        'already_active' => 'That currency is already active.',
+        'remove_principal' => 'You cannot remove your main currency.',
+        'not_active' => 'That currency is not active.',
+        'add_first' => 'Add the currency before making it your main one.',
+        'generic' => 'The currency could not be updated. Please try again.',
     ],
     'admin' => [
         'badge' => 'Admin',

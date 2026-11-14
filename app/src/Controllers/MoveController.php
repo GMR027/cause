@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Cauce\Controllers;
 
 use Cauce\Helpers\Flash;
+use Cauce\Helpers\Logger;
 use Cauce\Helpers\View;
 use Cauce\Services\AuthService;
 use Cauce\Services\MoveService;
@@ -54,7 +55,7 @@ final class MoveController
                 Flash::warning('moves.flash.large_move');
             }
         } catch (Throwable $exception) {
-            Flash::error('moves.flash.error', [':message' => $exception->getMessage()]);
+            Flash::error('moves.flash.error', [':message' => $this->moveErrorReason($exception)]);
         }
 
         redirect('/mover');
@@ -68,7 +69,7 @@ final class MoveController
         try {
             $data = $this->service->category($user, $part);
         } catch (Throwable $exception) {
-            Flash::error('moves.flash.error', [':message' => $exception->getMessage()]);
+            Flash::error('moves.flash.error', [':message' => $this->moveErrorReason($exception)]);
             redirect('/mover');
         }
 
@@ -89,5 +90,27 @@ final class MoveController
         }
 
         return $user;
+    }
+
+    private function moveErrorReason(Throwable $exception): string
+    {
+        $key = match ($exception->getMessage()) {
+            'La categoría no existe en tu método.' => 'moves.errors.category',
+            'El monto debe ser mayor que cero.' => 'moves.errors.amount',
+            'El origen y el destino deben ser distintos.' => 'moves.errors.same',
+            'Motivo de movimiento inválido.' => 'moves.errors.reason',
+            'No puedes mover más que el disponible del origen.' => 'moves.errors.exceeds',
+            'Solo puedes registrar movimientos en el período actual.' => 'moves.errors.closed',
+            'Solo puedes mover montos en el período actual.' => 'moves.errors.closed',
+            'sin_tasa' => 'currency.errors.no_rate',
+            default => null,
+        };
+
+        if ($key === null) {
+            Logger::warning('No se pudo registrar el movimiento entre categorías', ['error' => $exception->getMessage()]);
+            $key = 'moves.errors.generic';
+        }
+
+        return __($key);
     }
 }

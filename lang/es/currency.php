@@ -34,6 +34,11 @@ return [
         'principal' => 'No se pudo cambiar la moneda principal: :message',
         'no_rate' => 'No hay tasa de cambio para esa moneda. Pide al administrador que registre una.',
         'invalid' => 'Esa moneda no es válida.',
+        'already_active' => 'Esa moneda ya está activa.',
+        'remove_principal' => 'No puedes quitar la moneda principal.',
+        'not_active' => 'Esa moneda no está activa.',
+        'add_first' => 'Agrega la moneda antes de hacerla principal.',
+        'generic' => 'No se pudo actualizar la moneda. Inténtalo de nuevo.',
     ],
     'admin' => [
         'badge' => 'Admin',

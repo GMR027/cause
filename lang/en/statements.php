@@ -59,4 +59,15 @@ return [
         'uploaded' => 'Statement saved.',
         'deleted' => 'Statement deleted.',
     ],
+    'upload_errors' => [
+        'no_file' => 'no file was received.',
+        'upload' => 'make sure it is under 10 MB and try again.',
+        'limit' => 'you reached the limit of 240 statements.',
+        'extension' => 'the file must have a .pdf extension.',
+        'invalid' => 'the file is not valid.',
+        'empty' => 'the file is empty.',
+        'size' => 'the file is larger than 10 MB.',
+        'not_pdf' => 'the file is not a valid PDF.',
+        'generic' => 'please try again.',
+    ],
 ];

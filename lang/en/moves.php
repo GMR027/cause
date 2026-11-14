@@ -56,4 +56,13 @@ return [
         'large_move' => 'You moved more than 30% of the assigned amount. Check that your budget still makes sense.',
         'error' => 'Could not move: :message',
     ],
+    'errors' => [
+        'category' => 'that category is not in your method.',
+        'amount' => 'the amount must be greater than zero.',
+        'same' => 'the source and destination must be different.',
+        'reason' => 'choose a valid reason.',
+        'exceeds' => 'you cannot move more than the source has available.',
+        'closed' => 'you can only move amounts in the current period.',
+        'generic' => 'please try again.',
+    ],
 ];

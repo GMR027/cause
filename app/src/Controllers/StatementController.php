@@ -111,7 +111,7 @@ final class StatementController
                 'user_id' => $user['id'] ?? null,
                 'error' => $exception->getMessage(),
             ]);
-            Flash::error('statements.errors.upload_failed', [':message' => $exception->getMessage()]);
+            Flash::error('statements.errors.upload_failed', [':message' => __($this->uploadErrorKey($exception))]);
         }
 
         redirect('/estado-cuenta');
@@ -191,5 +191,20 @@ final class StatementController
         }
 
         return $user;
+    }
+
+    private function uploadErrorKey(Throwable $exception): string
+    {
+        return match ($exception->getMessage()) {
+            'No se recibió ningún archivo.' => 'statements.upload_errors.no_file',
+            'No se pudo subir el archivo.' => 'statements.upload_errors.upload',
+            'Alcanzaste el límite de 240 estados de cuenta.' => 'statements.upload_errors.limit',
+            'El archivo debe tener extensión .pdf.' => 'statements.upload_errors.extension',
+            'El archivo no es válido.' => 'statements.upload_errors.invalid',
+            'El archivo está vacío.' => 'statements.upload_errors.empty',
+            'El archivo supera el tamaño máximo de 10 MB.' => 'statements.upload_errors.size',
+            'El archivo no es un PDF válido.' => 'statements.upload_errors.not_pdf',
+            default => 'statements.upload_errors.generic',
+        };
     }
 }
