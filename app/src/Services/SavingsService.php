@@ -283,7 +283,7 @@ final class SavingsService
         $account = $this->requireAccount($user, (int) $accountId);
 
         if ((int) $account['activa'] !== 1) {
-            throw new RuntimeException('La bolsa está archivada.');
+            throw new RuntimeException('savings.errors.account_archived');
         }
 
         $utc = (new FinanceSupportService())->toUtc($date, $user);
@@ -333,7 +333,7 @@ final class SavingsService
         $account = $this->requireAccount($user, (int) $accountId);
 
         if ((int) $account['activa'] !== 1) {
-            throw new RuntimeException('La bolsa está archivada.');
+            throw new RuntimeException('savings.errors.account_archived');
         }
 
         $utc = (new FinanceSupportService())->toUtc($date, $user);
@@ -356,7 +356,7 @@ final class SavingsService
             $unassigned = (int) $summary['sin_asignar_principal_centavos'];
 
             if ($principalAmount > $unassigned) {
-                throw new RuntimeException('Ese dinero está asignado a metas. Retira desde la meta correspondiente.');
+                throw new RuntimeException('savings.errors.assigned_withdraw');
             }
         }
 
@@ -392,8 +392,10 @@ final class SavingsService
         }
 
         if ((int) ($row['es_reasignacion'] ?? 0) === 1) {
-            throw new RuntimeException('Ese movimiento interno no se puede editar.');
+            throw new RuntimeException('savings.errors.internal_movement');
         }
+
+        $this->assertMetaRowInCurrentAccount($user, $row);
 
         $utc = (new FinanceSupportService())->toUtc($date, $user);
         $this->assertCurrent($user, $utc);
@@ -406,7 +408,7 @@ final class SavingsService
         $delta = $newPrincipal - $oldPrincipal;
 
         if ((int) $summary['saldo_principal_centavos'] + $delta < 0) {
-            throw new RuntimeException('El ajuste dejaría la bolsa en negativo.');
+            throw new RuntimeException('savings.errors.account_negative');
         }
 
         if ($metaId !== null) {
@@ -414,7 +416,7 @@ final class SavingsService
                 throw new RuntimeException('El ajuste dejaría la meta en negativo.');
             }
         } elseif ((int) $summary['sin_asignar_principal_centavos'] + $delta < 0) {
-            throw new RuntimeException('El ajuste dejaría la bolsa por debajo de sus metas.');
+            throw new RuntimeException('savings.errors.below_goals');
         }
 
         $this->repo->updateContribution($id, (int) $user['id'], $amount, $utc->format('Y-m-d H:i:s'));
@@ -436,8 +438,10 @@ final class SavingsService
         }
 
         if ((int) ($row['es_reasignacion'] ?? 0) === 1) {
-            throw new RuntimeException('Ese movimiento interno no se puede borrar.');
+            throw new RuntimeException('savings.errors.internal_movement');
         }
+
+        $this->assertMetaRowInCurrentAccount($user, $row);
 
         $metaId = $row['meta_id'] !== null ? (int) $row['meta_id'] : null;
         $accountId = $row['cuenta_id'] !== null ? (int) $row['cuenta_id'] : (int) ($this->repo->defaultAccount((int) $user['id'])['id'] ?? 0);
@@ -445,7 +449,7 @@ final class SavingsService
         $oldPrincipal = (int) ($row['monto_principal_centavos'] ?? $row['monto_centavos']);
 
         if ((int) $summary['saldo_principal_centavos'] - $oldPrincipal < 0) {
-            throw new RuntimeException('El ajuste dejaría la bolsa en negativo.');
+            throw new RuntimeException('savings.errors.account_negative');
         }
 
         if ($metaId !== null) {
@@ -453,7 +457,7 @@ final class SavingsService
                 throw new RuntimeException('El ajuste dejaría la meta en negativo.');
             }
         } elseif ((int) $summary['sin_asignar_principal_centavos'] - $oldPrincipal < 0) {
-            throw new RuntimeException('El ajuste dejaría la bolsa por debajo de sus metas.');
+            throw new RuntimeException('savings.errors.below_goals');
         }
 
         $this->repo->deleteContribution($id, (int) $user['id']);
@@ -492,8 +496,10 @@ final class SavingsService
         $this->assertCurrent($user, $utc);
 
         if ((int) ($row['es_reasignacion'] ?? 0) === 1) {
-            throw new RuntimeException('Ese movimiento interno no se puede editar.');
+            throw new RuntimeException('savings.errors.internal_movement');
         }
+
+        $this->assertMetaRowInCurrentAccount($user, $row);
 
         $metaId = $row['meta_id'] !== null ? (int) $row['meta_id'] : null;
         $accountId = $row['cuenta_id'] !== null ? (int) $row['cuenta_id'] : (int) ($this->repo->defaultAccount((int) $user['id'])['id'] ?? 0);
@@ -505,7 +511,7 @@ final class SavingsService
         $delta = $newPrincipal - $oldPrincipal;
 
         if ((int) $summary['saldo_principal_centavos'] - $delta < 0) {
-            throw new RuntimeException('El ajuste dejaría la bolsa en negativo.');
+            throw new RuntimeException('savings.errors.account_negative');
         }
 
         if ($metaId !== null) {
@@ -513,7 +519,7 @@ final class SavingsService
                 throw new RuntimeException('El ajuste dejaría la meta en negativo.');
             }
         } elseif ((int) $summary['sin_asignar_principal_centavos'] - $delta < 0) {
-            throw new RuntimeException('El ajuste dejaría la bolsa por debajo de sus metas.');
+            throw new RuntimeException('savings.errors.below_goals');
         }
 
         $this->repo->updateWithdrawal(
@@ -542,8 +548,10 @@ final class SavingsService
         }
 
         if ((int) ($row['es_reasignacion'] ?? 0) === 1) {
-            throw new RuntimeException('Ese movimiento interno no se puede borrar.');
+            throw new RuntimeException('savings.errors.internal_movement');
         }
+
+        $this->assertMetaRowInCurrentAccount($user, $row);
 
         $this->repo->deleteWithdrawal($id, (int) $user['id']);
     }
@@ -578,15 +586,15 @@ final class SavingsService
         $types = ['banco', 'efectivo', 'cooperativa', 'otro'];
 
         if ($name === '') {
-            throw new InvalidArgumentException('La bolsa necesita un nombre.');
+            throw new InvalidArgumentException('savings.errors.account_name');
         }
 
         if (!in_array($type, $types, true)) {
-            throw new InvalidArgumentException('Tipo de bolsa inválido.');
+            throw new InvalidArgumentException('savings.errors.account_data');
         }
 
         if ($initial < 0) {
-            throw new InvalidArgumentException('El saldo inicial no puede ser negativo.');
+            throw new InvalidArgumentException('savings.errors.initial_negative');
         }
 
         $existing = $this->repo->accountsForUser((int) $user['id']);
@@ -644,18 +652,18 @@ final class SavingsService
         $default = (!empty($data['predeterminada']) || (int) ($account['es_predeterminada'] ?? 0) === 1) && $active;
         $types = ['banco', 'efectivo', 'cooperativa', 'otro'];
         if ($name === '' || !in_array($type, $types, true)) {
-            throw new InvalidArgumentException('Datos de la bolsa inválidos.');
+            throw new InvalidArgumentException('savings.errors.account_data');
         }
 
         if (!$active) {
             $summary = $this->accountSummary($user, $id);
 
             if ((int) $summary['saldo_principal_centavos'] !== 0 || (int) $summary['metas_count'] > 0) {
-                throw new RuntimeException('Para archivar la bolsa primero transfiere o retira su saldo y mueve sus metas.');
+                throw new RuntimeException('savings.errors.archive_not_empty');
             }
 
             if ((int) ($account['es_predeterminada'] ?? 0) === 1) {
-                throw new RuntimeException('No puedes archivar la bolsa predeterminada.');
+                throw new RuntimeException('savings.errors.archive_default');
             }
         }
 
@@ -679,11 +687,11 @@ final class SavingsService
         $summary = $this->accountSummary($user, $id);
 
         if ((int) $summary['saldo_principal_centavos'] !== 0 || (int) $summary['metas_count'] > 0) {
-            throw new RuntimeException('Para archivar la bolsa primero transfiere o retira su saldo y mueve sus metas.');
+            throw new RuntimeException('savings.errors.archive_not_empty');
         }
 
         if ((int) ($account['es_predeterminada'] ?? 0) === 1) {
-            throw new RuntimeException('No puedes archivar la bolsa predeterminada.');
+            throw new RuntimeException('savings.errors.archive_default');
         }
 
         $this->repo->updateAccount(
@@ -707,18 +715,18 @@ final class SavingsService
         }
 
         if ($originId === $destinationId) {
-            throw new InvalidArgumentException('Elige dos bolsas distintas.');
+            throw new InvalidArgumentException('savings.errors.same_account');
         }
 
         $origin = $this->requireAccount($user, $originId);
         $destination = $this->requireAccount($user, $destinationId);
 
         if ((int) $origin['activa'] !== 1 || (int) $destination['activa'] !== 1) {
-            throw new RuntimeException('Las dos bolsas deben estar activas.');
+            throw new RuntimeException('savings.errors.accounts_inactive');
         }
 
         if ((string) $origin['moneda'] !== (string) $destination['moneda']) {
-            throw new RuntimeException('Por ahora las transferencias deben ser entre bolsas de la misma moneda.');
+            throw new RuntimeException('savings.errors.currency_mismatch');
         }
 
         $utc = (new FinanceSupportService())->toUtc($date, $user);
@@ -728,7 +736,7 @@ final class SavingsService
         $summary = $this->accountSummary($user, $originId);
 
         if ($principalAmount > (int) $summary['sin_asignar_principal_centavos']) {
-            throw new RuntimeException('Ese dinero está asignado a metas. Usa Mover meta o ajusta la meta.');
+            throw new RuntimeException('savings.errors.assigned_transfer');
         }
 
         $this->repo->createTransfer(
@@ -757,11 +765,11 @@ final class SavingsService
         $meta = $this->requireMeta($user, $metaId);
 
         if ((int) ($meta['cuenta_id'] ?? 0) !== $accountId) {
-            throw new InvalidArgumentException('La meta no pertenece a esa bolsa.');
+            throw new InvalidArgumentException('savings.errors.meta_account');
         }
 
         if ((int) $meta['activa'] !== 1 || (int) $account['activa'] !== 1) {
-            throw new RuntimeException('La meta y la bolsa deben estar activas.');
+            throw new RuntimeException('savings.errors.meta_account_inactive');
         }
 
         $utc = (new FinanceSupportService())->toUtc($date, $user);
@@ -771,7 +779,7 @@ final class SavingsService
         $summary = $this->accountSummary($user, $accountId);
 
         if ($principalAmount > (int) $summary['sin_asignar_principal_centavos']) {
-            throw new RuntimeException('No hay suficiente saldo sin asignar en esa bolsa.');
+            throw new RuntimeException('savings.errors.unassigned_insufficient');
         }
 
         $db = Database::connection();
@@ -819,22 +827,22 @@ final class SavingsService
         $sourceId = (int) ($meta['cuenta_id'] ?? 0);
 
         if ($sourceId <= 0) {
-            throw new RuntimeException('La meta no tiene una bolsa de origen.');
+            throw new RuntimeException('savings.errors.meta_no_account');
         }
 
         if ($sourceId === $destinationId) {
-            throw new InvalidArgumentException('La meta ya está en esa bolsa.');
+            throw new InvalidArgumentException('savings.errors.meta_same_account');
         }
 
         $source = $this->requireAccount($user, $sourceId);
         $destination = $this->requireAccount($user, $destinationId);
 
         if ((int) $source['activa'] !== 1 || (int) $destination['activa'] !== 1) {
-            throw new RuntimeException('Las dos bolsas deben estar activas.');
+            throw new RuntimeException('savings.errors.accounts_inactive');
         }
 
         if ((string) $source['moneda'] !== (string) $destination['moneda']) {
-            throw new RuntimeException('Por ahora solo puedes mover metas entre bolsas de la misma moneda.');
+            throw new RuntimeException('savings.errors.currency_mismatch');
         }
 
         $utc = (new FinanceSupportService())->toUtc($date, $user);
@@ -852,7 +860,7 @@ final class SavingsService
                 $summary = $this->accountSummary($user, $sourceId);
 
                 if ($accumulated > (int) $summary['saldo_principal_centavos']) {
-                    throw new RuntimeException('La bolsa de origen no tiene saldo suficiente para mover la meta.');
+                    throw new RuntimeException('savings.errors.move_insufficient');
                 }
 
                 $principal = (string) ($user['moneda_activa'] ?? 'MXN');
@@ -941,7 +949,7 @@ final class SavingsService
         $account = $this->repo->findAccount($accountId, (int) $user['id']);
 
         if ($account === null) {
-            throw new RuntimeException('La bolsa no existe.');
+            throw new RuntimeException('savings.errors.account_not_found');
         }
 
         return $account;
@@ -964,7 +972,7 @@ final class SavingsService
         }
 
         if ($account === null) {
-            throw new RuntimeException('La bolsa no existe.');
+            throw new RuntimeException('savings.errors.account_not_found');
         }
 
         $totals = $this->repo->totalsByMeta((int) $user['id']);
@@ -1003,6 +1011,27 @@ final class SavingsService
         }
 
         return $meta;
+    }
+
+    /**
+     * Un movimiento de meta registrado antes de "Mover meta" quedó en la bolsa
+     * de origen. Editarlo ajustaría el saldo de esa bolsa y lo asignado de la
+     * nueva a la vez, así que se bloquea.
+     *
+     * @param array<string, mixed> $user
+     * @param array<string, mixed> $row
+     */
+    private function assertMetaRowInCurrentAccount(array $user, array $row): void
+    {
+        if ($row['meta_id'] === null || $row['cuenta_id'] === null) {
+            return;
+        }
+
+        $meta = $this->repo->findMeta((int) $row['meta_id'], (int) $user['id']);
+
+        if ($meta !== null && (int) ($meta['cuenta_id'] ?? 0) !== (int) $row['cuenta_id']) {
+            throw new RuntimeException('savings.errors.moved_movement');
+        }
     }
 
     private function accumulated(int $userId, ?int $metaId): int

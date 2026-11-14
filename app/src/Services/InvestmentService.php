@@ -6,6 +6,7 @@ namespace Cauce\Services;
 
 use Cauce\Config\Database;
 use Cauce\Repositories\InvestmentRepository;
+use DateTimeImmutable;
 use InvalidArgumentException;
 use RuntimeException;
 use Throwable;
@@ -222,7 +223,7 @@ final class InvestmentService
         $existing = $id !== null ? $this->repo->findPosition($id, (int) $user['id']) : null;
 
         if ($id !== null && $existing === null) {
-            throw new RuntimeException('La posición no existe.');
+            throw new RuntimeException('investment.errors.position_not_found');
         }
 
         $type = (string) ($data['tipo'] ?? 'otro');
@@ -246,27 +247,31 @@ final class InvestmentService
         $markets = ['BMV', 'EUA', 'CRIPTO', 'CETES', 'OTRO'];
 
         if ($name === '') {
-            throw new InvalidArgumentException('La posición necesita un nombre.');
+            throw new InvalidArgumentException('investment.errors.position_name');
         }
 
         if (!in_array($type, $types, true) || !in_array($market, $markets, true)) {
-            throw new InvalidArgumentException('Tipo o mercado de inversión inválido.');
+            throw new InvalidArgumentException('investment.errors.position_type');
         }
 
         if ($quantity <= 0) {
-            throw new InvalidArgumentException('La cantidad debe ser mayor que cero.');
+            throw new InvalidArgumentException('investment.errors.position_quantity');
         }
 
         if ($cost < 0) {
-            throw new InvalidArgumentException('El costo no puede ser negativo.');
+            throw new InvalidArgumentException('investment.errors.position_cost');
         }
 
         if (!in_array($mode, ['automatico', 'manual'], true)) {
-            throw new InvalidArgumentException('Modo de valor inválido.');
+            throw new InvalidArgumentException('investment.errors.position_mode');
+        }
+
+        if ($valueDate !== '' && !$this->validPastDate($valueDate)) {
+            throw new InvalidArgumentException('investment.errors.position_date');
         }
 
         if ($mode === 'automatico' && !in_array($market, ['BMV', 'EUA', 'CRIPTO'], true)) {
-            throw new InvalidArgumentException('Solo BMV, EUA y cripto pueden usar cotización automática.');
+            throw new InvalidArgumentException('investment.errors.position_auto_market');
         }
 
         if ($market === 'BMV') {
@@ -302,7 +307,7 @@ final class InvestmentService
         }
 
         if ($mode === 'automatico' && $provider === '') {
-            throw new InvalidArgumentException('Escribe el ticker o símbolo para actualizar la cotización.');
+            throw new InvalidArgumentException('investment.errors.position_ticker');
         }
 
         $today = gmdate('Y-m-d');
@@ -366,11 +371,15 @@ final class InvestmentService
         $position = $this->repo->findPosition($id, (int) $user['id']);
 
         if ($position === null) {
-            throw new RuntimeException('La posición no existe.');
+            throw new RuntimeException('investment.errors.position_not_found');
         }
 
         if ($value <= 0) {
-            throw new InvalidArgumentException('El valor debe ser mayor que cero.');
+            throw new InvalidArgumentException('investment.errors.position_value');
+        }
+
+        if (!$this->validPastDate($date)) {
+            throw new InvalidArgumentException('investment.errors.position_date');
         }
 
         $currency = (string) ($position['moneda'] ?? 'MXN');
@@ -384,7 +393,7 @@ final class InvestmentService
     public function deletePosition(array $user, int $id): void
     {
         if ($this->repo->findPosition($id, (int) $user['id']) === null) {
-            throw new RuntimeException('La posición no existe.');
+            throw new RuntimeException('investment.errors.position_not_found');
         }
 
         $this->repo->deletePosition($id, (int) $user['id']);
@@ -748,7 +757,8 @@ final class InvestmentService
         $userId = (int) $user['id'];
         $name = $this->normalizeName($name);
 
-        if ($this->repo->findCustomInstrumentByName($userId, $name) !== null) {
+        if ($this->builtInKeyForName($name) !== null
+            || $this->repo->findCustomInstrumentByName($userId, $name) !== null) {
             throw new InvalidArgumentException('investment.errors.instrument_duplicate');
         }
 
@@ -767,6 +777,11 @@ final class InvestmentService
         }
 
         $name = $this->normalizeName($name);
+
+        if ($this->builtInKeyForName($name) !== null) {
+            throw new InvalidArgumentException('investment.errors.instrument_duplicate');
+        }
+
         $existing = $this->repo->findCustomInstrumentByName($userId, $name);
 
         if ($existing !== null && (int) $existing['id'] !== $id) {
@@ -827,6 +842,36 @@ final class InvestmentService
         }
     }
 
+    /**
+     * Clave predefinida cuyo nombre (en cualquier idioma) coincide con `$name`.
+     */
+    private function builtInKeyForName(string $name): ?string
+    {
+        $needle = mb_strtolower($name);
+
+        foreach (['es', 'en'] as $locale) {
+            $file = base_path('lang/' . $locale . '/investment.php');
+            $labels = is_file($file) ? ((require $file)['instruments'] ?? []) : [];
+
+            foreach (self::INSTRUMENTS as $key) {
+                if ($needle === $key || $needle === mb_strtolower((string) ($labels[$key] ?? ''))) {
+                    return $key;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function validPastDate(string $value): bool
+    {
+        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+
+        return $date !== false
+            && $date->format('Y-m-d') === $value
+            && $value <= gmdate('Y-m-d', strtotime('+1 day'));
+    }
+
     private function normalizeName(string $name): string
     {
         $name = preg_replace('/[\p{C}]+/u', '', $name) ?? '';
@@ -842,6 +887,12 @@ final class InvestmentService
 
     private function findOrCreateInstrument(int $userId, string $name): string
     {
+        $builtIn = $this->builtInKeyForName($name);
+
+        if ($builtIn !== null) {
+            return $builtIn;
+        }
+
         $existing = $this->repo->findCustomInstrumentByName($userId, $name);
 
         if ($existing !== null) {
