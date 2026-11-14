@@ -1,0 +1,68 @@
+{{- if .Values.quotes.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cause-quotes
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: cause-quotes
+spec:
+  schedule: {{ .Values.quotes.schedule | quote }}
+  concurrencyPolicy: {{ .Values.quotes.concurrencyPolicy }}
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: cause-quotes
+        spec:
+          restartPolicy: OnFailure
+          securityContext:
+            runAsUser: 33
+            runAsGroup: 33
+            fsGroup: 33
+          containers:
+            - name: quotes
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              workingDir: /var/www/html
+              command: ["php", "/var/www/html/bin/quotes.php"]
+              env:
+                - name: APP_NAME
+                  value: {{ .Values.app.name | quote }}
+                - name: APP_ENV
+                  value: {{ .Values.app.env | quote }}
+                - name: APP_DEBUG
+                  value: "false"
+                - name: APP_URL
+                  value: {{ .Values.app.url | quote }}
+                - name: APP_TIMEZONE
+                  value: {{ .Values.app.timezone | quote }}
+                - name: DB_HOST
+                  value: cause-mysql
+                - name: DB_PORT
+                  value: "3306"
+                - name: DB_DATABASE
+                  value: {{ .Values.mysql.database | quote }}
+                - name: DB_USERNAME
+                  value: {{ .Values.mysql.user | quote }}
+                - name: DB_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: cause
+                      key: DB_PASSWORD
+                - name: DB_CHARSET
+                  value: utf8mb4
+                - name: LOG_PATH
+                  value: storage/logs/app.log
+              volumeMounts:
+                - name: storage
+                  mountPath: /var/www/html/storage
+          volumes:
+            - name: storage
+              persistentVolumeClaim:
+                claimName: cause-storage
+{{- end }}

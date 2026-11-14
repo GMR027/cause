@@ -1,0 +1,59 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'title' => 'Mover entre categorías',
+    'subtitle' => 'Redistribuye lo que ya tienes asignado. Mover no es gastar ni retirar.',
+    'badge' => 'Redistribución',
+    'form' => [
+        'title' => 'Nuevo movimiento',
+        'hint' => 'Solo puedes mover el disponible del origen dentro del período actual.',
+        'origin' => 'Desde',
+        'destination' => 'Hacia',
+        'amount' => 'Monto',
+        'reason' => 'Motivo',
+        'reason_text' => 'Detalle (opcional)',
+        'reason_placeholder' => 'Cuéntanos brevemente qué pasó.',
+        'date' => 'Fecha',
+        'submit' => 'Mover',
+        'available' => 'Disponible: :amount',
+        'select' => 'Selecciona una categoría',
+        'same_warning' => 'El origen y el destino deben ser distintos.',
+    ],
+    'reasons' => [
+        'emergencia' => 'Emergencia',
+        'ajuste_prioridades' => 'Ajuste de prioridades',
+        'error_asignacion' => 'Error de asignación',
+        'otro' => 'Otro',
+    ],
+    'columns' => [
+        'category' => 'Categoría',
+        'original' => 'Asignado',
+        'in' => 'Entradas',
+        'out' => 'Salidas',
+        'adjusted' => 'Ajustado',
+        'spent' => 'Gastado',
+        'available' => 'Disponible',
+    ],
+    'recent' => 'Movimientos del período',
+    'empty' => 'Todavía no hay movimientos en este período.',
+    'view_category' => 'Ver categoría',
+    'history' => 'Historial de la categoría',
+    'history_empty' => 'Esta categoría no tiene movimientos registrados.',
+    'category' => [
+        'back' => 'Volver a mover',
+        'summary' => 'Así va esta categoría en el período actual.',
+        'original' => 'Asignado original',
+        'adjusted' => 'Después de mover',
+        'spent' => 'Gastado',
+        'available' => 'Disponible',
+        'in' => 'Recibido de otras categorías',
+        'out' => 'Movido a otras categorías',
+    ],
+    'flash' => [
+        'created' => 'Movimiento registrado.',
+        'large_move' => 'Moviste más del 30 % de lo asignado. Revisa que tu presupuesto siga teniendo sentido.',
+        'error' => 'No se pudo mover: :message',
+    ],
+];

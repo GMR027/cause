@@ -1,0 +1,284 @@
+// Cauce · flujo de ingreso, pendientes y No controlado.
+
+.flow-shell {
+    min-height: 100dvh;
+    background:
+        radial-gradient(900px 400px at 50% -20%, rgba(var(--cauce-primary-rgb), .12), transparent 65%),
+        var(--bs-body-bg);
+}
+
+.flow-header {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    max-width: 54rem;
+    margin: 0 auto;
+    padding: .75rem 1rem;
+    background: var(--bs-body-bg);
+    background: color-mix(in srgb, var(--bs-body-bg) 88%, transparent);
+    border-bottom: 1px solid var(--cauce-border);
+    backdrop-filter: blur(8px);
+}
+
+.flow-main {
+    max-width: 54rem;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 4rem;
+}
+
+.flow-card {
+    max-width: 46rem;
+    margin: 0 auto;
+    padding: 1.35rem;
+}
+
+@media (min-width: 768px) {
+    .flow-card {
+        padding: 2.25rem;
+    }
+}
+
+.flow-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: .5rem;
+    margin-top: 1.75rem;
+}
+
+.income-context {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .85rem 1rem;
+    border: 1px solid var(--cauce-border);
+    border-radius: .85rem;
+    background: var(--cauce-surface-muted);
+}
+
+.income-amount {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .35rem .75rem;
+    border: 1px solid var(--cauce-border);
+    border-radius: .9rem;
+    background: var(--cauce-surface);
+
+    &:focus-within {
+        border-color: var(--cauce-primary);
+        box-shadow: 0 0 0 .25rem var(--cauce-primary-soft);
+    }
+
+    .form-control {
+        border: 0;
+        box-shadow: none;
+        font-size: clamp(1.6rem, 5vw, 2.4rem);
+        font-weight: 700;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        background: transparent;
+
+        &:focus {
+            box-shadow: none;
+        }
+    }
+}
+
+.income-currency {
+    flex: 0 0 auto;
+    font-weight: 600;
+    color: var(--bs-secondary-color);
+}
+
+.income-extra-note {
+    display: flex;
+    align-items: flex-start;
+    gap: .4rem;
+    margin-bottom: 1rem;
+    padding: .7rem .85rem;
+    border-radius: .7rem;
+    background: rgba(var(--cauce-primary-rgb), .10);
+    font-size: .85rem;
+}
+
+.income-summary {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: .75rem;
+    margin-bottom: 1.25rem;
+    padding: .9rem 1rem;
+    border: 1px solid var(--cauce-border);
+    border-radius: .85rem;
+    background: var(--cauce-surface-muted);
+}
+
+@media (min-width: 576px) {
+    .income-summary {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+.income-summary-amount {
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.allocation-list {
+    display: flex;
+    flex-direction: column;
+    gap: .85rem;
+}
+
+.allocation-card {
+    padding: 1rem;
+    border: 1px solid var(--cauce-border);
+    border-radius: .9rem;
+    background: var(--cauce-surface);
+}
+
+.allocation-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: .8rem;
+}
+
+.allocation-name {
+    font-weight: 600;
+}
+
+.allocation-amount {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.allocation-states {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+}
+
+.allocation-state {
+    position: relative;
+    cursor: pointer;
+
+    input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    span {
+        display: inline-flex;
+        align-items: center;
+        padding: .35rem .7rem;
+        border: 1px solid var(--cauce-border);
+        border-radius: 999px;
+        font-size: .8rem;
+        background: var(--cauce-surface-muted);
+    }
+
+    input:checked + span {
+        border-color: var(--cauce-primary);
+        background: var(--cauce-primary-soft);
+        color: var(--cauce-primary);
+        font-weight: 600;
+    }
+
+    input:focus-visible + span {
+        outline: 2px solid var(--cauce-primary);
+        outline-offset: 2px;
+    }
+}
+
+.justify-fields {
+    margin-top: .8rem;
+    padding: .8rem;
+    border-radius: .7rem;
+    background: var(--cauce-surface-muted);
+}
+
+.allocation-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--cauce-border);
+}
+
+.allocation-summary-text {
+    font-size: .85rem;
+    color: var(--bs-secondary-color);
+}
+
+.extra-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: .75rem;
+}
+
+@media (min-width: 576px) {
+    .extra-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.extra-row {
+    padding: .6rem .7rem;
+    border: 1px solid var(--cauce-border);
+    border-radius: .7rem;
+    background: var(--cauce-surface-muted);
+}
+
+.pending-banner {
+    display: flex;
+    align-items: center;
+    gap: .85rem;
+    margin-bottom: 1.25rem;
+    padding: .9rem 1rem;
+    border: 1px solid rgba(230, 160, 0, .35);
+    border-radius: .9rem;
+    background: rgba(230, 160, 0, .12);
+}
+
+.pending-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 50%;
+    background: rgba(230, 160, 0, .18);
+    color: #8a5a00;
+    font-size: 1.15rem;
+}
+
+[data-bs-theme="dark"] .pending-icon {
+    color: #ffd27a;
+}
+
+.no-controlado-card {
+    padding: .9rem 1rem;
+    border: 1px solid rgba(230, 160, 0, .35);
+    border-radius: .9rem;
+    background: rgba(230, 160, 0, .10);
+    color: inherit;
+}
+
+.no-controlado-card .small {
+    color: var(--bs-secondary-color);
+}
+
+[data-bs-theme="dark"] .no-controlado-card {
+    background: rgba(230, 160, 0, .08);
+}

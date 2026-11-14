@@ -1,0 +1,63 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'title' => 'Reportes',
+    'subtitle' => 'Patrimonio, suscripciones y una mirada honesta a tu dinero.',
+    'net_worth' => [
+        'title' => 'Patrimonio neto',
+        'hint' => 'Ahorro + inversión + efectivo manual, menos deudas activas.',
+        'assets' => 'Activos',
+        'liabilities' => 'Pasivos',
+        'net' => 'Patrimonio',
+        'savings' => 'Ahorro neto',
+        'investment' => 'Inversión (mercado)',
+        'cash' => 'Efectivo manual',
+    ],
+    'cash' => [
+        'title' => 'Efectivo manual',
+        'hint' => 'Dinero que tienes fuera de Cauce y quieres incluir en tu patrimonio.',
+        'label' => 'Monto en efectivo',
+        'save' => 'Guardar efectivo',
+        'saved' => 'Efectivo actualizado.',
+        'error' => 'No se pudo actualizar el efectivo.',
+    ],
+    'chart' => [
+        'title' => 'Evolución del patrimonio',
+        'empty' => 'Aún no hay historial suficiente. El primer snapshot se guarda este mes.',
+        'month' => 'Mes',
+    ],
+    'subscriptions' => [
+        'title' => 'Suscripciones',
+        'subtitle' => 'Gastos recurrentes activos, agrupados por nombre.',
+        'hint' => 'Detectamos tus gastos recurrentes. Los recordatorios de deuda no cuentan como suscripción.',
+        'count' => ':count suscripción(es)',
+        'monthly' => 'Costo mensual',
+        'annual' => 'Costo anual',
+        'annual_message' => 'Tus suscripciones cuestan :amount al año.',
+        'view' => 'Ver suscripciones',
+        'empty' => 'No tienes gastos recurrentes activos.',
+        'empty_hint' => 'Cuando registres un gasto recurrente aparecerá aquí.',
+        'list_title' => 'Tus suscripciones',
+        'name' => 'Suscripción',
+        'category' => 'Categoría',
+        'frequency' => 'Frecuencia',
+        'amount' => 'Costo mensual',
+        'annualized' => 'Anualizado',
+        'next' => 'Próximo cargo',
+        'variable' => 'Monto variable',
+        'grouped' => ':count cargos agrupados',
+        'savings_title' => 'Ahorro potencial',
+        'savings_hint' => 'Marca las que podrías cancelar para ver cuánto ahorrarías al año.',
+        'savings_selected' => 'Si cancelas las seleccionadas, ahorrarías :amount al año.',
+        'savings_none' => 'Selecciona una o más suscripciones.',
+    ],
+    'frequencies' => [
+        'diaria' => 'Diaria',
+        'semanal' => 'Semanal',
+        'mensual' => 'Mensual',
+        'anual' => 'Anual',
+        'mixta' => 'Mixta',
+    ],
+];

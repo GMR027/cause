@@ -1,0 +1,49 @@
+// Cauce · bandeja de soporte.
+
+.support-thread {
+    display: flex;
+    flex-direction: column;
+    gap: .9rem;
+}
+
+.support-message {
+    max-width: min(42rem, 88%);
+    padding: .8rem .9rem;
+    border: 1px solid var(--cauce-border);
+    border-radius: .9rem;
+    background: var(--cauce-surface-muted);
+
+    &.is-user {
+        align-self: flex-end;
+        border-color: rgba(var(--cauce-primary-rgb), .25);
+        background: var(--cauce-primary-soft);
+    }
+
+    &.is-admin {
+        align-self: flex-start;
+        background: var(--cauce-surface-muted);
+    }
+}
+
+.support-message-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    margin-bottom: .35rem;
+    color: var(--cauce-text-muted, #61736e);
+    font-size: .72rem;
+
+    strong {
+        color: var(--cauce-text, #0b1f1c);
+        font-size: .78rem;
+    }
+}
+
+.support-message-body {
+    color: var(--cauce-text, #0b1f1c);
+    font-size: .9rem;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}

@@ -1,0 +1,47 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'title' => 'Buscar',
+    'subtitle' => 'Encuentra gastos, ingresos, movimientos, ahorro, inversión, donaciones, metas y deudas.',
+    'badge' => 'Búsqueda global',
+    'placeholder' => 'Monto, nota, subcategoría, tag…',
+    'filters' => [
+        'title' => 'Filtros',
+        'period' => 'Período',
+        'all_periods' => 'Todos los períodos',
+        'from' => 'Desde',
+        'to' => 'Hasta',
+        'category' => 'Categoría',
+        'all_categories' => 'Todas las categorías',
+        'tag' => 'Tag',
+        'all_tags' => 'Todos los tags',
+        'medium' => 'Medio de pago',
+        'all_mediums' => 'Todos los medios',
+        'min' => 'Monto mínimo',
+        'max' => 'Monto máximo',
+        'apply' => 'Buscar',
+        'clear' => 'Limpiar',
+    ],
+    'results' => ':count resultado(s)',
+    'total' => 'Suma de resultados',
+    'empty' => 'No encontramos resultados.',
+    'empty_hint' => 'Prueba con otro monto, una parte de la nota o quita algún filtro.',
+    'prompt' => 'Escribe algo o elige un filtro para empezar.',
+    'prompt_hint' => 'Puedes combinar texto, período, categoría, tag y rango de monto.',
+    'types' => [
+        'gasto' => 'Gasto',
+        'ingreso' => 'Ingreso',
+        'movimiento' => 'Movimiento',
+        'ahorro' => 'Ahorro',
+        'inversion' => 'Inversión',
+        'donacion' => 'Donación',
+        'meta' => 'Meta',
+        'deuda' => 'Deuda',
+        'deseo' => 'Deseo',
+        'retiro_ahorro' => 'Retiro de ahorro',
+        'retiro_inversion' => 'Retiro de inversión',
+        'pago_deuda' => 'Pago de deuda',
+    ],
+];

@@ -1,0 +1,240 @@
+// Cauce · paneles de ahorro, inversión y donación.
+
+.finance-tile {
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    height: 100%;
+    padding: 1rem;
+    border: 1px solid var(--cauce-border);
+    border-radius: 1rem;
+    background: var(--cauce-surface);
+    color: inherit;
+    text-decoration: none;
+
+    &:hover {
+        border-color: rgba(var(--cauce-primary-rgb), .4);
+        background: var(--cauce-primary-soft);
+    }
+}
+
+.finance-tile-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 2.7rem;
+    height: 2.7rem;
+    border-radius: .8rem;
+    font-size: 1.25rem;
+}
+
+.finance-tile-savings {
+    background: rgba(21, 127, 107, .14);
+    color: #0e5a4c;
+}
+
+.finance-tile-investment {
+    background: rgba(21, 101, 192, .14);
+    color: #0d47a1;
+}
+
+.finance-tile-donation {
+    background: rgba(173, 20, 87, .12);
+    color: #880e4f;
+}
+
+[data-bs-theme="dark"] {
+    .finance-tile-savings { color: #7fd4c3; }
+    .finance-tile-investment { color: #90caf9; }
+    .finance-tile-donation { color: #f48fb1; }
+}
+
+.finance-tile-body {
+    display: flex;
+    flex-direction: column;
+    gap: .1rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.finance-tile-label {
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--bs-secondary-color);
+}
+
+.finance-tile-amount {
+    font-size: 1.15rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.finance-progress {
+    display: block;
+    width: 100%;
+    height: .45rem;
+    margin-top: .15rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--cauce-surface-muted);
+
+    span {
+        display: block;
+        height: 100%;
+        background: var(--cauce-primary);
+        border-radius: 999px;
+        transition: width .2s ease;
+    }
+}
+
+.finance-card {
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+    height: 100%;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--cauce-border);
+    border-radius: 1rem;
+    background: var(--cauce-surface);
+}
+
+.finance-card-accent {
+    background: var(--cauce-primary-soft);
+    border-color: rgba(var(--cauce-primary-rgb), .25);
+}
+
+.finance-card-label {
+    font-size: .78rem;
+    color: var(--bs-secondary-color);
+}
+
+.finance-card-value {
+    font-size: 1.45rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.finance-warning {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .7rem;
+    padding: .85rem 1rem;
+    border: 1px solid rgba(230, 160, 0, .4);
+    border-radius: .9rem;
+    background: rgba(230, 160, 0, .12);
+
+    > i {
+        color: #8a5a00;
+        font-size: 1.15rem;
+    }
+}
+
+[data-bs-theme="dark"] .finance-warning > i {
+    color: #ffd27a;
+}
+
+.goal-card {
+    height: 100%;
+    padding: 1rem;
+    border: 1px solid var(--cauce-border);
+    border-radius: 1rem;
+    background: var(--cauce-surface);
+}
+
+.goal-card.is-inactive {
+    opacity: .65;
+}
+
+.goal-amount {
+    font-size: 1.3rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.instrument-card {
+    display: flex;
+    flex-direction: column;
+    gap: .2rem;
+    height: 100%;
+    padding: .9rem;
+    border: 1px solid var(--cauce-border);
+    border-radius: .9rem;
+    background: var(--cauce-surface-muted);
+}
+
+.instrument-name {
+    font-size: .78rem;
+    color: var(--bs-secondary-color);
+    text-transform: capitalize;
+}
+
+.instrument-value {
+    font-size: 1.05rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.finance-list {
+    display: flex;
+    flex-direction: column;
+    gap: .45rem;
+}
+
+.finance-row {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .6rem .7rem;
+    border: 1px solid var(--cauce-border);
+    border-radius: .75rem;
+    background: var(--cauce-surface-muted);
+}
+
+.finance-sheet {
+    height: auto;
+    max-height: 88dvh;
+    border-radius: 1.25rem 1.25rem 0 0;
+
+    .offcanvas-body {
+        padding-bottom: 2rem;
+    }
+}
+
+// En tablet/escritorio las hojas de aportar/retirar/editar dejan de salir
+// desde abajo y se muestran como un modal centrado. En móvil se conserva
+// el bottom sheet nativo.
+@media (min-width: 768px) {
+    .offcanvas-bottom.finance-sheet,
+    .offcanvas-bottom.app-sheet {
+        top: 50%;
+        right: auto;
+        bottom: auto;
+        left: 50%;
+        width: min(34rem, calc(100vw - 3rem));
+        height: auto;
+        max-height: 88dvh;
+        border: 0;
+        border-radius: 1.25rem;
+        box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, .28);
+        transform: translate(-50%, -50%) scale(.97);
+        opacity: 0;
+        transition: transform .2s ease-out, opacity .2s ease-out;
+    }
+
+    .offcanvas-bottom.finance-sheet.show,
+    .offcanvas-bottom.finance-sheet.showing,
+    .offcanvas-bottom.app-sheet.show,
+    .offcanvas-bottom.app-sheet.showing {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+
+    .offcanvas-bottom.finance-sheet.hiding,
+    .offcanvas-bottom.app-sheet.hiding {
+        transform: translate(-50%, -50%) scale(.97);
+        opacity: 0;
+    }
+}

@@ -1,0 +1,79 @@
+# ===========================================================================
+# values.yaml — valores por defecto del chart cause
+#
+# Los secretos reales van en values.local.yaml (NO versionado):
+#
+#   helm upgrade --install cause ./helm/cause \
+#     -n cause --create-namespace \
+#     -f helm/cause/values.yaml \
+#     -f helm/cause/values.local.yaml
+#
+# El script deploy.sh automatiza build, push y helm upgrade.
+# ===========================================================================
+
+replicaCount: 1
+
+image:
+  repository: gmr27/cause
+  tag: "1"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+app:
+  name: Cauce
+  host: cause.iguzman.com.mx
+  env: production
+  debug: "false"
+  url: https://cause.iguzman.com.mx
+  timezone: America/Mexico_City
+  version: "1.0.0"
+  shareUrl: https://cause.iguzman.com.mx
+  adminContactEmail: soporte@cauce.app
+  onboardingDefaultIncomeCents: "1000000"
+  pushEnabled: "false"
+
+mysql:
+  image: mysql:8.0
+  database: cause
+  user: cause
+  storage: 2Gi
+  storageClassName: microk8s-hostpath
+
+persistence:
+  storage:
+    size: 2Gi
+    storageClassName: microk8s-hostpath
+
+# Credenciales — SOBRESCRIBIR en values.local.yaml
+secrets:
+  dbPassword: CAMBIAR-EN-VALUES-LOCAL
+  mysqlRootPassword: CAMBIAR-EN-VALUES-LOCAL
+
+resources:
+  app:
+    requests:
+      cpu: 100m
+      memory: 192Mi
+    limits:
+      cpu: 500m
+      memory: 384Mi
+  mysql:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+ingress:
+  className: public
+  clusterIssuer: letsencrypt-prod
+  tlsSecret: cause-cert
+  proxyBodySize: 16m
+  proxyTimeout: "120"
+
+quotes:
+  enabled: true
+  schedule: "15 22 * * 1-5"
+  concurrencyPolicy: Forbid

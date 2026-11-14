@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cause-mysql-data
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: cause-mysql
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: {{ .Values.mysql.storageClassName }}
+  resources:
+    requests:
+      storage: {{ .Values.mysql.storage }}

@@ -1,0 +1,311 @@
+// Cauce · gastos, movimientos, plantillas y recurrentes.
+
+.template-strip {
+    padding-bottom: .25rem;
+}
+
+.template-chips {
+    display: flex;
+    gap: .45rem;
+    overflow-x: auto;
+    padding-bottom: .25rem;
+}
+
+.template-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    flex: 0 0 auto;
+    padding: .45rem .7rem;
+    border: 1px solid var(--cauce-border);
+    border-radius: 999px;
+    background: var(--cauce-surface);
+    color: inherit;
+    font-size: .8rem;
+    white-space: nowrap;
+
+    &:hover {
+        border-color: var(--cauce-primary);
+        background: var(--cauce-primary-soft);
+    }
+
+    i {
+        color: var(--cauce-primary);
+    }
+}
+
+.template-chip-amount {
+    color: var(--bs-secondary-color);
+    font-variant-numeric: tabular-nums;
+}
+
+.excess-box {
+    padding: .9rem 1rem;
+    border: 1px solid rgba(230, 160, 0, .4);
+    border-radius: .85rem;
+    background: rgba(230, 160, 0, .12);
+
+    > .d-flex > i {
+        color: #8a5a00;
+        font-size: 1.1rem;
+    }
+}
+
+[data-bs-theme="dark"] .excess-box > .d-flex > i {
+    color: #ffd27a;
+}
+
+.source-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+}
+
+.source-option {
+    position: relative;
+    cursor: pointer;
+
+    input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    span {
+        display: inline-flex;
+        padding: .35rem .65rem;
+        border: 1px solid var(--cauce-border);
+        border-radius: 999px;
+        background: var(--cauce-surface);
+        font-size: .78rem;
+    }
+
+    input:checked + span {
+        border-color: var(--cauce-primary);
+        background: var(--cauce-primary-soft);
+        color: var(--cauce-primary);
+        font-weight: 600;
+    }
+}
+
+.expense-more {
+    border: 1px solid var(--cauce-border);
+    border-radius: .9rem;
+    background: var(--cauce-surface);
+
+    summary {
+        padding: .8rem 1rem;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: .9rem;
+    }
+}
+
+.expense-more-body {
+    padding: 0 1rem 1rem;
+    border-top: 1px dashed var(--cauce-border);
+    padding-top: 1rem;
+}
+
+.expense-thumb,
+.expense-photo {
+    border-radius: .7rem;
+    object-fit: cover;
+}
+
+.expense-thumb {
+    width: 4rem;
+    height: 4rem;
+}
+
+.expense-photo {
+    width: 100%;
+    max-height: 24rem;
+}
+
+.tag-chip {
+    display: inline-flex;
+    padding: .2rem .5rem;
+    border-radius: 999px;
+    background: var(--cauce-primary-soft);
+    color: var(--cauce-primary);
+    font-size: .75rem;
+    font-weight: 600;
+}
+
+.tag-chip-sm {
+    font-size: .68rem;
+    padding: .1rem .4rem;
+}
+
+.movement-list {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
+.movement-row {
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    padding: .75rem .85rem;
+    border: 1px solid var(--cauce-border);
+    border-radius: .9rem;
+    background: var(--cauce-surface);
+    color: inherit;
+    text-decoration: none;
+
+    &:hover {
+        border-color: rgba(var(--cauce-primary-rgb), .4);
+        background: var(--cauce-primary-soft);
+    }
+}
+
+.movement-thumb {
+    flex: 0 0 auto;
+    width: 2.8rem;
+    height: 2.8rem;
+    border-radius: .7rem;
+    object-fit: cover;
+    background: var(--cauce-surface-muted);
+}
+
+.movement-thumb-empty {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--bs-secondary-color);
+    font-size: 1.1rem;
+}
+
+.movement-main {
+    display: flex;
+    flex-direction: column;
+    gap: .1rem;
+    min-width: 0;
+    flex: 1;
+}
+
+.movement-amount {
+    flex: 0 0 auto;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.filter-card .form-label {
+    margin-bottom: .2rem;
+}
+
+// Filtros: flexibles para que nunca se recorten los botones ni los selects.
+.filter-card .row.filter-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    align-items: flex-end;
+    margin-inline: 0;
+}
+
+.filter-card .row.filter-grid > [class*="col-"] {
+    flex: 1 1 9rem;
+    width: auto;
+    max-width: none;
+    padding-inline: 0;
+    margin: 0;
+}
+
+.filter-card .row.filter-grid > .filter-search {
+    flex: 1.6 1 13rem;
+}
+
+.filter-card .row.filter-grid > .filter-periodo {
+    flex: 2.4 1 15rem;
+}
+
+.filter-card .row.filter-grid > .filter-actions {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    margin-left: auto;
+}
+
+.filter-card .row.filter-grid > .filter-actions .btn {
+    white-space: nowrap;
+}
+
+.settings-list {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
+.settings-row {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .7rem .8rem;
+    border: 1px solid var(--cauce-border);
+    border-radius: .8rem;
+    background: var(--cauce-surface-muted);
+}
+
+.recurring-confirm {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .6rem;
+    margin-bottom: 1rem;
+    padding: .85rem 1rem;
+    border: 1px solid rgba(var(--cauce-primary-rgb), .25);
+    border-radius: .9rem;
+    background: var(--cauce-primary-soft);
+}
+
+.insight-card {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    margin-bottom: 1.25rem;
+    padding: .85rem 1rem;
+    border: 1px solid var(--cauce-border);
+    border-radius: .9rem;
+    background: var(--cauce-surface);
+}
+
+.insight-row {
+    display: flex;
+    align-items: flex-start;
+    gap: .6rem;
+    font-size: .88rem;
+
+    i {
+        color: #8a5a00;
+        font-size: 1rem;
+        margin-top: .1rem;
+    }
+}
+
+[data-bs-theme="dark"] .insight-row i {
+    color: #ffd27a;
+}
+
+.conciliar-list {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
+.conciliar-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .7rem .8rem;
+    border: 1px solid var(--cauce-border);
+    border-radius: .8rem;
+    background: var(--cauce-surface-muted);
+}
+
+.pending-banner-gastos {
+    border-color: rgba(var(--cauce-primary-rgb), .3);
+    background: var(--cauce-primary-soft);
+}

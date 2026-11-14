@@ -1,0 +1,138 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cause
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: cause
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: cause
+  template:
+    metadata:
+      labels:
+        app: cause
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        fsGroup: 33
+      initContainers:
+        - name: preparar-volumenes
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              mkdir -p \
+                /var/www/html/storage/logs \
+                /var/www/html/storage/cache \
+                /var/www/html/storage/uploads/gastos \
+                /var/www/html/storage/estados_cuenta \
+                /var/www/html/storage/sessions
+              chown -R www-data:www-data /var/www/html/storage
+              chmod -R ug+rwX /var/www/html/storage
+          volumeMounts:
+            - name: storage
+              mountPath: /var/www/html/storage
+        - name: init-db
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/usr/local/bin/init-db.sh"]
+          env:
+            - name: DB_HOST
+              value: cause-mysql
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_NAME
+              value: {{ .Values.mysql.database | quote }}
+            - name: DB_ROOT_USER
+              value: root
+            - name: DB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: cause
+                  key: MYSQL_ROOT_PASSWORD
+            - name: DB_CHARSET
+              value: utf8mb4
+      containers:
+        - name: cause
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: APP_NAME
+              value: {{ .Values.app.name | quote }}
+            - name: APP_ENV
+              value: {{ .Values.app.env | quote }}
+            - name: APP_DEBUG
+              value: {{ .Values.app.debug | quote }}
+            - name: APP_URL
+              value: {{ .Values.app.url | quote }}
+            - name: APP_TIMEZONE
+              value: {{ .Values.app.timezone | quote }}
+            - name: APP_SHARE_URL
+              value: {{ .Values.app.shareUrl | quote }}
+            - name: APP_VERSION
+              value: {{ .Values.app.version | quote }}
+            - name: ADMIN_CONTACT_EMAIL
+              value: {{ .Values.app.adminContactEmail | quote }}
+            - name: MAIL_ENABLED
+              value: "false"
+            - name: ONBOARDING_DEFAULT_INCOME_CENTS
+              value: {{ .Values.app.onboardingDefaultIncomeCents | quote }}
+            - name: DB_HOST
+              value: cause-mysql
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_DATABASE
+              value: {{ .Values.mysql.database | quote }}
+            - name: DB_USERNAME
+              value: {{ .Values.mysql.user | quote }}
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: cause
+                  key: DB_PASSWORD
+            - name: DB_CHARSET
+              value: utf8mb4
+            - name: LOG_PATH
+              value: storage/logs/app.log
+            - name: PUSH_ENABLED
+              value: {{ .Values.app.pushEnabled | quote }}
+          ports:
+            - name: http
+              containerPort: 80
+          resources:
+            {{- toYaml .Values.resources.app | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /api/app/version
+              port: http
+            initialDelaySeconds: 8
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /api/app/version
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+          volumeMounts:
+            - name: storage
+              mountPath: /var/www/html/storage
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - name: storage
+          persistentVolumeClaim:
+            claimName: cause-storage

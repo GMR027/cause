@@ -1,0 +1,38 @@
+# Entorno
+.env
+
+# Dependencias
+/vendor
+/node_modules
+
+# Logs
+/storage/logs/*.log
+
+# Assets compilados
+/public/assets/css/*.css
+/public/assets/js/*.js
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Editores
+.idea
+.vscode
+*.swp
+
+# PHPUnit
+.phpunit.cache
+.phpunit.result.cache
+
+# Archivos de usuarios
+/storage/uploads/
+/storage/estados_cuenta/
+/storage/cache/
+
+# Despliegue
+.deploy-tag
+helm/cause/values.local.yaml
+
+# Herramientas locales
+.liveproject/

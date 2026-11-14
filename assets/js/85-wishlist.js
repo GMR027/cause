@@ -1,0 +1,105 @@
+'use strict';
+
+/**
+ * Cauce · lista de deseos: edición, compra e impacto.
+ */
+(() => {
+    const page = document.querySelector('[data-wishlist-savings]');
+
+    if (!page) {
+        return;
+    }
+
+    const savingsTotal = Number(page.getAttribute('data-wishlist-savings') || 0);
+    const currency = page.getAttribute('data-currency') || 'MXN';
+    const locale = (window.CauceI18n && window.CauceI18n.locale) || 'es-MX';
+    const moneyFormatter = new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency,
+    });
+    const formatMoney = (cents) => moneyFormatter.format(Number(cents || 0) / 100);
+    const setValue = (id, value) => {
+        const element = document.getElementById(id);
+
+        if (element) {
+            element.value = value;
+        }
+    };
+
+    document.querySelectorAll('[data-wishlist-edit]').forEach((button) => {
+        button.addEventListener('click', () => {
+            setValue('wishlist-edit-id', button.getAttribute('data-id') || '0');
+            setValue('wishlist-edit-name', button.getAttribute('data-name') || '');
+            setValue('wishlist-edit-amount', button.getAttribute('data-amount') || '');
+            setValue('wishlist-edit-priority', button.getAttribute('data-priority') || '2');
+            setValue('wishlist-edit-target', button.getAttribute('data-target-date') || '');
+            setValue('wishlist-edit-cooling-date', button.getAttribute('data-cooling-date') || '');
+            setValue('wishlist-edit-cooling', '0');
+            setValue('wishlist-edit-note', button.getAttribute('data-note') || '');
+            setValue('wishlist-edit-currency', button.getAttribute('data-currency') || 'MXN');
+        });
+    });
+
+    const updateImpact = (element, amountValue) => {
+        if (!element) {
+            return;
+        }
+
+        const normalized = String(amountValue || '').replace(',', '.');
+        const amount = Math.round(Number(normalized) * 100);
+
+        if (!Number.isFinite(amount) || amount <= 0) {
+            element.textContent = '';
+            return;
+        }
+
+        const after = Math.max(0, savingsTotal - amount);
+        const percent = savingsTotal > 0 ? Math.round((amount / savingsTotal) * 1000) / 10 : 0;
+        const line = t('wishlist.impact.line', { amount: formatMoney(after) });
+        const detail = t('wishlist.impact.percent', { percent });
+        element.innerHTML = line + '<br><span class="text-secondary">' + detail + '</span>';
+    };
+
+    document.querySelectorAll('[data-wishlist-buy]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const amountInput = document.getElementById('wishlist-buy-amount');
+            const nameElement = document.querySelector('[data-wishlist-buy-name]');
+            const warning = document.querySelector('[data-wishlist-cooling-warning]');
+            const warningText = document.querySelector('[data-wishlist-cooling-text]');
+            const skip = document.getElementById('wishlist-skip-cooling');
+            const impact = document.querySelector('[data-wishlist-impact]');
+            const amount = button.getAttribute('data-amount') || '';
+            const coolingActive = button.getAttribute('data-cooling-active') === '1';
+            const coolingLabel = button.getAttribute('data-cooling-label') || '';
+
+            setValue('wishlist-buy-id', button.getAttribute('data-id') || '0');
+            setValue('wishlist-buy-amount', amount);
+
+            if (nameElement) {
+                nameElement.textContent = button.getAttribute('data-name') || '';
+            }
+
+            if (warning) {
+                warning.classList.toggle('d-none', !coolingActive);
+            }
+
+            if (skip) {
+                skip.checked = false;
+            }
+
+            if (warningText) {
+                warningText.textContent = coolingActive
+                    ? t('wishlist.buy.cooling_warning', { date: coolingLabel })
+                    : '';
+            }
+
+            updateImpact(impact, amount);
+        });
+    });
+
+    const buyAmount = document.getElementById('wishlist-buy-amount');
+
+    buyAmount?.addEventListener('input', () => {
+        updateImpact(document.querySelector('[data-wishlist-impact]'), buyAmount.value);
+    });
+})();

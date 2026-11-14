@@ -1,0 +1,47 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'title' => 'Search',
+    'subtitle' => 'Find expenses, income, moves, savings, investments, donations, goals and debts.',
+    'badge' => 'Global search',
+    'placeholder' => 'Amount, note, subcategory, tag…',
+    'filters' => [
+        'title' => 'Filters',
+        'period' => 'Period',
+        'all_periods' => 'All periods',
+        'from' => 'From',
+        'to' => 'To',
+        'category' => 'Category',
+        'all_categories' => 'All categories',
+        'tag' => 'Tag',
+        'all_tags' => 'All tags',
+        'medium' => 'Payment method',
+        'all_mediums' => 'All methods',
+        'min' => 'Minimum amount',
+        'max' => 'Maximum amount',
+        'apply' => 'Search',
+        'clear' => 'Clear',
+    ],
+    'results' => ':count result(s)',
+    'total' => 'Results total',
+    'empty' => 'No results found.',
+    'empty_hint' => 'Try another amount, part of a note, or remove a filter.',
+    'prompt' => 'Type something or choose a filter to begin.',
+    'prompt_hint' => 'You can combine text, period, category, tag and amount range.',
+    'types' => [
+        'gasto' => 'Expense',
+        'ingreso' => 'Income',
+        'movimiento' => 'Move',
+        'ahorro' => 'Savings',
+        'inversion' => 'Investment',
+        'donacion' => 'Donation',
+        'meta' => 'Goal',
+        'deuda' => 'Debt',
+        'deseo' => 'Wish',
+        'retiro_ahorro' => 'Savings withdrawal',
+        'retiro_inversion' => 'Investment withdrawal',
+        'pago_deuda' => 'Debt payment',
+    ],
+];

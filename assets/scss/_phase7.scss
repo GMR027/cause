@@ -1,0 +1,327 @@
+// Cauce · Fase 7: progreso, celebraciones y lista de deseos.
+
+// ---------------------------------------------------------------------------
+// Inicio: tarjeta compacta de progreso
+// ---------------------------------------------------------------------------
+
+.progress-card {
+    .badge.phase-badge {
+        font-size: .7rem;
+    }
+}
+
+.streak-chip {
+    display: flex;
+    align-items: flex-start;
+    gap: .6rem;
+    height: 100%;
+    padding: .75rem;
+    border: 1px solid var(--cauce-border);
+    border-radius: .85rem;
+    background: var(--cauce-surface-muted);
+
+    &.is-paused {
+        opacity: .75;
+        border-style: dashed;
+    }
+
+    &.is-broken {
+        opacity: .6;
+    }
+}
+
+.streak-chip-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: .65rem;
+    background: var(--cauce-primary-soft);
+    color: var(--cauce-primary);
+    font-size: 1.05rem;
+}
+
+.challenge-mini {
+    height: 100%;
+    padding: .75rem;
+    border: 1px solid var(--cauce-border);
+    border-radius: .85rem;
+    background: var(--cauce-surface-muted);
+}
+
+.challenge-progress {
+    height: .45rem;
+    border-radius: 999px;
+    background: rgba(var(--cauce-primary-rgb), .12);
+}
+
+.progress-past {
+    padding: .75rem;
+    border: 1px solid var(--cauce-border);
+    border-radius: .85rem;
+    background: var(--cauce-surface-muted);
+}
+
+.progress-past-label {
+    display: block;
+    margin-bottom: .2rem;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--bs-secondary-color);
+}
+
+.progress-past-text {
+    font-size: .9rem;
+    font-weight: 600;
+}
+
+// ---------------------------------------------------------------------------
+// Página de progreso
+// ---------------------------------------------------------------------------
+
+.level-card {
+    .level-progress {
+        height: .6rem;
+        border-radius: 999px;
+    }
+}
+
+.level-period {
+    padding: .75rem 0;
+    border-top: 1px solid var(--cauce-border);
+
+    &:first-of-type {
+        border-top: 0;
+    }
+}
+
+.progress-summary {
+    padding: .85rem;
+    border: 1px solid var(--cauce-border);
+    border-radius: .9rem;
+    background: var(--cauce-surface-muted);
+}
+
+.progress-setting {
+    .form-check-input {
+        cursor: pointer;
+    }
+}
+
+.badge-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: .75rem;
+}
+
+.badge-tile {
+    display: flex;
+    align-items: flex-start;
+    gap: .65rem;
+    padding: .8rem;
+    border: 1px solid var(--cauce-border);
+    border-radius: .85rem;
+    background: var(--cauce-surface);
+
+    &.is-locked {
+        opacity: .55;
+        filter: grayscale(1);
+    }
+
+    &.is-unlocked {
+        border-color: rgba(var(--cauce-primary-rgb), .3);
+        background: var(--cauce-primary-soft);
+    }
+}
+
+.badge-tile-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 2.3rem;
+    height: 2.3rem;
+    border-radius: .7rem;
+    background: var(--cauce-surface-muted);
+    color: var(--cauce-primary);
+    font-size: 1.1rem;
+}
+
+.badge-tile-body {
+    min-width: 0;
+}
+
+// ---------------------------------------------------------------------------
+// Celebración
+// ---------------------------------------------------------------------------
+
+.celebration-modal {
+    .modal-content {
+        border: 0;
+        border-radius: 1.1rem;
+        box-shadow: 0 1rem 3rem rgba(0, 0, 0, .2);
+    }
+}
+
+.celebration-burst {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 4.4rem;
+    height: 4.4rem;
+    border-radius: 999px;
+    background: var(--cauce-primary-soft);
+    color: var(--cauce-primary);
+    font-size: 2rem;
+    animation: celebration-pop 1.4s ease-out both;
+    position: relative;
+
+    &::before,
+    &::after {
+        content: "";
+        position: absolute;
+        inset: -.45rem;
+        border: 2px solid rgba(var(--cauce-primary-rgb), .35);
+        border-radius: 999px;
+        animation: celebration-ring 1.4s ease-out both;
+    }
+
+    &::after {
+        animation-delay: .15s;
+    }
+}
+
+@keyframes celebration-pop {
+    0% {
+        transform: scale(.4);
+        opacity: 0;
+    }
+
+    55% {
+        transform: scale(1.08);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes celebration-ring {
+    0% {
+        transform: scale(.7);
+        opacity: .6;
+    }
+
+    100% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .celebration-burst,
+    .celebration-burst::before,
+    .celebration-burst::after {
+        animation: none !important;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Lista de deseos
+// ---------------------------------------------------------------------------
+
+.wishlist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: .9rem;
+}
+
+.wishlist-card {
+    display: flex;
+    flex-direction: column;
+    gap: .65rem;
+    height: 100%;
+    padding: 1rem;
+    border: 1px solid var(--cauce-border);
+    border-radius: 1rem;
+    background: var(--cauce-surface);
+
+    &.is-closed {
+        opacity: .75;
+    }
+}
+
+.wishlist-amount {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.wishlist-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .4rem .7rem;
+}
+
+.wishlist-impact {
+    padding: .55rem .65rem;
+    border-radius: .7rem;
+    background: var(--cauce-surface-muted);
+}
+
+.wishlist-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+    margin-top: auto;
+    padding-top: .25rem;
+}
+
+.priority-1 {
+    background: rgba(220, 53, 69, .14);
+    color: #a11b2a;
+}
+
+.priority-2 {
+    background: rgba(230, 160, 0, .16);
+    color: #8a5a00;
+}
+
+.priority-3 {
+    background: rgba(21, 127, 107, .14);
+    color: #0d5a4c;
+}
+
+[data-bs-theme="dark"] {
+    .priority-1 {
+        background: rgba(255, 107, 122, .18);
+        color: #ffb3bc;
+    }
+
+    .priority-2 {
+        background: rgba(255, 210, 122, .16);
+        color: #ffd27a;
+    }
+
+    .priority-3 {
+        background: rgba(80, 220, 190, .16);
+        color: #8ff0dc;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .wishlist-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .badge-grid {
+        grid-template-columns: 1fr;
+    }
+}

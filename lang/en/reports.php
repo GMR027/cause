@@ -1,0 +1,63 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'title' => 'Reports',
+    'subtitle' => 'Net worth, subscriptions and an honest look at your money.',
+    'net_worth' => [
+        'title' => 'Net worth',
+        'hint' => 'Savings + investments + manual cash, minus active debts.',
+        'assets' => 'Assets',
+        'liabilities' => 'Liabilities',
+        'net' => 'Net worth',
+        'savings' => 'Net savings',
+        'investment' => 'Investments (market)',
+        'cash' => 'Manual cash',
+    ],
+    'cash' => [
+        'title' => 'Manual cash',
+        'hint' => 'Money you hold outside Cauce and want to include in your net worth.',
+        'label' => 'Cash amount',
+        'save' => 'Save cash',
+        'saved' => 'Cash updated.',
+        'error' => 'Cash could not be updated.',
+    ],
+    'chart' => [
+        'title' => 'Net worth evolution',
+        'empty' => 'Not enough history yet. The first snapshot is saved this month.',
+        'month' => 'Month',
+    ],
+    'subscriptions' => [
+        'title' => 'Subscriptions',
+        'subtitle' => 'Active recurring expenses, grouped by name.',
+        'hint' => 'We detect your recurring expenses. Debt reminders do not count as subscriptions.',
+        'count' => ':count subscription(s)',
+        'monthly' => 'Monthly cost',
+        'annual' => 'Annual cost',
+        'annual_message' => 'Your subscriptions cost :amount per year.',
+        'view' => 'View subscriptions',
+        'empty' => 'You have no active recurring expenses.',
+        'empty_hint' => 'When you record a recurring expense it will appear here.',
+        'list_title' => 'Your subscriptions',
+        'name' => 'Subscription',
+        'category' => 'Category',
+        'frequency' => 'Frequency',
+        'amount' => 'Monthly cost',
+        'annualized' => 'Annualized',
+        'next' => 'Next charge',
+        'variable' => 'Variable amount',
+        'grouped' => ':count grouped charges',
+        'savings_title' => 'Potential savings',
+        'savings_hint' => 'Check the ones you could cancel to see how much you would save per year.',
+        'savings_selected' => 'If you cancel the selected ones, you would save :amount per year.',
+        'savings_none' => 'Select one or more subscriptions.',
+    ],
+    'frequencies' => [
+        'diaria' => 'Daily',
+        'semanal' => 'Weekly',
+        'mensual' => 'Monthly',
+        'anual' => 'Annual',
+        'mixta' => 'Mixed',
+    ],
+];

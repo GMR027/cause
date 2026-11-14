@@ -1,0 +1,6 @@
+apiVersion: v2
+name: cause
+description: Cauce · finanzas personales (PHP 8.3 + Apache + MySQL 8)
+type: application
+version: 1.0.0
+appVersion: "1.0.0"

@@ -1,0 +1,41 @@
+// Cauce · Fase 10: lecciones contextuales y score de salud financiera.
+
+.lesson-trigger {
+    white-space: nowrap;
+
+    .badge {
+        font-weight: 500;
+    }
+}
+
+.lesson-panel {
+    .lesson-content {
+        line-height: 1.7;
+        max-width: 42rem;
+    }
+}
+
+.score-widget {
+    border-left: .3rem solid var(--cauce-primary);
+}
+
+.score-component {
+    height: 100%;
+    padding: .8rem .9rem;
+    border: 1px solid var(--cauce-border);
+    border-radius: .8rem;
+    background: var(--cauce-surface-muted);
+}
+
+.score-widget,
+.score-component {
+    .finance-progress {
+        height: .4rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .lesson-trigger {
+        max-width: 100%;
+    }
+}

@@ -1,0 +1,59 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'title' => 'Move between categories',
+    'subtitle' => 'Redistribute what you already have assigned. Moving is not spending or withdrawing.',
+    'badge' => 'Redistribution',
+    'form' => [
+        'title' => 'New move',
+        'hint' => 'You can only move the available amount from the origin within the current period.',
+        'origin' => 'From',
+        'destination' => 'To',
+        'amount' => 'Amount',
+        'reason' => 'Reason',
+        'reason_text' => 'Details (optional)',
+        'reason_placeholder' => 'Briefly tell us what happened.',
+        'date' => 'Date',
+        'submit' => 'Move',
+        'available' => 'Available: :amount',
+        'select' => 'Select a category',
+        'same_warning' => 'Origin and destination must be different.',
+    ],
+    'reasons' => [
+        'emergencia' => 'Emergency',
+        'ajuste_prioridades' => 'Priority adjustment',
+        'error_asignacion' => 'Assignment mistake',
+        'otro' => 'Other',
+    ],
+    'columns' => [
+        'category' => 'Category',
+        'original' => 'Assigned',
+        'in' => 'In',
+        'out' => 'Out',
+        'adjusted' => 'Adjusted',
+        'spent' => 'Spent',
+        'available' => 'Available',
+    ],
+    'recent' => 'Period moves',
+    'empty' => 'No moves in this period yet.',
+    'view_category' => 'View category',
+    'history' => 'Category history',
+    'history_empty' => 'This category has no moves yet.',
+    'category' => [
+        'back' => 'Back to move',
+        'summary' => 'This is how the category is doing in the current period.',
+        'original' => 'Originally assigned',
+        'adjusted' => 'After moves',
+        'spent' => 'Spent',
+        'available' => 'Available',
+        'in' => 'Received from other categories',
+        'out' => 'Moved to other categories',
+    ],
+    'flash' => [
+        'created' => 'Move recorded.',
+        'large_move' => 'You moved more than 30% of the assigned amount. Check that your budget still makes sense.',
+        'error' => 'Could not move: :message',
+    ],
+];

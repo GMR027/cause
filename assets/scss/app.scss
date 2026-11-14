@@ -1,0 +1,128 @@
+// Cauce · estilos de la aplicación
+// Las variables se declaran antes del import para personalizar Bootstrap.
+
+$primary: #157f6b;
+$secondary: #5b6b74;
+$body-bg: #f5f7f7;
+$body-color: #1d2a2e;
+$border-radius: .75rem;
+$border-radius-lg: 1rem;
+$font-family-sans-serif: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+
+@import "bootstrap/scss/bootstrap";
+@import "shell";
+@import "income";
+@import "expenses";
+@import "finance";
+@import "phase6";
+@import "phase7";
+@import "phase8";
+@import "phase9";
+@import "phase10";
+@import "landing";
+@import "support";
+
+.brand-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: .6rem;
+    background: var(--cauce-primary, #{$primary});
+    color: #fff;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.brand-icon {
+    display: inline-block;
+    width: 2rem;
+    height: 2rem;
+    border-radius: .62rem;
+    object-fit: cover;
+    box-shadow: 0 .25rem .7rem rgba(6, 47, 42, .18);
+}
+
+.phase-badge {
+    background-color: var(--cauce-primary-soft);
+    color: var(--cauce-primary-hover);
+    border: 1px solid rgba(var(--cauce-primary-rgb), .25);
+    font-weight: 600;
+}
+
+.hero-card {
+    color: #fff;
+    background:
+        radial-gradient(900px 320px at 8% -30%, rgba(255, 255, 255, .22), transparent 60%),
+        linear-gradient(135deg, var(--cauce-primary-active) 0%, var(--cauce-primary) 55%, var(--cauce-primary-hover) 100%);
+
+    .phase-badge {
+        background-color: rgba(255, 255, 255, .16);
+        border-color: rgba(255, 255, 255, .28);
+        color: #fff;
+    }
+}
+
+.card {
+    border-radius: $border-radius-lg;
+}
+
+code {
+    color: var(--cauce-primary-hover);
+}
+
+// Autenticación
+.auth-page {
+    background-color: var(--bs-body-bg);
+    background-image: radial-gradient(
+        800px 400px at 10% -10%,
+        rgba(var(--cauce-primary-rgb), .1),
+        transparent 60%
+    );
+}
+
+.auth-card {
+    border-radius: $border-radius-lg;
+}
+
+.lang-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .85rem;
+    font-weight: 600;
+
+    a {
+        color: $secondary;
+        text-decoration: none;
+
+        &.active,
+        &:hover {
+            color: var(--cauce-primary);
+        }
+    }
+
+    span {
+        color: rgba($secondary, .5);
+    }
+}
+
+.recovery-code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    color: var(--cauce-primary-hover);
+    word-break: break-all;
+}
+
+.recovery-option {
+    transition: border-color .15s ease, transform .15s ease;
+
+    &:hover {
+        border: 1px solid rgba(var(--cauce-primary-rgb), .35) !important;
+        transform: translateY(-1px);
+    }
+}
+

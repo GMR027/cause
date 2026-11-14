@@ -1,0 +1,106 @@
+// Cauce · Fase 8: privacidad, legal, estados de cuenta y admin.
+
+// ---------------------------------------------------------------------------
+// Utilidades
+// ---------------------------------------------------------------------------
+
+.desktop-only {
+    @media (max-width: 1199.98px) {
+        display: none !important;
+    }
+}
+
+.legal-body {
+    line-height: 1.7;
+    color: var(--bs-body-color);
+    overflow-wrap: anywhere;
+}
+
+.legal-body-scroll {
+    max-height: 22rem;
+    overflow: auto;
+    padding-right: .5rem;
+}
+
+.legal-document {
+    h1 {
+        overflow-wrap: anywhere;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Privacidad
+// ---------------------------------------------------------------------------
+
+.privacy-danger {
+    border-color: rgba(220, 53, 69, .35);
+}
+
+.recovery-code {
+    display: inline-block;
+    padding: .55rem .8rem;
+    border: 1px dashed var(--cauce-border);
+    border-radius: .6rem;
+    background: var(--cauce-surface-muted);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 1.05rem;
+    letter-spacing: .08em;
+    overflow-wrap: anywhere;
+}
+
+// ---------------------------------------------------------------------------
+// Estado de cuenta
+// ---------------------------------------------------------------------------
+
+.statement-auth-card {
+    max-width: 42rem;
+}
+
+.statement-notice {
+    border-left: .3rem solid var(--bs-warning);
+}
+
+// ---------------------------------------------------------------------------
+// Admin
+// ---------------------------------------------------------------------------
+
+.admin-users-table {
+    min-width: 64rem;
+
+    th {
+        white-space: nowrap;
+        font-size: .78rem;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: var(--bs-secondary-color);
+    }
+
+    td {
+        vertical-align: middle;
+    }
+}
+
+.admin-chart {
+    width: 100%;
+    height: auto;
+    color: var(--cauce-primary);
+    background:
+        linear-gradient(to bottom, rgba(var(--cauce-primary-rgb), .05), transparent);
+    border-radius: .75rem;
+}
+
+.admin-storage-bar {
+    height: .4rem;
+    border-radius: 999px;
+    background: rgba(var(--cauce-primary-rgb), .12);
+}
+
+// ---------------------------------------------------------------------------
+// Shell offline / PWA
+// ---------------------------------------------------------------------------
+
+@media (display-mode: standalone) {
+    .app-sidebar {
+        padding-top: env(safe-area-inset-top);
+    }
+}
