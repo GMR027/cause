@@ -501,9 +501,10 @@ final class SavingsService
         $summary = $this->accountSummary($user, $accountId);
         $oldPrincipal = (int) ($row['monto_principal_centavos'] ?? $row['monto_centavos']);
         $newPrincipal = (new CurrencyService())->toPrincipal($user, $amount, (string) $account['moneda'], $utc->format('Y-m-d'))['centavos'];
+        // Un retiro mayor resta saldo: el delta se descuenta.
         $delta = $newPrincipal - $oldPrincipal;
 
-        if ((int) $summary['saldo_principal_centavos'] + $delta < 0) {
+        if ((int) $summary['saldo_principal_centavos'] - $delta < 0) {
             throw new RuntimeException('El ajuste dejaría la bolsa en negativo.');
         }
 
