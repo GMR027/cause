@@ -105,6 +105,7 @@ final class ExportService
             'transferencias_ahorro' => 'SELECT * FROM transferencias_ahorro WHERE user_id = ? ORDER BY fecha ASC, id ASC',
             'aportaciones_inversion' => 'SELECT * FROM aportaciones_inversion WHERE user_id = ? ORDER BY fecha ASC, id ASC',
             'retiros_inversion' => 'SELECT * FROM retiros_inversion WHERE user_id = ? ORDER BY fecha ASC, id ASC',
+            'instrumentos_inversion' => 'SELECT * FROM instrumentos_inversion WHERE user_id = ? ORDER BY id ASC',
             'inversiones_posiciones' => 'SELECT * FROM inversiones_posiciones WHERE user_id = ? ORDER BY created_at ASC, id ASC',
             'inversiones_precios' => 'SELECT * FROM inversiones_precios WHERE simbolo_proveedor IN (SELECT simbolo_proveedor FROM inversiones_posiciones WHERE user_id = ?) ORDER BY fecha ASC, id ASC',
             'donaciones' => 'SELECT * FROM donaciones WHERE user_id = ? ORDER BY fecha ASC, id ASC',
