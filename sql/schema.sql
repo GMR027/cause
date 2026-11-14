@@ -693,8 +693,8 @@ CREATE TABLE `transferencias_ahorro` (
     KEY `idx_transferencias_ahorro_destino` (`cuenta_destino_id`),
     KEY `idx_transferencias_ahorro_meta` (`meta_id`),
     CONSTRAINT `fk_transferencias_ahorro_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `fk_transferencias_ahorro_origen` FOREIGN KEY (`cuenta_origen_id`) REFERENCES `cuentas_ahorro` (`id`) ON DELETE RESTRICT,
-    CONSTRAINT `fk_transferencias_ahorro_destino` FOREIGN KEY (`cuenta_destino_id`) REFERENCES `cuentas_ahorro` (`id`) ON DELETE RESTRICT,
+    CONSTRAINT `fk_transferencias_ahorro_origen` FOREIGN KEY (`cuenta_origen_id`) REFERENCES `cuentas_ahorro` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_transferencias_ahorro_destino` FOREIGN KEY (`cuenta_destino_id`) REFERENCES `cuentas_ahorro` (`id`) ON DELETE CASCADE,
     CONSTRAINT `fk_transferencias_ahorro_meta` FOREIGN KEY (`meta_id`) REFERENCES `metas_ahorro` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

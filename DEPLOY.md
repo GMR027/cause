@@ -84,6 +84,13 @@ La migración `20261114_custom_investment_instruments.sql` crea
 aportaciones, retiros y fondos. Los tipos propios se guardan como `u<id>`.
 Es idempotente y no modifica datos existentes.
 
+### Borrado en cascada de transferencias
+
+`20261114_transfers_fk_cascade.sql` cambia las claves de bolsa de
+`transferencias_ahorro` de `RESTRICT` a `CASCADE`. Sin ella, eliminar a un
+usuario que hizo transferencias o movió metas falla con el error 1451.
+No es idempotente; `init-db.sh` la aplica una sola vez.
+
 ### Cotizaciones automáticas
 
 El CronJob `cause-quotes` ejecuta `php /var/www/html/bin/quotes.php` con el
