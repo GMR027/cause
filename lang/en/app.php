@@ -10,6 +10,8 @@ return [
         'available' => 'Available',
         'empty_hint' => 'No transactions yet',
         'period_hint' => 'Current period',
+        'over' => 'Over budget this period',
+        'over_hint' => 'You recorded more expenses, contributions and donations than your income. Check your activity; if you contributed money you already had, mark it as "already saved".',
         'available_hint' => 'Income minus expenses, savings, investing, giving and sharing',
         'movements_title' => 'Period transactions',
         'movements_body' => 'Check and filter income, expenses, contributions, giving and everything that happened this period.',

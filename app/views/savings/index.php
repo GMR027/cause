@@ -338,6 +338,7 @@ $activeMetas = array_values(array_filter($metas, static fn (array $m): bool => (
                                         data-id="<?= (int) $row['id'] ?>"
                                         data-amount="<?= e(number_format((int) $row['monto_centavos'] / 100, 2, '.', '')) ?>"
                                         data-date="<?= e($localDate((string) $row['fecha'])) ?>"
+                                        data-initial="<?= (int) ($row['es_saldo_inicial'] ?? 0) ?>"
                                         data-bs-toggle="offcanvas" data-bs-target="#savingsEditContribution">
                                     <i class="bi bi-pencil" aria-hidden="true"></i>
                                 </button>

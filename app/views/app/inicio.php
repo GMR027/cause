@@ -150,11 +150,19 @@ $format = static fn (int $cents): string => money_html($cents, $currency);
         </div>
     </div>
     <div class="col-12 col-md-4">
-        <div class="metric-card metric-card-accent">
-            <span class="metric-label"><?= e(__('app.home.available')) ?></span>
-            <span class="metric-value"><?= $format($availableTotal) ?></span>
-            <span class="metric-hint"><?= e(__('app.home.available_hint')) ?></span>
-        </div>
+        <?php if ($availableTotal < 0): ?>
+            <a class="metric-card metric-card-over text-decoration-none" href="/movimientos">
+                <span class="metric-label"><?= e(__('app.home.over')) ?></span>
+                <span class="metric-value"><?= $format(abs($availableTotal)) ?></span>
+                <span class="metric-hint"><?= e(__('app.home.over_hint')) ?></span>
+            </a>
+        <?php else: ?>
+            <div class="metric-card metric-card-accent">
+                <span class="metric-label"><?= e(__('app.home.available')) ?></span>
+                <span class="metric-value"><?= $format($availableTotal) ?></span>
+                <span class="metric-hint"><?= e(__('app.home.available_hint')) ?></span>
+            </div>
+        <?php endif; ?>
     </div>
 </div>
 

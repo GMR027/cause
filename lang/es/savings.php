@@ -3,6 +3,10 @@
 declare(strict_types=1);
 
 return [
+    'already_saved' => [
+        'label' => 'Es dinero que ya tenía ahorrado',
+        'hint' => 'No sale del ingreso de este período: suma a la bolsa y a tu patrimonio, pero no descuenta de tu disponible.',
+    ],
     'title' => 'Ahorro',
     'subtitle' => 'Tus bolsas, tus metas y el fondo de emergencia. Sin prisas, a tu ritmo.',
     'badge' => 'Ahorro',

@@ -10,6 +10,8 @@ return [
         'available' => 'Disponible',
         'empty_hint' => 'Aún sin movimientos',
         'period_hint' => 'Del período actual',
+        'over' => 'Te pasaste este período',
+        'over_hint' => 'Registraste más gastos, aportes y donaciones que tu ingreso. Revisa tus movimientos; si aportaste dinero que ya tenías, márcalo como «ya ahorrado».',
         'available_hint' => 'Ingreso menos gastos, ahorro, inversión, donación y compartir',
         'movements_title' => 'Movimientos del período',
         'movements_body' => 'Consulta y filtra ingresos, gastos, aportes, donaciones y todo lo que pasó en este período.',

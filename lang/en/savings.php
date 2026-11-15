@@ -3,6 +3,10 @@
 declare(strict_types=1);
 
 return [
+    'already_saved' => [
+        'label' => 'This is money I had already saved',
+        'hint' => 'It does not come from this period\'s income: it adds to the bag and your net worth, but is not deducted from your available balance.',
+    ],
     'title' => 'Savings',
     'subtitle' => 'Your savings bags, goals and emergency fund. No rush, at your pace.',
     'badge' => 'Savings',

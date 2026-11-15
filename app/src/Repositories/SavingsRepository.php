@@ -624,19 +624,19 @@ final class SavingsRepository
         return is_array($row) ? $row : null;
     }
 
-    public function updateContribution(int $id, int $userId, int $amount, string $date): void
+    public function updateContribution(int $id, int $userId, int $amount, string $date, bool $initial = false): void
     {
         $row = $this->findContribution($id, $userId);
         $currency = (string) ($row['moneda'] ?? 'MXN');
         $stmt = $this->db->prepare(
             'UPDATE aportaciones_ahorro SET monto_centavos = ?, monto_principal_centavos = ?,
-                fecha = ?, updated_at = NOW()
+                fecha = ?, es_saldo_inicial = ?, updated_at = NOW()
              WHERE id = ? AND user_id = ?'
         );
         $stmt->execute([
             $amount,
             $this->principalCents($userId, $amount, $currency, substr($date, 0, 10)),
-            $date, $id, $userId,
+            $date, $initial ? 1 : 0, $id, $userId,
         ]);
     }
 

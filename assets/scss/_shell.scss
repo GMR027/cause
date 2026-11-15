@@ -690,6 +690,22 @@ $doodle-sizes: (finanzas: 280px, simbolos: 240px, monedas: 260px, cerdito: 260px
     border-color: rgba(var(--cauce-primary-rgb), .25);
 }
 
+// Disponible negativo: se muestra como «te pasaste» en rojo, con su monto.
+.metric-card-over {
+    background: rgba(var(--bs-danger-rgb), .08);
+    border-color: rgba(var(--bs-danger-rgb), .35);
+    color: inherit;
+
+    .metric-label,
+    .metric-value {
+        color: var(--bs-danger-text-emphasis);
+    }
+
+    &:hover {
+        border-color: rgba(var(--bs-danger-rgb), .6);
+    }
+}
+
 .metric-label {
     font-size: .8rem;
     color: var(--bs-secondary-color);

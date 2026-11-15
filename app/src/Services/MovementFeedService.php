@@ -153,7 +153,9 @@ final class MovementFeedService
             $title = (int) $row['es_saldo_inicial'] === 1
                 ? __('expenses.feed.savings_initial')
                 : __('expenses.feed.savings_in');
-            $rows[] = $this->row('ahorro', $row, $title, $this->joinText($row['meta_nombre'] ?? null, $row['cuenta_nombre'] ?? null), 'salida', '/ahorro');
+            // El dinero que ya tenía ahorrado no sale del ingreso del período.
+            $direction = (int) $row['es_saldo_inicial'] === 1 ? 'neutral' : 'salida';
+            $rows[] = $this->row('ahorro', $row, $title, $this->joinText($row['meta_nombre'] ?? null, $row['cuenta_nombre'] ?? null), $direction, '/ahorro');
         }
 
         [$where, $params] = $this->base($userId, $inicio, $fin, 'r.fecha');

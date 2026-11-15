@@ -57,6 +57,12 @@ $today = (string) ($today ?? date('Y-m-d'));
                 <input type="date" class="form-control" id="savings_date" name="fecha" value="<?= e($today) ?>" required>
             </div>
 
+            <label class="form-check mb-1">
+                <input type="checkbox" class="form-check-input" name="ya_ahorrado" value="1">
+                <span class="form-check-label"><?= e(__('savings.already_saved.label')) ?></span>
+            </label>
+            <p class="small text-secondary mb-3"><?= e(__('savings.already_saved.hint')) ?></p>
+
             <button type="submit" class="btn btn-primary w-100"><?= e(__('savings.actions.contribute')) ?></button>
         </form>
     </div>
@@ -225,6 +231,11 @@ $today = (string) ($today ?? date('Y-m-d'));
                 <label class="form-label" for="edit_contribution_date"><?= e(__('finance.date')) ?></label>
                 <input type="date" class="form-control" id="edit_contribution_date" name="fecha" required>
             </div>
+            <label class="form-check mb-1">
+                <input type="checkbox" class="form-check-input" name="ya_ahorrado" value="1">
+                <span class="form-check-label"><?= e(__('savings.already_saved.label')) ?></span>
+            </label>
+            <p class="small text-secondary mb-3"><?= e(__('savings.already_saved.hint')) ?></p>
             <button type="submit" class="btn btn-primary w-100"><?= e(__('common.actions.save')) ?></button>
         </form>
     </div>

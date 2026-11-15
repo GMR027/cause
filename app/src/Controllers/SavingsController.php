@@ -83,7 +83,14 @@ final class SavingsController
         $amount = parse_money_cents((string) input('monto', '')) ?? 0;
 
         try {
-            $result = $this->service->contribute($user, $accountId, $metaId, $amount, (string) input('fecha', 'now'));
+            $result = $this->service->contribute(
+                $user,
+                $accountId,
+                $metaId,
+                $amount,
+                (string) input('fecha', 'now'),
+                !empty($_POST['ya_ahorrado'])
+            );
             Flash::success('savings.flash.contributed');
             MoneyFxService::queue($user, 'save', $amount, (string) ($result['currency'] ?? ''));
 
@@ -237,7 +244,8 @@ final class SavingsController
                 $user,
                 (int) ($_POST['id'] ?? 0),
                 $amount,
-                (string) input('fecha', 'now')
+                (string) input('fecha', 'now'),
+                !empty($_POST['ya_ahorrado'])
             );
             Flash::success('savings.flash.movement_updated');
         } catch (Throwable $exception) {

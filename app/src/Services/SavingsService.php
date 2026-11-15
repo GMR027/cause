@@ -262,7 +262,15 @@ final class SavingsService
      * @param array<string, mixed> $user
      * @return array<string, mixed>
      */
-    public function contribute(array $user, ?int $accountId, ?int $metaId, int $amount, string $date): array
+    /**
+     * Aporta a una bolsa o meta. Con $alreadySaved el monto es dinero que la
+     * persona ya tenía ahorrado: suma al saldo y al patrimonio, pero no sale
+     * del ingreso del período (no descuenta del disponible ni del % de ahorro).
+     *
+     * @param array<string, mixed> $user
+     * @return array<string, mixed>
+     */
+    public function contribute(array $user, ?int $accountId, ?int $metaId, int $amount, string $date, bool $alreadySaved = false): array
     {
         if ($amount <= 0) {
             throw new InvalidArgumentException('El monto debe ser mayor que cero.');
@@ -296,7 +304,8 @@ final class SavingsService
             $metaId,
             $amount,
             $currency,
-            $utc->format('Y-m-d H:i:s')
+            $utc->format('Y-m-d H:i:s'),
+            $alreadySaved
         );
 
         return $this->periodStatus($user) + ['currency' => $currency];
@@ -377,7 +386,7 @@ final class SavingsService
     /**
      * @param array<string, mixed> $user
      */
-    public function updateContribution(array $user, int $id, int $amount, string $date): void
+    public function updateContribution(array $user, int $id, int $amount, string $date, ?bool $alreadySaved = null): void
     {
         $row = $this->repo->findContribution($id, (int) $user['id']);
 
@@ -421,7 +430,13 @@ final class SavingsService
             throw new RuntimeException('savings.errors.below_goals');
         }
 
-        $this->repo->updateContribution($id, (int) $user['id'], $amount, $utc->format('Y-m-d H:i:s'));
+        $this->repo->updateContribution(
+            $id,
+            (int) $user['id'],
+            $amount,
+            $utc->format('Y-m-d H:i:s'),
+            $alreadySaved ?? (int) ($row['es_saldo_inicial'] ?? 0) === 1
+        );
     }
 
     /**

@@ -66,6 +66,7 @@
             value(form.querySelector('[name="id"]'), button.getAttribute('data-id') || '');
             value(form.querySelector('[name="monto"]'), button.getAttribute('data-amount') || '');
             value(form.querySelector('[name="fecha"]'), button.getAttribute('data-date') || '');
+            checked(form.querySelector('[name="ya_ahorrado"]'), button.getAttribute('data-initial') === '1');
         });
     });
 
