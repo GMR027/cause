@@ -51,7 +51,7 @@ $count = count($tags);
                     </form>
 
                     <form method="post" action="/ajustes/tags/eliminar" class="m-0"
-                          onsubmit="return confirm('<?= e(__('expenses.tags.confirm_delete')) ?>')">
+                          data-confirm="<?= e(__('expenses.tags.confirm_delete')) ?>" data-confirm-danger>
                         <?= csrf_field() ?>
                         <input type="hidden" name="id" value="<?= (int) $tag['id'] ?>">
                         <button type="submit" class="btn btn-sm btn-outline-danger" aria-label="<?= e(__('expenses.tags.delete')) ?>">

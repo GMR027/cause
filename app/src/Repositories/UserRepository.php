@@ -338,7 +338,7 @@ final class UserRepository
         $stmt = $this->db->prepare(
             'UPDATE users
              SET tema_modo = ?, tema_color_principal = ?, tema_enfoque = ?,
-                 tema_efecto_fondo = ?, tema_textura = ?, updated_at = NOW()
+                 tema_efecto_fondo = ?, tema_textura = ?, tema_textura_opacidad = ?, updated_at = NOW()
              WHERE id = ?'
         );
 
@@ -348,6 +348,7 @@ final class UserRepository
             $theme['enfoque'],
             $theme['fondo'],
             $theme['textura'],
+            (int) ($theme['opacidad'] ?? 30),
             $id,
         ]);
     }

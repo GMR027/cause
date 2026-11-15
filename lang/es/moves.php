@@ -33,7 +33,7 @@ return [
         'in' => 'Entradas',
         'out' => 'Salidas',
         'adjusted' => 'Ajustado',
-        'spent' => 'Gastado',
+        'spent' => 'Usado',
         'available' => 'Disponible',
     ],
     'recent' => 'Movimientos del período',

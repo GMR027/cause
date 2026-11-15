@@ -31,7 +31,7 @@ $byCause = $by_cause ?? [];
 </div>
 
 <?php if (empty($has_category)): ?>
-    <div class="finance-warning mb-3">
+    <div class="finance-warning mb-3" data-dismissible data-dismiss-key="donation-no-category">
         <i class="bi bi-info-circle" aria-hidden="true"></i>
         <div class="flex-grow-1">
             <strong class="d-block"><?= e(__('donation.no_category_title')) ?></strong>
@@ -125,7 +125,7 @@ $byCause = $by_cause ?? [];
                                     <i class="bi bi-pencil" aria-hidden="true"></i>
                                 </button>
                                 <form method="post" action="/donacion/eliminar" class="m-0"
-                                      onsubmit="return confirm('<?= e(__('finance.confirm_delete')) ?>')">
+                                      data-confirm="<?= e(__('finance.confirm_delete')) ?>" data-confirm-danger>
                                     <?= csrf_field() ?>
                                     <input type="hidden" name="id" value="<?= (int) $row['id'] ?>">
                                     <button type="submit" class="btn btn-sm btn-outline-danger">

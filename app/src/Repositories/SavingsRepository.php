@@ -668,6 +668,16 @@ final class SavingsRepository
         $stmt->execute([$id, $userId]);
     }
 
+    public function linkLastWithdrawalToGasto(int $userId, int $metaId, int $gastoId): void
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE retiros_ahorro SET gasto_asociado_id = ?
+             WHERE user_id = ? AND meta_id = ? AND gasto_asociado_id IS NULL
+             ORDER BY id DESC LIMIT 1'
+        );
+        $stmt->execute([$gastoId, $userId, $metaId]);
+    }
+
     public function deleteWithdrawal(int $id, int $userId): void
     {
         $stmt = $this->db->prepare('DELETE FROM retiros_ahorro WHERE id = ? AND user_id = ?');

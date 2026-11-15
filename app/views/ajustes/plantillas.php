@@ -115,7 +115,7 @@ $subcategories = $subcategories ?? [];
                             </span>
 
                             <form method="post" action="/ajustes/plantillas/eliminar" class="m-0"
-                                  onsubmit="return confirm('<?= e(__('expenses.templates.confirm_delete')) ?>')">
+                                  data-confirm="<?= e(__('expenses.templates.confirm_delete')) ?>" data-confirm-danger>
                                 <?= csrf_field() ?>
                                 <input type="hidden" name="id" value="<?= (int) $template['id'] ?>">
                                 <button type="submit" class="btn btn-sm btn-outline-danger" aria-label="<?= e(__('expenses.templates.delete')) ?>">

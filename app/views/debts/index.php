@@ -100,7 +100,7 @@ $dateLabel = static function (?string $value): string {
     <?php if ($strategy !== 'manual'): ?>
         <?php foreach ($debts as $debt): ?>
             <?php if (!empty($debt['prioritaria'])): ?>
-                <div class="alert alert-info py-2 small" role="status">
+                <div class="alert alert-info py-2 small" role="status" data-dismissible data-dismiss-key="debts-info">
                     <i class="bi bi-bullseye me-1" aria-hidden="true"></i>
                     <?= e(__('debts.strategy.priority', [':name' => (string) $debt['nombre']])) ?>
                 </div>
@@ -197,7 +197,7 @@ $dateLabel = static function (?string $value): string {
                         <?= e(__('common.actions.edit')) ?>
                     </button>
                     <form method="post" action="/deudas/eliminar" class="m-0"
-                          onsubmit="return confirm('<?= e(__('debts.confirm_delete')) ?>')">
+                          data-confirm="<?= e(__('debts.confirm_delete')) ?>" data-confirm-danger>
                         <?= csrf_field() ?>
                         <input type="hidden" name="id" value="<?= (int) $debt['id'] ?>">
                         <button type="submit" class="btn btn-sm btn-outline-danger"><?= e(__('common.actions.delete')) ?></button>
@@ -238,7 +238,7 @@ $dateLabel = static function (?string $value): string {
     <?php endif; ?>
 </div>
 
-<div class="offcanvas offcanvas-end" tabindex="-1" id="debtForm" aria-labelledby="debtFormTitle">
+<div class="offcanvas offcanvas-bottom finance-sheet" tabindex="-1" id="debtForm" aria-labelledby="debtFormTitle">
     <div class="offcanvas-header">
         <h2 class="offcanvas-title h5" id="debtFormTitle"><?= e(__('debts.create')) ?></h2>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="<?= e(__('common.actions.close')) ?>"></button>
@@ -289,7 +289,7 @@ $dateLabel = static function (?string $value): string {
     </div>
 </div>
 
-<div class="offcanvas offcanvas-end" tabindex="-1" id="debtPayment" aria-labelledby="debtPaymentTitle">
+<div class="offcanvas offcanvas-bottom finance-sheet" tabindex="-1" id="debtPayment" aria-labelledby="debtPaymentTitle">
     <div class="offcanvas-header">
         <div>
             <span class="small text-secondary d-block"><?= e(__('debts.pay')) ?></span>
@@ -346,7 +346,7 @@ $dateLabel = static function (?string $value): string {
     </div>
 </div>
 
-<div class="offcanvas offcanvas-end" tabindex="-1" id="debtReminder" aria-labelledby="debtReminderTitle">
+<div class="offcanvas offcanvas-bottom finance-sheet" tabindex="-1" id="debtReminder" aria-labelledby="debtReminderTitle">
     <div class="offcanvas-header">
         <div>
             <span class="small text-secondary d-block"><?= e(__('debts.reminder.create')) ?></span>

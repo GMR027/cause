@@ -11,7 +11,13 @@ use Cauce\Repositories\AsignacionRepository;
 use Cauce\Repositories\IngresoRepository;
 use Cauce\Repositories\MetodoRepository;
 use Cauce\Repositories\UsuarioMetodoRepository;
+use Cauce\Repositories\DebtRepository;
+use Cauce\Repositories\GastoRepository;
+use Cauce\Repositories\RecurringExpenseRepository;
+use Cauce\Repositories\SavingsRepository;
+use Cauce\Repositories\WishlistRepository;
 use Cauce\Services\AuthService;
+use Cauce\Services\DebtService;
 use Cauce\Services\IngresoService;
 use Cauce\Services\OnboardingService;
 use Cauce\Services\PeriodoService;
@@ -118,27 +124,187 @@ final class IncomeController
     {
         $user = $this->user();
         $id = (int) ($_POST['ingreso_id'] ?? $_GET['id'] ?? 0);
-        $decisiones = $_POST['decisiones'] ?? [];
+        $recurrentes = $this->decisions($_POST['recurrentes'] ?? []);
+        $gastosRecurrentes = $this->decisions($_POST['gastos_recurrentes'] ?? []);
+        $abonos = ['deuda_categoria' => (string) input('deuda_categoria', '')];
 
-        if (!is_array($decisiones)) {
-            $decisiones = [];
+        foreach (['deuda', 'meta', 'bolsa', 'deseo'] as $kind) {
+            $raw = $_POST['abonos'][$kind] ?? [];
+            $abonos[$kind] = [];
+
+            foreach (is_array($raw) ? $raw : [] as $targetId => $value) {
+                $cents = is_string($value) ? parse_money_cents($value) : null;
+
+                if ($cents !== null && $cents > 0) {
+                    $abonos[$kind][(int) $targetId] = $cents;
+                }
+            }
         }
 
         try {
-            $this->service->finalizar($user, $id, $decisiones);
+            $result = $this->service->acreditarTodo($user, $id, $recurrentes, $gastosRecurrentes, $abonos);
         } catch (Throwable $exception) {
-            Logger::warning('No se pudo finalizar el ingreso', [
+            Logger::warning('No se pudo acreditar el ingreso', [
                 'user_id' => $user['id'],
                 'ingreso_id' => $id,
                 'error' => $exception->getMessage(),
             ]);
 
-            $this->renderAcreditar($user, $id, [__('income.errors.decisions')], $decisiones);
+            $this->renderAcreditar($user, $id, [__('income.errors.decisions')]);
             return;
         }
 
-        Flash::success('income.flash.saved');
+        if ($result['errores'] !== []) {
+            Flash::warning('income.flash.saved_with_errors', [
+                ':count' => (string) $result['abonos'],
+                ':items' => implode(', ', $result['errores']),
+            ]);
+        } elseif ($result['abonos'] > 0) {
+            Flash::success('income.flash.saved_with_payments', [':count' => (string) $result['abonos']]);
+        } else {
+            Flash::success('income.flash.saved');
+        }
+
         redirect('/inicio');
+    }
+
+    public function show(): void
+    {
+        $user = $this->user();
+        $this->renderShow($user, (int) ($_GET['id'] ?? 0));
+    }
+
+    public function update(): void
+    {
+        $user = $this->user();
+        $id = (int) ($_POST['ingreso_id'] ?? 0);
+        $amount = parse_money_cents((string) input('monto', ''));
+
+        if ($amount === null || $amount <= 0) {
+            $this->renderShow($user, $id, [__('income.errors.amount')]);
+            return;
+        }
+
+        try {
+            $this->service->actualizarMonto($user, $id, $amount, !empty($_POST['confirmar']));
+        } catch (Throwable $exception) {
+            if ($exception->getMessage() === 'income.errors.used_exceeds') {
+                $this->renderShow($user, $id, [], ['action' => 'editar', 'monto' => (string) input('monto', '')]);
+                return;
+            }
+
+            $this->renderShow($user, $id, [$this->incomeError($exception)]);
+            return;
+        }
+
+        Flash::success('income.flash.updated');
+        redirect('/ingresos/ver?id=' . $id);
+    }
+
+    public function destroy(): void
+    {
+        $user = $this->user();
+        $id = (int) ($_POST['ingreso_id'] ?? 0);
+
+        $withMovements = !empty($_POST['borrar_movimientos']);
+
+        try {
+            $deleted = $this->service->eliminar($user, $id, !empty($_POST['confirmar']), $withMovements);
+        } catch (Throwable $exception) {
+            if ($exception->getMessage() === 'income.errors.used_exceeds') {
+                $this->renderShow($user, $id, [], ['action' => 'eliminar']);
+                return;
+            }
+
+            Logger::warning('No se pudo eliminar el ingreso', [
+                'user_id' => $user['id'],
+                'ingreso_id' => $id,
+                'error' => $exception->getMessage(),
+            ]);
+            $this->renderShow($user, $id, [$this->incomeError($exception)]);
+            return;
+        }
+
+        if ($withMovements) {
+            Flash::success('income.flash.deleted_with_movements', [':count' => (string) $deleted]);
+        } else {
+            Flash::success('income.flash.deleted');
+        }
+        redirect('/movimientos');
+    }
+
+    /**
+     * @param list<string> $errors
+     * @param array<string, string>|null $confirm
+     */
+    private function renderShow(array $user, int $id, array $errors = [], ?array $confirm = null): void
+    {
+        $ingreso = (new IngresoRepository())->findForUser($id, (int) $user['id']);
+
+        if ($ingreso === null) {
+            Flash::error('income.errors.not_found');
+            redirect('/movimientos');
+        }
+
+        $editable = true;
+
+        try {
+            $this->service->ingresoEditable($user, $id);
+        } catch (Throwable) {
+            $editable = false;
+        }
+
+        $movements = (new \Cauce\Services\MovementReversalService())->countForPeriod(
+            (int) $user['id'],
+            (string) $ingreso['periodo_inicio'],
+            (string) $ingreso['periodo_fin']
+        );
+        $incomesInPeriod = (new IngresoRepository())->countForPeriod(
+            (int) $user['id'],
+            (string) $ingreso['periodo_inicio'],
+            (string) $ingreso['periodo_fin']
+        );
+
+        echo View::render('income/show', [
+            'title' => __('income.show.title'),
+            'movements' => $movements,
+            'onlyIncome' => $incomesInPeriod <= 1,
+            'ingreso' => $ingreso,
+            'asignaciones' => (new AsignacionRepository())->forIngreso($id),
+            'editable' => $editable,
+            'errors' => $errors,
+            'confirm' => $confirm,
+        ], 'layouts/app');
+    }
+
+    private function incomeError(Throwable $exception): string
+    {
+        $message = $exception->getMessage();
+
+        return match (true) {
+            $message === 'income.errors.closed_period' => __('income.errors.closed_period'),
+            $message === 'sin_tasa' => __('currency.errors.no_rate'),
+            str_contains(mb_strtolower($message), 'no existe') => __('income.errors.not_found'),
+            str_contains(mb_strtolower($message), 'monto') => __('income.errors.amount'),
+            default => __('income.errors.generic'),
+        };
+    }
+
+    /**
+     * @param mixed $raw
+     * @return array<int, string>
+     */
+    private function decisions(mixed $raw): array
+    {
+        $result = [];
+
+        foreach (is_array($raw) ? $raw : [] as $id => $value) {
+            if ((int) $id > 0 && in_array($value, ['aceptar', 'no_controlado'], true)) {
+                $result[(int) $id] = (string) $value;
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -192,15 +358,50 @@ final class IncomeController
         $method = $ingreso['metodo_id'] !== null
             ? (new MetodoRepository())->findById((int) $ingreso['metodo_id'])
             : null;
+        $userId = (int) $user['id'];
+        $types = [];
+
+        foreach ((array) ($method['categorias'] ?? []) as $category) {
+            $types[(string) $category['nombre']] = (string) $category['tipo'];
+        }
+
+        // Gastos recurrentes que se cobrarán en este período, y los que ya se
+        // registraron como pendientes porque aún no había ingreso.
+        $recurring = (new RecurringExpenseRepository())->dueInPeriod($userId, (string) $ingreso['periodo_fin']);
+        $pendingRecurring = array_values(array_filter(
+            (new GastoRepository())->pendingForUser($userId),
+            static fn (array $row): bool => !empty($row['gasto_recurrente_id'])
+                && (string) $row['periodo_inicio'] === (string) $ingreso['periodo_inicio']
+        ));
+
+        $savings = new SavingsRepository();
+        $metas = array_values(array_filter(
+            $savings->metasForUser($userId),
+            static fn (array $row): bool => (int) $row['activa'] === 1 && (string) $row['tipo'] !== 'deseo'
+        ));
+        $bolsas = array_values(array_filter(
+            $savings->accountsForUser($userId),
+            static fn (array $row): bool => (int) $row['activa'] === 1
+        ));
+        $debts = array_values(array_filter(
+            (new DebtRepository())->allForUser($userId, true),
+            static fn (array $row): bool => (int) $row['saldo_actual_centavos'] > 0
+        ));
 
         echo View::render('income/acreditar', [
             'title' => __('income.acreditar.title'),
             'ingreso' => $ingreso,
             'asignaciones' => $asignaciones,
+            'categoryTypes' => $types,
             'method' => $method,
-            'reasons' => (array) config('ingreso.justification_reasons', []),
+            'recurring' => $recurring,
+            'pendingRecurring' => $pendingRecurring,
+            'debts' => $debts,
+            'debtCategories' => (new DebtService())->paymentCategories($user),
+            'metas' => $metas,
+            'bolsas' => $bolsas,
+            'wishes' => (new WishlistRepository())->allForUser($userId, 'activo'),
             'errors' => $errors,
-            'old' => $old,
         ], 'layouts/flow');
     }
 

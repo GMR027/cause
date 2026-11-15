@@ -132,6 +132,22 @@
         });
     });
 
+    document.querySelectorAll('[data-sharing-edit]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const form = document.querySelector('[data-sharing-form]');
+
+            if (!form) {
+                return;
+            }
+
+            value(form.querySelector('[name="id"]'), button.getAttribute('data-id') || '');
+            value(form.querySelector('[name="monto"]'), button.getAttribute('data-amount') || '');
+            value(form.querySelector('[name="fecha"]'), button.getAttribute('data-date') || '');
+            value(form.querySelector('[name="destinatario"]'), button.getAttribute('data-recipient') || '');
+            checked(form.querySelector('[name="es_extra"]'), button.getAttribute('data-extra') === '1');
+        });
+    });
+
     const withdrawReason = document.querySelector('[data-investment-withdraw-reason]');
     const rebalanceBox = document.querySelector('[data-rebalance-target]');
 

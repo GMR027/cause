@@ -97,6 +97,29 @@
         updateSummary();
     }
 
+    // Acreditar: total de abonos opcionales.
+    const creditForm = document.querySelector('[data-credit-form]');
+
+    if (creditForm) {
+        const totalEl = creditForm.querySelector('[data-payment-total]');
+        const inputs = Array.from(creditForm.querySelectorAll('[data-payment-input]'));
+
+        const updatePayments = () => {
+            const cents = inputs.reduce((sum, input) => {
+                const value = Math.round((parseFloat(input.value) || 0) * 100);
+
+                return sum + (value > 0 ? value : 0);
+            }, 0);
+
+            if (totalEl) {
+                totalEl.textContent = Cauce.formatMoney(cents);
+            }
+        };
+
+        inputs.forEach((input) => input.addEventListener('input', updatePayments));
+        updatePayments();
+    }
+
     const extraForm = document.querySelector('[data-extra-form]');
 
     if (extraForm) {
@@ -114,6 +137,18 @@
         };
 
         inputs.forEach((input) => input.addEventListener('input', updateTotal));
+
+        const useMethod = extraForm.querySelector('[data-extra-use-method]');
+
+        if (useMethod) {
+            useMethod.addEventListener('click', () => {
+                inputs.forEach((input) => {
+                    input.value = input.getAttribute('data-method-percent') || '0';
+                });
+                updateTotal();
+            });
+        }
+
         updateTotal();
     }
 })();

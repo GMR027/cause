@@ -70,6 +70,36 @@ final class RecurringExpenseRepository
     }
 
     /**
+     * Recurrentes activos (sin recordatorios de deuda) que se cobrarán antes
+     * de que termine el período.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function dueInPeriod(int $userId, string $periodoFin): array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT * FROM gastos_recurrentes
+             WHERE user_id = ? AND activo = 1 AND deuda_id IS NULL AND proxima_ejecucion <= ?
+             ORDER BY proxima_ejecucion ASC, id ASC'
+        );
+        $stmt->execute([$userId, $periodoFin]);
+
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Manda los cobros del recurrente a «no controlado» hasta esa fecha (UTC).
+     */
+    public function setNoControladoHasta(int $id, int $userId, ?string $hastaUtc): void
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE gastos_recurrentes SET no_controlado_hasta = ?, updated_at = NOW()
+             WHERE id = ? AND user_id = ?'
+        );
+        $stmt->execute([$hastaUtc, $id, $userId]);
+    }
+
+    /**
      * @return array<string, mixed>|null
      */
     public function lockForUpdate(int $id): ?array
@@ -159,6 +189,61 @@ final class RecurringExpenseRepository
             'UPDATE gastos_recurrentes SET activo = 0, updated_at = NOW() WHERE id = ? AND user_id = ?'
         );
         $stmt->execute([$id, $userId]);
+    }
+
+    /**
+     * Marca un recurrente como suscripción y guarda sus datos de seguimiento.
+     */
+    public function setSubscription(
+        int $id,
+        int $userId,
+        ?string $provider,
+        ?string $trialUntil,
+        ?int $reminderDays,
+        ?string $notes
+    ): void {
+        $stmt = $this->db->prepare(
+            'UPDATE gastos_recurrentes SET es_suscripcion = 1, proveedor = ?, prueba_hasta = ?,
+                recordatorio_dias = ?, notas = ?, updated_at = NOW()
+             WHERE id = ? AND user_id = ?'
+        );
+        $stmt->execute([$provider, $trialUntil, $reminderDays, $notes, $id, $userId]);
+    }
+
+    /**
+     * Cancela una suscripción: deja de cobrarse y queda en el historial.
+     */
+    public function cancelSubscription(int $id, int $userId): void
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE gastos_recurrentes SET activo = 0, es_suscripcion = 1, cancelada_at = UTC_TIMESTAMP(), updated_at = NOW()
+             WHERE id = ? AND user_id = ?'
+        );
+        $stmt->execute([$id, $userId]);
+    }
+
+    public function reactivateSubscription(int $id, int $userId, string $nextUtc): void
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE gastos_recurrentes SET activo = 1, cancelada_at = NULL, proxima_ejecucion = ?, updated_at = NOW()
+             WHERE id = ? AND user_id = ?'
+        );
+        $stmt->execute([$nextUtc, $id, $userId]);
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public function cancelledSubscriptions(int $userId): array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT * FROM gastos_recurrentes
+             WHERE user_id = ? AND es_suscripcion = 1 AND activo = 0 AND cancelada_at IS NOT NULL
+             ORDER BY cancelada_at DESC, id DESC'
+        );
+        $stmt->execute([$userId]);
+
+        return $stmt->fetchAll();
     }
 
     public function advance(int $id, string $nextUtc): void

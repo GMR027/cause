@@ -103,4 +103,41 @@ final class ThemeServiceTest extends TestCase
         self::assertSame('#1565c0', $result['theme']['color']);
         self::assertSame('waves', $result['theme']['textura']);
     }
+
+    public function test_texture_opacity_is_clamped_to_configured_range(): void
+    {
+        self::assertSame(5, $this->service->clampOpacity('1', 30));
+        self::assertSame(60, $this->service->clampOpacity(95, 30));
+        self::assertSame(45, $this->service->clampOpacity('45', 30));
+        self::assertSame(30, $this->service->clampOpacity('abc', 30));
+        self::assertSame(30, $this->service->clampOpacity(null, 30));
+    }
+
+    public function test_validate_keeps_opacity_and_new_textures(): void
+    {
+        $result = $this->service->validate([
+            'modo' => 'auto',
+            'color' => '#157f6b',
+            'enfoque' => 'mixto',
+            'fondo' => 'textura',
+            'textura' => 'cerdito',
+            'opacidad' => '20',
+        ]);
+
+        self::assertSame([], $result['errors']);
+        self::assertSame('cerdito', $result['theme']['textura']);
+        self::assertSame(20, $result['theme']['opacidad']);
+    }
+
+    public function test_every_texture_has_a_doodle_or_css_pattern(): void
+    {
+        $doodles = array_keys((array) require __DIR__ . '/../../app/config/doodles.php');
+
+        foreach ((array) config('themes.textures', []) as $texture) {
+            self::assertTrue(
+                in_array($texture, ['dots', 'grid', 'waves'], true) || in_array($texture, $doodles, true),
+                'Textura sin mosaico: ' . $texture
+            );
+        }
+    }
 }

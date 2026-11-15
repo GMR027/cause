@@ -16,6 +16,7 @@ use Cauce\Services\AnalyticsService;
 use Cauce\Services\AuthService;
 use Cauce\Services\GamificationService;
 use Cauce\Services\IngresoService;
+use Cauce\Services\MethodService;
 use Cauce\Services\PeriodoService;
 use Cauce\Services\PinService;
 use Cauce\Services\RecoveryService;
@@ -267,6 +268,7 @@ final class SettingsController
                 'enfoque' => input('enfoque', '') ?? '',
                 'fondo' => input('fondo', '') ?? '',
                 'textura' => input('textura', '') ?? '',
+                'opacidad' => input('opacidad', '') ?? '',
             ];
 
             if (($input['color'] ?? '') === 'custom') {
@@ -419,8 +421,10 @@ final class SettingsController
     private function renderIngreso(array $user, array $errors = [], ?array $old = null): void
     {
         $service = new IngresoService();
-        $categories = $service->categoriasDelMetodoActivo((int) $user['id']);
+        // Solo las categorías que tu método vigente usa (con % > 0).
+        $categories = $service->categoriasActivas($user);
         $defaultName = $categories !== [] ? $service->categoriaExtraPorDefecto($categories) : null;
+        $methodData = (new MethodService())->activeData($user);
 
         $extra = $old['extra'] ?? null;
         $extra = is_array($extra) ? $extra : ($service->extraGuardado($user) ?? []);
@@ -443,6 +447,8 @@ final class SettingsController
             'changeFrom' => $user['recurrencia_cambio_desde'] ?? null,
             'recurrences' => ['diaria', 'semanal', 'mensual', 'anual'],
             'categories' => $categories,
+            'methodCode' => $methodData['method']['codigo'] ?? null,
+            'methodName' => $methodData['method']['nombre'] ?? null,
             'extra' => $extra,
             'errors' => $errors,
         ], 'layouts/app');

@@ -113,7 +113,7 @@ $stateClass = [
                     </a>
 
                     <form method="post" action="/gastos/eliminar"
-                          onsubmit="return confirm('<?= e(__('expenses.show.confirm_delete')) ?>')">
+                          data-confirm="<?= e(__('expenses.show.confirm_delete')) ?>" data-confirm-danger>
                         <?= csrf_field() ?>
                         <input type="hidden" name="id" value="<?= $gastoId ?>">
                         <button type="submit" class="btn btn-outline-danger w-100">

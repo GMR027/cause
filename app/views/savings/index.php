@@ -198,7 +198,7 @@ $activeMetas = array_values(array_filter($metas, static fn (array $m): bool => (
                                     </button>
                                     <?php if ((int) $account['activa'] === 1 && (int) $account['es_predeterminada'] !== 1): ?>
                                         <form method="post" action="/ahorro/cuentas/archivar" class="m-0"
-                                              onsubmit="return confirm('<?= e(__('savings.accounts.confirm_archive')) ?>')">
+                                              data-confirm="<?= e(__('savings.accounts.confirm_archive')) ?>" data-confirm-danger>
                                             <?= csrf_field() ?>
                                             <input type="hidden" name="id" value="<?= (int) $account['id'] ?>">
                                             <button type="submit" class="btn btn-sm btn-outline-danger">
@@ -342,7 +342,7 @@ $activeMetas = array_values(array_filter($metas, static fn (array $m): bool => (
                                     <i class="bi bi-pencil" aria-hidden="true"></i>
                                 </button>
                                 <form method="post" action="/ahorro/aportaciones/eliminar" class="m-0"
-                                      onsubmit="return confirm('<?= e(__('finance.confirm_delete')) ?>')">
+                                      data-confirm="<?= e(__('finance.confirm_delete')) ?>" data-confirm-danger>
                                     <?= csrf_field() ?>
                                     <input type="hidden" name="id" value="<?= (int) $row['id'] ?>">
                                     <button type="submit" class="btn btn-sm btn-outline-danger">
@@ -388,7 +388,7 @@ $activeMetas = array_values(array_filter($metas, static fn (array $m): bool => (
                                     <i class="bi bi-pencil" aria-hidden="true"></i>
                                 </button>
                                 <form method="post" action="/ahorro/retiros/eliminar" class="m-0"
-                                      onsubmit="return confirm('<?= e(__('finance.confirm_delete')) ?>')">
+                                      data-confirm="<?= e(__('finance.confirm_delete')) ?>" data-confirm-danger>
                                     <?= csrf_field() ?>
                                     <input type="hidden" name="id" value="<?= (int) $row['id'] ?>">
                                     <button type="submit" class="btn btn-sm btn-outline-danger">

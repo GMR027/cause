@@ -188,7 +188,7 @@ $isAdminTarget = ($user['rol'] ?? 'user') === 'admin';
             <h2 class="h5 mb-2 text-danger"><?= e(__('admin.users.delete_title')) ?></h2>
             <p class="small text-secondary mb-2"><?= e(__('admin.users.delete_hint')) ?></p>
             <form method="post" action="/admin/usuarios/eliminar" class="row g-2"
-                  onsubmit="return confirm('<?= e(__('privacy.delete.final_confirm')) ?>')">
+                  data-confirm="<?= e(__('privacy.delete.final_confirm')) ?>" data-confirm-danger>
                 <?= csrf_field() ?>
                 <input type="hidden" name="id" value="<?= (int) $user['id'] ?>">
                 <div class="col-12">

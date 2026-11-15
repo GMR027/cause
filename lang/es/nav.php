@@ -18,6 +18,7 @@ return [
     'deseos' => 'Lista de deseos',
     'inversion' => 'Inversión',
     'donacion' => 'Donación',
+    'compartir' => 'Compartir',
     'calendario' => 'Calendario',
     'resumen' => 'Resumen mensual',
     'estado_cuenta' => 'Estado de cuenta',

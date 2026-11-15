@@ -13,7 +13,7 @@ namespace Cauce\Services;
 final class ThemeService
 {
     /**
-     * @return array{modo: string, color: string, enfoque: string, fondo: string, textura: string}
+     * @return array{modo: string, color: string, enfoque: string, fondo: string, textura: string, opacidad: int}
      */
     public function defaults(): array
     {
@@ -25,7 +25,24 @@ final class ThemeService
             'enfoque' => (string) ($defaults['enfoque'] ?? 'mixto'),
             'fondo' => (string) ($defaults['fondo'] ?? 'ninguno'),
             'textura' => (string) ($defaults['textura'] ?? 'dots'),
+            'opacidad' => (int) ($defaults['opacidad'] ?? 30),
         ];
+    }
+
+    /**
+     * Opacidad de textura dentro del rango permitido.
+     */
+    public function clampOpacity(mixed $value, int $fallback): int
+    {
+        if (!is_numeric($value)) {
+            return $fallback;
+        }
+
+        $range = (array) config('themes.texture_opacity', []);
+        $min = (int) ($range['min'] ?? 5);
+        $max = (int) ($range['max'] ?? 60);
+
+        return max($min, min($max, (int) round((float) $value)));
     }
 
     /**
@@ -40,7 +57,7 @@ final class ThemeService
 
     /**
      * @param array<string, mixed>|null $user
-     * @return array{modo: string, color: string, enfoque: string, fondo: string, textura: string}
+     * @return array{modo: string, color: string, enfoque: string, fondo: string, textura: string, opacidad: int}
      */
     public function resolve(?array $user): array
     {
@@ -54,6 +71,7 @@ final class ThemeService
         $theme['enfoque'] = $this->pick((string) ($user['tema_enfoque'] ?? ''), (array) config('themes.focus', []), $theme['enfoque']);
         $theme['fondo'] = $this->pick((string) ($user['tema_efecto_fondo'] ?? ''), (array) config('themes.backgrounds', []), $theme['fondo']);
         $theme['textura'] = $this->pick((string) ($user['tema_textura'] ?? ''), (array) config('themes.textures', []), $theme['textura']);
+        $theme['opacidad'] = $this->clampOpacity($user['tema_textura_opacidad'] ?? null, $theme['opacidad']);
 
         $color = strtolower((string) ($user['tema_color_principal'] ?? ''));
 
@@ -118,6 +136,8 @@ final class ThemeService
         if (in_array($textura, (array) config('themes.textures', []), true)) {
             $theme['textura'] = $textura;
         }
+
+        $theme['opacidad'] = $this->clampOpacity($input['opacidad'] ?? null, $theme['opacidad']);
 
         return ['theme' => $theme, 'errors' => $errors];
     }

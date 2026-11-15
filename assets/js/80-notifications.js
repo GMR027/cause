@@ -40,6 +40,31 @@
         });
     });
 
+    // X: cierra la notificación sin recargar la página.
+    document.querySelectorAll('[data-notification-dismiss]').forEach((form) => {
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const row = form.closest('[data-notification-row]');
+            const id = form.querySelector('[name="id"]')?.value || '';
+
+            try {
+                const response = await post('/notificaciones/descartar', { id });
+
+                if (!response.ok) {
+                    throw new Error('dismiss');
+                }
+            } catch (error) {
+                form.submit();
+                return;
+            }
+
+            if (row) {
+                row.classList.add('is-leaving');
+                window.setTimeout(() => row.remove(), 250);
+            }
+        });
+    });
+
     const base64ToBytes = (value) => {
         const padding = '='.repeat((4 - (value.length % 4)) % 4);
         const normalized = (value + padding).replace(/-/g, '+').replace(/_/g, '/');

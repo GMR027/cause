@@ -109,6 +109,7 @@ final class ExportService
             'inversiones_posiciones' => 'SELECT * FROM inversiones_posiciones WHERE user_id = ? ORDER BY created_at ASC, id ASC',
             'inversiones_precios' => 'SELECT * FROM inversiones_precios WHERE simbolo_proveedor IN (SELECT simbolo_proveedor FROM inversiones_posiciones WHERE user_id = ?) ORDER BY fecha ASC, id ASC',
             'donaciones' => 'SELECT * FROM donaciones WHERE user_id = ? ORDER BY fecha ASC, id ASC',
+            'compartidos' => 'SELECT * FROM compartidos WHERE user_id = ? ORDER BY fecha ASC, id ASC',
             'metas' => 'SELECT * FROM metas_ahorro WHERE user_id = ? ORDER BY created_at ASC, id ASC',
             'deudas' => 'SELECT * FROM deudas WHERE user_id = ? ORDER BY created_at ASC, id ASC',
             'pagos_deuda' => 'SELECT * FROM pagos_deuda WHERE user_id = ? ORDER BY fecha ASC, id ASC',

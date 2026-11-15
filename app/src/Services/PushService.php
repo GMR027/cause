@@ -42,6 +42,9 @@ final class PushService
             'title' => $title,
             'body' => $body,
             'url' => $url ?? '/notificaciones',
+            // Textos de los botones de la notificación del sistema (ver sw.js).
+            'openLabel' => __('notifications.push_open'),
+            'closeLabel' => '✕ ' . __('common.actions.close'),
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
         if (!$this->enabled() || !class_exists(WebPush::class)) {

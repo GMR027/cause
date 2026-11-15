@@ -28,6 +28,8 @@ return [
                 ['label' => 'nav.deseos', 'icon' => 'bi-stars', 'route' => '/deseos'],
                 ['label' => 'nav.inversion', 'icon' => 'bi-graph-up-arrow', 'route' => '/inversion'],
                 ['label' => 'nav.donacion', 'icon' => 'bi-heart', 'route' => '/donacion'],
+                // Solo aparece si el método activo tiene la categoría Compartir (p. ej. Cinco frascos).
+                ['label' => 'nav.compartir', 'icon' => 'bi-people', 'route' => '/compartir', 'requires_category' => 'compartir'],
             ],
         ],
         [

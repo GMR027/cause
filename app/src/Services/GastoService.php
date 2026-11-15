@@ -34,6 +34,9 @@ final class GastoService
         'no_aplica',
     ];
 
+    /** Tipos de categoría cuyo uso se registra en su propio módulo, no con gastos. */
+    private const TIPOS_POR_MODULO = ['ahorro', 'inversion', 'donacion', 'compartir'];
+
     /**
      * @return array{cubierto_centavos: int, exceso_centavos: int, excedido: bool}
      */
@@ -104,6 +107,20 @@ final class GastoService
     }
 
     /**
+     * Asignado, usado y disponible de cada categoría del método en el período.
+     *
+     * Lo "usado" depende del tipo de categoría:
+     * - controlada / no_controlado: gastos asignados a esa parte.
+     * - ahorro: aportaciones a ahorro del período.
+     * - inversion: aportaciones normales (no extra) a inversión.
+     * - donacion: donaciones normales (no extra).
+     * - compartir: registros normales (no extra) de Compartir.
+     *
+     * Ahorro, inversión, donación y compartir se registran por tipo, no por
+     * categoría; si un método tiene varias categorías del mismo tipo (p. ej.
+     * «Ahorro LP» y «Educación»), lo usado se reparte en orden hasta cubrir
+     * cada asignado, y el excedente queda en la última.
+     *
      * @param array<string, mixed> $user
      * @return array<string, array{tipo: string, asignado: int, gastado: int, disponible: int}>
      */
@@ -113,21 +130,77 @@ final class GastoService
         $repo = new GastoRepository();
         $userId = (int) $user['id'];
         $result = [];
+        $byType = [];
 
         foreach ($this->categoriasActivas($user) as $category) {
             $name = (string) $category['nombre'];
+            $type = (string) $category['tipo'];
             $assigned = $repo->sumAssignedForPart($userId, $name, $period['inicio'], $period['fin']);
-            $spent = $repo->sumSpentForPart($userId, $name, $period['inicio'], $period['fin']);
+            $spent = in_array($type, self::TIPOS_POR_MODULO, true)
+                ? 0
+                : $repo->sumSpentForPart($userId, $name, $period['inicio'], $period['fin']);
 
             $result[$name] = [
-                'tipo' => (string) $category['tipo'],
+                'tipo' => $type,
                 'asignado' => $assigned,
                 'gastado' => $spent,
                 'disponible' => max(0, $assigned - $spent),
             ];
+
+            if (in_array($type, self::TIPOS_POR_MODULO, true)) {
+                $byType[$type][] = $name;
+            }
+        }
+
+        foreach ($byType as $type => $names) {
+            $remaining = $this->usadoPorTipo($userId, $type, $period['inicio'], $period['fin']);
+            $last = count($names) - 1;
+
+            foreach ($names as $index => $name) {
+                $used = $index === $last
+                    ? $remaining
+                    : min($remaining, max(0, $result[$name]['asignado']));
+                $remaining -= $used;
+                $result[$name]['gastado'] = $used;
+                $result[$name]['disponible'] = max(0, $result[$name]['asignado'] - $used);
+            }
         }
 
         return $result;
+    }
+
+    /**
+     * Disponible total del período: lo asignado menos todo lo usado.
+     *
+     * No suma los disponibles por categoría (que no bajan de cero): si una
+     * categoría se pasa (p. ej. aportar más a ahorro de lo asignado), ese
+     * exceso sale del dinero de las demás y debe restarse del total.
+     *
+     * @param array<string, array{asignado: int, gastado: int}> $porParte
+     */
+    public function disponibleTotal(array $porParte): int
+    {
+        $total = 0;
+
+        foreach ($porParte as $category) {
+            $total += (int) $category['asignado'] - (int) $category['gastado'];
+        }
+
+        return $total;
+    }
+
+    /**
+     * Lo registrado en el período en el módulo de un tipo de categoría.
+     */
+    private function usadoPorTipo(int $userId, string $type, string $inicio, string $fin): int
+    {
+        return match ($type) {
+            'ahorro' => (new \Cauce\Repositories\SavingsRepository())->sumPeriodContributions($userId, $inicio, $fin),
+            'inversion' => (new \Cauce\Repositories\InvestmentRepository())->sumContributions($userId, null, $inicio, $fin, true),
+            'donacion' => (new \Cauce\Repositories\DonationRepository())->sumPeriodNormal($userId, $inicio, $fin),
+            'compartir' => (new \Cauce\Repositories\SharingRepository())->sumPeriodNormal($userId, $inicio, $fin),
+            default => 0,
+        };
     }
 
     /**
@@ -249,7 +322,9 @@ final class GastoService
 
         try {
             $db->beginTransaction();
-            (new NoControladoRepository($db))->deleteByReferencia((int) $user['id'], 'gasto_excedido', $gastoId);
+            // El dinero vuelve a estar disponible y se deshace lo que el gasto
+            // provocó: pago de deuda, retiro de ahorro, deseo comprado, exceso.
+            (new MovementReversalService($db))->revertGastoEffects($gasto);
             (new GastoRepository($db))->delete($gastoId, (int) $user['id']);
             $db->commit();
         } catch (Throwable $exception) {
@@ -402,12 +477,71 @@ final class GastoService
             (string) ($datos['fecha'] ?? gmdate('Y-m-d H:i:s')),
             null,
             [
-                'estado' => $hasIncome ? 'asignado' : 'pendiente_asignacion',
+                // Al acreditar, la persona puede mandar el recurrente a «no
+                // controlado» en este período: no descuenta de su categoría.
+                'estado' => !empty($datos['no_controlado'])
+                    ? 'no_controlado'
+                    : ($hasIncome ? 'asignado' : 'pendiente_asignacion'),
                 'confirmado' => 0,
                 'es_recurrente' => 1,
                 'gasto_recurrente_id' => isset($datos['gasto_recurrente_id']) ? (int) $datos['gasto_recurrente_id'] : null,
             ]
         );
+    }
+
+    /**
+     * Pasa un gasto ya registrado (asignado o pendiente) a «no controlado»:
+     * deja de descontar de su categoría y se suma al aviso de No controlado.
+     *
+     * @param array<string, mixed> $user
+     */
+    public function marcarNoControlado(array $user, int $gastoId): void
+    {
+        $userId = (int) $user['id'];
+        $gasto = (new GastoRepository())->findForUser($gastoId, $userId);
+
+        if ($gasto === null || in_array((string) $gasto['estado'], ['no_controlado', 'cerrado'], true)) {
+            return;
+        }
+
+        $db = Database::connection();
+        $ownsTransaction = !$db->inTransaction();
+
+        try {
+            if ($ownsTransaction) {
+                $db->beginTransaction();
+            }
+
+            $stmt = $db->prepare(
+                "UPDATE gastos SET estado = 'no_controlado', fuente_exceso = 'no_aplica', updated_at = NOW()
+                 WHERE id = ? AND user_id = ?"
+            );
+            $stmt->execute([$gastoId, $userId]);
+
+            $noControlado = new NoControladoRepository($db);
+            $noControlado->deleteByReferencia($userId, 'gasto_excedido', $gastoId);
+            $noControlado->deleteByReferencia($userId, 'otro', $gastoId);
+            $noControlado->create(
+                $userId,
+                (string) $gasto['periodo_inicio'],
+                (string) $gasto['periodo_fin'],
+                (int) ($gasto['monto_principal_centavos'] ?? $gasto['monto_centavos']),
+                (new CurrencyService())->principal($user),
+                'otro',
+                $gastoId,
+                (string) $gasto['parte_metodo']
+            );
+
+            if ($ownsTransaction) {
+                $db->commit();
+            }
+        } catch (Throwable $exception) {
+            if ($ownsTransaction && $db->inTransaction()) {
+                $db->rollBack();
+            }
+
+            throw $exception;
+        }
     }
 
     /**
@@ -526,7 +660,7 @@ final class GastoService
         $split = ['cubierto_centavos' => $principalAmount, 'exceso_centavos' => 0, 'excedido' => false];
         $repo = new GastoRepository();
 
-        if ($state !== 'pendiente_asignacion') {
+        if (!in_array($state, ['pendiente_asignacion', 'no_controlado'], true)) {
             $assigned = $repo->sumAssignedForPart($userId, $part, $period['inicio'], $period['fin']);
             $spent = !empty($options['exclude_id'])
                 ? $repo->sumSpentForPartExcluding((int) $options['exclude_id'], $userId, $part, $period['inicio'], $period['fin'])
@@ -598,6 +732,20 @@ final class GastoService
             }
 
             (new NoControladoRepository($db))->deleteByReferencia($userId, 'gasto_excedido', $gastoId);
+            (new NoControladoRepository($db))->deleteByReferencia($userId, 'otro', $gastoId);
+
+            if ($state === 'no_controlado') {
+                (new NoControladoRepository($db))->create(
+                    $userId,
+                    $period['inicio'],
+                    $period['fin'],
+                    $principalAmount,
+                    $principal,
+                    'otro',
+                    $gastoId,
+                    $part
+                );
+            }
 
             if ($split['excedido'] && $split['exceso_centavos'] > 0) {
                 (new NoControladoRepository($db))->create(
@@ -617,7 +765,12 @@ final class GastoService
                 && $split['excedido']
                 && $split['exceso_centavos'] > 0
             ) {
-                (new DebtService())->applyExcessFromExpense($user, $datos, $split['exceso_centavos']);
+                $debtId = (new DebtService())->applyExcessFromExpense($user, $datos, $split['exceso_centavos']);
+
+                if ($debtId !== null) {
+                    $db->prepare('UPDATE gastos SET deuda_exceso_id = ?, deuda_exceso_centavos = ? WHERE id = ? AND user_id = ?')
+                        ->execute([$debtId, $split['exceso_centavos'], $gastoId, $userId]);
+                }
             }
 
             (new TagService())->syncGasto($gastoId, $userId, $datos['tags'] ?? []);

@@ -5,6 +5,7 @@ $currency = (string) ($currentUser['moneda_activa'] ?? 'MXN');
 $methodName = $methodName ?? null;
 $percentages = $percentages ?? [];
 $methodAmounts = $methodAmounts ?? [];
+$methodStatus = $methodStatus ?? [];
 $methodBase = (int) ($methodBase ?? 0);
 $methodBaseSource = (string) ($methodBaseSource ?? 'period');
 $period = $period ?? null;
@@ -43,7 +44,7 @@ $format = static fn (int $cents): string => money_html($cents, $currency);
 </section>
 
 <?php if ($pendingIncome !== null): ?>
-    <div class="pending-banner" role="status">
+    <div class="pending-banner" role="status" data-dismissible data-dismiss-key="pending-income-<?= (int) $pendingIncome['id'] ?>">
         <span class="pending-icon" aria-hidden="true"><i class="bi bi-exclamation-circle"></i></span>
         <div class="flex-grow-1">
             <strong class="d-block"><?= e(__('income.pending_banner')) ?></strong>
@@ -62,7 +63,8 @@ $format = static fn (int $cents): string => money_html($cents, $currency);
 <?php endif; ?>
 
 <?php if ($pendingGastos !== []): ?>
-    <div class="pending-banner pending-banner-gastos" role="status">
+    <div class="pending-banner pending-banner-gastos" role="status" data-dismissible
+         data-dismiss-key="pending-gastos-<?= count($pendingGastos) ?>-<?= (int) $pendingGastosTotal ?>">
         <span class="pending-icon" aria-hidden="true"><i class="bi bi-receipt"></i></span>
         <div class="flex-grow-1">
             <strong class="d-block">
@@ -79,7 +81,7 @@ $format = static fn (int $cents): string => money_html($cents, $currency);
 <?php endif; ?>
 
 <?php foreach (array_slice($recurringConfirm, 0, 3) as $recurring): ?>
-    <div class="recurring-confirm" role="status">
+    <div class="recurring-confirm" role="status" data-dismissible data-dismiss-key="recurring-<?= (int) $recurring['id'] ?>">
         <div class="flex-grow-1">
             <strong class="d-block">
                 <?= e(__('expenses.recurring.banner_title', [
@@ -113,9 +115,10 @@ $format = static fn (int $cents): string => money_html($cents, $currency);
 <?php endforeach; ?>
 
 <?php if ($insights !== []): ?>
-    <div class="insight-card">
+    <div class="insight-card" data-dismiss-empty>
         <?php foreach ($insights as $insight): ?>
-            <div class="insight-row">
+            <div class="insight-row" data-dismissible
+                 data-dismiss-key="insight-<?= e(substr(md5((string) $insight['key'] . json_encode($insight['params'])), 0, 12)) ?>">
                 <i class="bi <?= $insight['severity'] === 'warning' ? 'bi-exclamation-triangle' : 'bi-info-circle' ?>"
                    aria-hidden="true"></i>
                 <div class="flex-grow-1">
@@ -323,14 +326,49 @@ $format = static fn (int $cents): string => money_html($cents, $currency);
                 <h2 class="h5 mb-3"><?= e($displayMethod) ?></h2>
                 <ul class="method-list mb-0">
                     <?php foreach ($percentages as $name => $percentage): ?>
-                        <li>
-                            <span><?= e((string) $name) ?></span>
+                        <?php
+                        $status = $methodStatus[$name] ?? null;
+                        $stateLabel = null;
+
+                        if ($status !== null) {
+                            $stateLabel = $status['estado'] === 'pendiente'
+                                ? __('app.home.method_status.pendiente', [
+                                    ':used' => format_money((int) $status['usado'], $currency),
+                                    ':assigned' => format_money((int) $status['asignado'], $currency),
+                                ])
+                                : __('app.home.method_status.' . $status['estado']);
+                        }
+                        ?>
+                        <li class="flex-wrap">
+                            <span class="d-inline-flex align-items-center gap-2">
+                                <?php if ($status !== null && $status['estado'] === 'cumplido'): ?>
+                                    <i class="bi bi-check-circle-fill text-success" aria-hidden="true"></i>
+                                <?php elseif ($status !== null && $status['estado'] === 'excedido'): ?>
+                                    <i class="bi bi-exclamation-circle-fill text-warning" aria-hidden="true"></i>
+                                <?php elseif ($status !== null): ?>
+                                    <i class="bi bi-circle text-secondary" aria-hidden="true"></i>
+                                <?php endif; ?>
+                                <?= e((string) $name) ?>
+                            </span>
                             <span class="d-inline-flex align-items-baseline gap-2">
                                 <?php if (isset($methodAmounts[$name])): ?>
                                     <span class="fw-semibold"><?= money_html((int) $methodAmounts[$name], $currency) ?></span>
                                 <?php endif; ?>
                                 <span class="text-secondary small"><?= (int) $percentage ?>%</span>
                             </span>
+                            <?php if ($status !== null): ?>
+                                <span class="w-100 d-block mt-1">
+                                    <span class="progress d-flex" role="progressbar" style="height: 4px;"
+                                          aria-valuenow="<?= (int) $status['progreso'] ?>" aria-valuemin="0" aria-valuemax="100"
+                                          aria-label="<?= e(__('app.home.method_status.aria', [':name' => (string) $name, ':state' => (string) $stateLabel])) ?>">
+                                        <span class="progress-bar <?= $status['estado'] === 'cumplido' ? 'bg-success' : ($status['estado'] === 'excedido' ? 'bg-warning' : '') ?>"
+                                              style="width: <?= (int) $status['progreso'] ?>%"></span>
+                                    </span>
+                                    <span class="small <?= $status['estado'] === 'cumplido' ? 'text-success' : ($status['estado'] === 'excedido' ? 'text-warning-emphasis' : 'text-secondary') ?>">
+                                        <?= e((string) $stateLabel) ?>
+                                    </span>
+                                </span>
+                            <?php endif; ?>
                         </li>
                     <?php endforeach; ?>
                 </ul>

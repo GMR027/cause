@@ -15,6 +15,8 @@
     const custom = form.querySelector('[data-theme-custom]');
     const textureWrap = document.querySelector('[data-theme-texture-wrap]');
     const textureSelect = form.querySelector('[name="textura"]');
+    const opacityInput = form.querySelector('[name="opacidad"]');
+    const opacityValue = form.querySelector('[data-opacity-value]');
 
     const checked = (name) => {
         const input = form.querySelector('input[name="' + name + '"]:checked');
@@ -35,6 +37,7 @@
             enfoque: checked('enfoque') || 'mixto',
             fondo: checked('fondo') || 'ninguno',
             textura: textureSelect ? textureSelect.value : 'dots',
+            opacidad: opacityInput ? parseInt(opacityInput.value, 10) : 30,
         };
     };
 
@@ -87,6 +90,16 @@
 
         update();
     });
+
+    if (opacityInput) {
+        opacityInput.addEventListener('input', () => {
+            if (opacityValue) {
+                opacityValue.textContent = opacityInput.value + ' %';
+            }
+
+            update();
+        });
+    }
 
     if (custom) {
         custom.addEventListener('input', () => {

@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 return [
+    'push_open' => 'Ver',
+    'dismiss' => 'Cerrar notificación',
     'title' => 'Notificaciones',
     'subtitle' => 'Avisos útiles para que no se te pase nada importante.',
     'badge' => 'Avisos',
@@ -20,6 +22,8 @@ return [
         'ingreso_rescate' => 'Aviso de ingreso sin registrar',
         'gasto_recurrente' => 'Cargo recurrente',
         'recordatorio_deuda' => 'Recordatorio de deuda',
+        'recordatorio_suscripcion' => 'Recordatorio de suscripción',
+        'fin_prueba_suscripcion' => 'Fin de prueba gratis',
         'soporte_respuesta' => 'Respuesta de soporte',
         'alerta_categoria' => 'Categoría cerca del límite',
         'resumen_mensual' => 'Resumen mensual',
@@ -89,6 +93,14 @@ return [
         ],
     ],
     'templates' => [
+        'recordatorio_suscripcion' => [
+            'title' => 'Se cobrará :name',
+            'body' => 'El :date se cobrará :amount de :name. Si ya no la usas, cancélala desde Suscripciones.',
+        ],
+        'fin_prueba_suscripcion' => [
+            'title' => 'Termina la prueba de :name',
+            'body' => 'Tu prueba gratis termina el :date; después se cobrarán :amount. Cancélala antes si no la quieres.',
+        ],
         'ingreso_dia_menos_1' => [
             'title' => 'Tu ingreso llega mañana',
             'body' => 'Mañana empieza tu período. Ten listo el monto para registrarlo a tiempo.',

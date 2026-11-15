@@ -37,7 +37,7 @@ $customInstruments = $customInstruments ?? [];
                         <button type="submit" class="btn btn-outline-secondary"><?= e(__('investment.custom.save')) ?></button>
                     </form>
                     <form method="post" action="/inversion/tipos/eliminar" class="m-0"
-                          onsubmit="return confirm('<?= e(__('investment.custom.confirm_delete')) ?>')">
+                          data-confirm="<?= e(__('investment.custom.confirm_delete')) ?>" data-confirm-danger>
                         <?= csrf_field() ?>
                         <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
                         <button type="submit" class="btn btn-outline-danger" aria-label="<?= e(__('investment.custom.delete')) ?>">

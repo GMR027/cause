@@ -48,6 +48,7 @@ return [
         'type_ahorro' => 'Savings',
         'type_inversion' => 'Investing',
         'type_donacion' => 'Giving',
+        'type_compartir' => 'Sharing',
         'private' => 'Your level is private. Only you see it here.',
     ],
     'badges' => [

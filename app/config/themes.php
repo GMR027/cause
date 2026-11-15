@@ -15,6 +15,7 @@ return [
         'enfoque' => 'mixto',
         'fondo' => 'ninguno',
         'textura' => 'dots',
+        'opacidad' => 30,
     ],
 
     'palette' => [
@@ -35,5 +36,8 @@ return [
     'modes' => ['claro', 'oscuro', 'auto'],
     'focus' => ['iconos', 'botones', 'mixto'],
     'backgrounds' => ['ninguno', 'radial', 'textura', 'radial_textura'],
-    'textures' => ['dots', 'grid', 'waves', 'finanzas', 'simbolos'],
+    'textures' => ['dots', 'grid', 'waves', 'finanzas', 'simbolos', 'monedas', 'cerdito', 'graficas', 'tarjetas', 'billetes', 'calculadora'],
+
+    // Opacidad (%) de la textura de fondo que la persona puede ajustar.
+    'texture_opacity' => ['min' => 5, 'max' => 60, 'step' => 5],
 ];

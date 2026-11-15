@@ -4,7 +4,8 @@
  * Cauce · animación del cerdito al mover dinero.
  *
  * save   → cerdito verde que recibe monedas.
- * invest → cerdito azul que recibe monedas y flechas de crecimiento.
+ * invest → gráfica de bolsa que sube: velas que crecen, línea que se dibuja
+ *          y flecha al alza.
  * out    → cerdito rojo que se agrieta y se rompe en dos.
  *
  * El nivel (1-5) llega del servidor según el monto: más partículas, más
@@ -31,7 +32,7 @@
 
     const PALETTES = {
         save: { body: '#2fbf7f', light: '#8ff0bf', dark: '#137a4d', cheek: '#ff9fb0' },
-        invest: { body: '#3a86ec', light: '#9cc8ff', dark: '#1b4f9c', cheek: '#ffb0c4' },
+        invest: { body: '#16a34a', light: '#86efac', dark: '#0f3d2a', cheek: '#ffb0c4' },
         out: { body: '#e5484d', light: '#ff9b9e', dark: '#9b1c22', cheek: '#ffd0d2' },
     };
     const palette = PALETTES[kind];
@@ -69,7 +70,69 @@
         <path d="M168 66 C 196 74 214 92 220 110" fill="none" stroke="#fff" stroke-width="5"
               stroke-linecap="round" opacity=".5"/>`;
 
+    // Gráfica de acciones al alza: más velas y más subida con el nivel.
+    const chartSvg = () => {
+        const candles = [6, 7, 8, 10, 12][level - 1];
+        const left = 22;
+        const right = 218;
+        const bottom = 170;
+        const top = 30;
+        const step = (right - left) / candles;
+        const points = [];
+        let value = 0.18;
+        let body = '';
+
+        for (let i = 0; i < candles; i += 1) {
+            const open = value;
+            // Tendencia al alza con algún retroceso pequeño, como en la bolsa.
+            const close = Math.min(0.95, Math.max(0.08, open + (i % 3 === 2 ? -0.05 : rand(0.06, 0.14))));
+            const high = Math.max(open, close) + rand(0.02, 0.06);
+            const low = Math.min(open, close) - rand(0.02, 0.05);
+            const y = (v) => (bottom - v * (bottom - top)).toFixed(1);
+            const x = left + step * i + step / 2;
+            const up = close >= open;
+            const width = Math.max(6, step * 0.5);
+
+            body += `<g class="money-fx-candle ${up ? 'is-up' : 'is-down'}" style="--i:${i}">
+                <line x1="${x.toFixed(1)}" y1="${y(high)}" x2="${x.toFixed(1)}" y2="${y(low)}"/>
+                <rect x="${(x - width / 2).toFixed(1)}" y="${y(Math.max(open, close))}" width="${width.toFixed(1)}"
+                      height="${Math.max(3, (Math.abs(close - open) * (bottom - top))).toFixed(1)}" rx="1.5"/>
+            </g>`;
+            points.push(`${x.toFixed(1)},${y(close)}`);
+            value = close;
+        }
+
+        const last = points[points.length - 1].split(',');
+        const area = `M${points[0].split(',')[0]},${bottom} L${points.join(' L')} L${last[0]},${bottom} Z`;
+
+        return `<svg viewBox="0 0 240 200" class="money-fx-svg money-fx-chart" aria-hidden="true">
+            <defs>
+                <linearGradient id="moneyFxArea" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="${palette.light}" stop-opacity=".55"/>
+                    <stop offset="100%" stop-color="${palette.light}" stop-opacity="0"/>
+                </linearGradient>
+            </defs>
+            <rect x="4" y="8" width="232" height="184" rx="18" class="money-fx-chart-panel"/>
+            <g class="money-fx-chart-grid">
+                <line x1="${left}" y1="${top}" x2="${right}" y2="${top}"/>
+                <line x1="${left}" y1="${(top + bottom) / 2}" x2="${right}" y2="${(top + bottom) / 2}"/>
+                <line x1="${left}" y1="${bottom}" x2="${right}" y2="${bottom}"/>
+            </g>
+            <path d="${area}" class="money-fx-chart-area" fill="url(#moneyFxArea)"/>
+            ${body}
+            <polyline points="${points.join(' ')}" class="money-fx-chart-line" pathLength="100"/>
+            <g class="money-fx-chart-arrow" transform="translate(${last[0]} ${last[1]})">
+                <circle r="9"/>
+                <path d="M-4 3 L0 -3 L4 3" />
+            </g>
+        </svg>`;
+    };
+
     const pigSvg = () => {
+        if (kind === 'invest') {
+            return chartSvg();
+        }
+
         if (!broken) {
             return `<svg viewBox="0 0 240 200" class="money-fx-svg" aria-hidden="true">
                 <g class="money-fx-whole">${pigShape()}</g>
@@ -129,8 +192,8 @@
     const COIN = '<i class="bi bi-coin"></i>';
 
     if (!reduced && !broken) {
-        // Monedas que caen en la ranura; más y más rápido según el nivel.
-        const coins = [4, 7, 12, 18, 28][level - 1];
+        // Monedas que caen en la ranura; en inversión, flechas y % que suben.
+        const coins = kind === 'invest' ? 0 : [4, 7, 12, 18, 28][level - 1];
 
         for (let i = 0; i < coins; i += 1) {
             particle('money-fx-coin', COIN, {
@@ -141,11 +204,16 @@
             });
         }
 
-        if (kind === 'invest' && level >= 2) {
-            const arrows = [0, 3, 5, 8, 12][level - 1];
+        if (kind === 'invest') {
+            const arrows = [3, 5, 7, 10, 14][level - 1];
 
             for (let i = 0; i < arrows; i += 1) {
-                particle('money-fx-rise', '<i class="bi bi-graph-up-arrow"></i>', {
+                particle('money-fx-rise', pick([
+                    '<i class="bi bi-arrow-up-right"></i>',
+                    '<i class="bi bi-graph-up-arrow"></i>',
+                    '<b>%</b>',
+                    '<i class="bi bi-caret-up-fill"></i>',
+                ]), {
                     '--x': rand(-150, 150).toFixed(0) + 'px',
                     '--delay': rand(0.4, 1.8).toFixed(2) + 's',
                     '--size': rand(1.2, 2).toFixed(2) + 'rem',

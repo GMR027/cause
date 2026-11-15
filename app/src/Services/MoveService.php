@@ -163,6 +163,8 @@ final class MoveService
         $moves = new MoveRepository();
         $userId = (int) $user['id'];
         $result = [];
+        // Lo usado por categoría (gastos, aportes, donaciones o Compartir según el tipo).
+        $used = (new GastoService())->disponiblePorParte($user);
 
         foreach ($support->categories($user) as $category) {
             $name = (string) $category['nombre'];
@@ -170,7 +172,9 @@ final class MoveService
             $in = $moves->sumIn($userId, $name, $period['inicio'], $period['fin']);
             $out = $moves->sumOut($userId, $name, $period['inicio'], $period['fin']);
             $adjusted = $original + $in - $out;
-            $spent = $gastos->sumSpentForPart($userId, $name, $period['inicio'], $period['fin']);
+            $spent = isset($used[$name])
+                ? (int) $used[$name]['gastado']
+                : $gastos->sumSpentForPart($userId, $name, $period['inicio'], $period['fin']);
 
             $result[] = [
                 'nombre' => $name,

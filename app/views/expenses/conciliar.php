@@ -42,7 +42,7 @@ $total = array_sum(array_map(
 
             <?php if ($hasIncome): ?>
                 <form method="post" action="/gastos/conciliar/todos"
-                      onsubmit="return confirm('<?= e(__('expenses.conciliar.confirm_all')) ?>')">
+                      data-confirm="<?= e(__('expenses.conciliar.confirm_all')) ?>">
                     <?= csrf_field() ?>
                     <button type="submit" class="btn btn-primary"><?= e(__('expenses.conciliar.all')) ?></button>
                 </form>

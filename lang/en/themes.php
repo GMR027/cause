@@ -9,6 +9,12 @@ return [
         'waves' => 'Waves',
         'finanzas' => 'Money doodles',
         'simbolos' => 'Money symbols',
+        'monedas' => 'Coins',
+        'cerdito' => 'Piggy banks',
+        'graficas' => 'Market charts',
+        'tarjetas' => 'Cards and wallets',
+        'billetes' => 'Banknotes',
+        'calculadora' => 'Bills and calculator',
     ],
     'errors' => [
         'mode' => 'Choose a valid mode.',

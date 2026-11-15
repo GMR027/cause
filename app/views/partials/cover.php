@@ -46,7 +46,7 @@ $inputId = 'cover-' . $target . '-' . $id;
 
         <?php if ($path !== null): ?>
             <form method="post" action="/portadas" class="card-cover-remove"
-                  onsubmit="return confirm('<?= e(__('covers.remove_confirm')) ?>')">
+                  data-confirm="<?= e(__('covers.remove_confirm')) ?>" data-confirm-danger>
                 <?= csrf_field() ?>
                 <input type="hidden" name="tipo" value="<?= e($target) ?>">
                 <input type="hidden" name="id" value="<?= $id ?>">

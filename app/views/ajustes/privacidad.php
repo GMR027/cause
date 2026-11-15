@@ -104,7 +104,7 @@ $analyticsOptOut = (int) ($user['analytics_opt_out'] ?? 0) === 1;
     <p class="small text-secondary mb-3"><?= e(__('privacy.delete.backups')) ?></p>
 
     <form method="post" action="/ajustes/privacidad/eliminar" class="row g-3"
-          onsubmit="return confirm('<?= e(__('privacy.delete.final_confirm')) ?>')">
+          data-confirm="<?= e(__('privacy.delete.final_confirm')) ?>" data-confirm-danger>
         <?= csrf_field() ?>
         <div class="col-12 col-md-5">
             <label class="form-label" for="delete-password"><?= e(__('common.fields.current_password')) ?></label>

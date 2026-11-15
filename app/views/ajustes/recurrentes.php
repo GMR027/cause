@@ -176,7 +176,7 @@ if ($editing !== null) {
 
                             <?php if ((int) $recurring['activo'] === 1): ?>
                                 <form method="post" action="/ajustes/recurrentes/desactivar" class="m-0"
-                                      onsubmit="return confirm('<?= e(__('expenses.recurring.confirm_deactivate')) ?>')">
+                                      data-confirm="<?= e(__('expenses.recurring.confirm_deactivate')) ?>" data-confirm-danger>
                                     <?= csrf_field() ?>
                                     <input type="hidden" name="id" value="<?= (int) $recurring['id'] ?>">
                                     <button type="submit" class="btn btn-sm btn-outline-danger">

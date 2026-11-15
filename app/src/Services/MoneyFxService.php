@@ -8,7 +8,7 @@ use Cauce\Repositories\IngresoRepository;
 use Throwable;
 
 /**
- * Animación del cerdito tras mover dinero.
+ * Animación tras mover dinero (cerdito al ahorrar o gastar, gráfica de bolsa al invertir).
  *
  * El controlador encola el evento antes de redirigir y el layout lo pinta en
  * la siguiente página: verde al ahorrar, azul al invertir y rojo (roto) en

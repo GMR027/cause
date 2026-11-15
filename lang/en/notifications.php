@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 return [
+    'push_open' => 'View',
+    'dismiss' => 'Dismiss notification',
     'title' => 'Notifications',
     'subtitle' => 'Useful reminders so nothing important slips by.',
     'badge' => 'Reminders',
@@ -20,6 +22,8 @@ return [
         'ingreso_rescate' => 'Missing income notice',
         'gasto_recurrente' => 'Recurring charge',
         'recordatorio_deuda' => 'Debt reminder',
+        'recordatorio_suscripcion' => 'Subscription reminder',
+        'fin_prueba_suscripcion' => 'Free trial ending',
         'soporte_respuesta' => 'Support reply',
         'alerta_categoria' => 'Category near its limit',
         'resumen_mensual' => 'Monthly summary',
@@ -89,6 +93,14 @@ return [
         ],
     ],
     'templates' => [
+        'recordatorio_suscripcion' => [
+            'title' => ':name will be charged',
+            'body' => 'On :date you will be charged :amount for :name. If you no longer use it, cancel it from Subscriptions.',
+        ],
+        'fin_prueba_suscripcion' => [
+            'title' => 'The :name trial is ending',
+            'body' => 'Your free trial ends on :date; after that :amount will be charged. Cancel before if you do not want it.',
+        ],
         'ingreso_dia_menos_1' => [
             'title' => 'Your income arrives tomorrow',
             'body' => 'Your period starts tomorrow. Have the amount ready to record it on time.',

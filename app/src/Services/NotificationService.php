@@ -69,6 +69,62 @@ final class NotificationService
         } catch (Throwable $exception) {
             Logger::warning('No se pudieron procesar hitos', ['error' => $exception->getMessage()]);
         }
+
+        try {
+            $this->subscriptionReminders($user, $config, $pushAllowed);
+        } catch (Throwable $exception) {
+            Logger::warning('No se pudieron procesar recordatorios de suscripción', ['error' => $exception->getMessage()]);
+        }
+    }
+
+    /**
+     * Avisos de suscripciones: N días antes del cobro (si la persona lo pidió)
+     * y 3 días antes de que termine una prueba gratis. La clave única evita
+     * repetir el aviso para el mismo cobro.
+     *
+     * @param array<string, mixed> $user
+     * @param array<string, mixed> $config
+     */
+    private function subscriptionReminders(array $user, array $config, bool $pushAllowed): void
+    {
+        if (empty($config['gasto_recurrente']['activo'] ?? 1)) {
+            return;
+        }
+
+        $timezone = (new PeriodoService())->userTimezone($user);
+        $today = new \DateTimeImmutable('today', $timezone);
+
+        foreach ((new \Cauce\Repositories\RecurringExpenseRepository())->allForUser((int) $user['id'], true) as $row) {
+            if ((int) ($row['es_suscripcion'] ?? 0) !== 1) {
+                continue;
+            }
+
+            $next = (new \DateTimeImmutable((string) $row['proxima_ejecucion'], new \DateTimeZone('UTC')))
+                ->setTimezone($timezone)->setTime(0, 0);
+            $days = (int) $today->diff($next)->format('%r%a');
+            $amount = format_money((int) $row['monto_centavos'], (string) $row['moneda']);
+
+            if ($row['recordatorio_dias'] !== null && $days >= 0 && $days <= (int) $row['recordatorio_dias']) {
+                $this->emit($user, 'recordatorio_suscripcion', 'sub-reminder:' . (int) $row['id'] . ':' . $next->format('Y-m-d'), [
+                    ':name' => (string) $row['nombre'],
+                    ':amount' => $amount,
+                    ':date' => format_date($next->format('Y-m-d') . ' 12:00:00'),
+                ], null, $pushAllowed, (int) $row['id'], '/reportes/suscripciones');
+            }
+
+            if (!empty($row['prueba_hasta'])) {
+                $trial = new \DateTimeImmutable((string) $row['prueba_hasta'], $timezone);
+                $trialDays = (int) $today->diff($trial)->format('%r%a');
+
+                if ($trialDays >= 0 && $trialDays <= 3) {
+                    $this->emit($user, 'fin_prueba_suscripcion', 'sub-trial:' . (int) $row['id'] . ':' . $trial->format('Y-m-d'), [
+                        ':name' => (string) $row['nombre'],
+                        ':amount' => $amount,
+                        ':date' => format_date($trial->format('Y-m-d') . ' 12:00:00'),
+                    ], null, $pushAllowed, (int) $row['id'], '/reportes/suscripciones');
+                }
+            }
+        }
     }
 
     /**

@@ -21,7 +21,13 @@
         }
 
         if (file.size > MAX_BYTES) {
-            window.alert(input.getAttribute('data-cover-too-big') || '');
+            const message = input.getAttribute('data-cover-too-big') || '';
+
+            if (window.Cauce && typeof window.Cauce.alert === 'function') {
+                window.Cauce.alert(message);
+            } else {
+                window.alert(message);
+            }
             input.value = '';
             return;
         }

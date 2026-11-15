@@ -8,7 +8,19 @@ $categories = $categories ?? [];
 $subcategories = $subcategories ?? [];
 $filters = $filters ?? [];
 $periodoValue = $periodoValue ?? 'todos';
-$total = (int) ($total ?? 0);
+$feed = $feed ?? [];
+$kind = (string) ($kind ?? 'todos');
+$kinds = $kinds ?? [];
+$totals = $totals ?? ['entradas' => 0, 'salidas' => 0];
+$kindIcons = [
+    'ingreso' => 'bi-arrow-down-circle',
+    'ahorro' => 'bi-piggy-bank',
+    'inversion' => 'bi-graph-up-arrow',
+    'donacion' => 'bi-heart',
+    'compartir' => 'bi-people',
+    'movimiento' => 'bi-arrow-left-right',
+];
+$signs = ['entrada' => '+', 'salida' => '−', 'neutral' => ''];
 $currency = (string) ($currency ?? ($currentUser['moneda_activa'] ?? 'MXN'));
 $stateClasses = [
     'asignado' => 'text-bg-success',
@@ -22,7 +34,10 @@ $stateClasses = [
         <h1 class="h3 mb-1"><?= e(__('nav.movimientos')) ?></h1>
         <p class="text-secondary mb-0">
             <?= e(__('expenses.list.subtitle')) ?>
-            · <?= e(__('expenses.list.total')) ?>: <strong><?= money_html($total, $currency) ?></strong>
+        </p>
+        <p class="small mb-0">
+            <?= e(__('expenses.list.income_total')) ?>: <strong class="text-success"><?= money_html((int) $totals['entradas'], $currency) ?></strong>
+            · <?= e(__('expenses.list.outflow_total')) ?>: <strong><?= money_html((int) $totals['salidas'], $currency) ?></strong>
         </p>
     </div>
     <a href="/gastos/nuevo" class="btn btn-primary d-none d-xl-inline-flex">
@@ -32,7 +47,7 @@ $stateClasses = [
 
 <form method="get" action="/movimientos" class="surface-card mb-3 filter-card">
     <div class="row g-2 align-items-end filter-grid">
-        <div class="col-12 col-lg-3 filter-search">
+        <div class="col-12 col-lg-2 filter-search">
             <label class="form-label small" for="q"><?= e(__('expenses.list.search')) ?></label>
             <input type="search" class="form-control" id="q" name="q"
                    value="<?= e((string) ($filters['q'] ?? '')) ?>"
@@ -52,7 +67,18 @@ $stateClasses = [
             </select>
         </div>
 
-        <div class="col-6 col-lg-2">
+        <div class="col-6 col-lg-1">
+            <label class="form-label small" for="tipo"><?= e(__('expenses.list.kind')) ?></label>
+            <select class="form-select" id="tipo" name="tipo">
+                <?php foreach (array_merge(['todos'], $kinds) as $option): ?>
+                    <option value="<?= e((string) $option) ?>" <?= $kind === $option ? 'selected' : '' ?>>
+                        <?= e(__('expenses.list.kinds.' . (string) $option)) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+
+        <div class="col-6 col-lg-1">
             <label class="form-label small" for="parte"><?= e(__('expenses.list.part')) ?></label>
             <select class="form-select" id="parte" name="parte">
                 <option value=""><?= e(__('expenses.list.all_parts')) ?></option>
@@ -110,9 +136,10 @@ $stateClasses = [
             <a href="/movimientos" class="btn btn-outline-secondary"><?= e(__('expenses.list.clear')) ?></a>
         </div>
     </div>
+    <p class="small text-secondary mt-2 mb-0"><?= e(__('expenses.list.expense_only_hint')) ?></p>
 </form>
 
-<?php if ($rows === []): ?>
+<?php if ($feed === []): ?>
     <div class="surface-card">
         <div class="empty-state">
             <span class="empty-icon" aria-hidden="true"><i class="bi bi-cash-stack"></i></span>
@@ -123,8 +150,37 @@ $stateClasses = [
     </div>
 <?php else: ?>
     <div class="movement-list">
-        <?php foreach ($rows as $row): ?>
+        <?php foreach ($feed as $item): ?>
+            <?php if ($item['tipo'] !== 'gasto'): ?>
+                <?php
+                $tag = $item['url'] !== null ? 'a' : 'div';
+                $href = $item['url'] !== null ? ' href="' . e((string) $item['url']) . '"' : '';
+                $amountClass = $item['direccion'] === 'entrada' ? 'text-success' : ($item['direccion'] === 'neutral' ? 'text-secondary' : '');
+                ?>
+                <<?= $tag ?> class="movement-row"<?= $href ?>>
+                    <span class="movement-thumb movement-thumb-empty" aria-hidden="true">
+                        <i class="bi <?= e($kindIcons[$item['tipo']] ?? 'bi-dot') ?>"></i>
+                    </span>
+                    <span class="movement-main">
+                        <span class="d-flex align-items-center gap-2">
+                            <span class="fw-semibold"><?= e((string) $item['titulo']) ?></span>
+                            <span class="badge text-bg-light border"><?= e(__('expenses.list.kinds.' . (string) $item['tipo'])) ?></span>
+                        </span>
+                        <span class="small text-secondary">
+                            <?php if ((string) $item['detalle'] !== ''): ?>
+                                <?= e((string) $item['detalle']) ?> ·
+                            <?php endif; ?>
+                            <?= e(format_date($item['fecha'] ?? null)) ?>
+                        </span>
+                    </span>
+                    <span class="movement-amount <?= e($amountClass) ?>">
+                        <?= e($signs[$item['direccion']] ?? '') ?><?= money_html((int) $item['monto_centavos'], (string) $item['moneda']) ?>
+                    </span>
+                </<?= $tag ?>>
+                <?php continue; ?>
+            <?php endif; ?>
             <?php
+            $row = $item['gasto'];
             $id = (int) $row['id'];
             $state = (string) ($row['estado'] ?? 'asignado');
             $rowTags = $tagMap[$id] ?? [];
@@ -162,7 +218,7 @@ $stateClasses = [
                 </span>
 
                 <span class="movement-amount">
-                    <?= money_html((int) $row['monto_centavos'], (string) $row['moneda']) ?>
+                    −<?= money_html((int) $row['monto_centavos'], (string) $row['moneda']) ?>
                 </span>
             </a>
         <?php endforeach; ?>

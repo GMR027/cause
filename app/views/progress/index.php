@@ -49,7 +49,7 @@ $badgeIcons = [
 </div>
 
 <?php if (!$enabled): ?>
-    <div class="alert alert-secondary py-2 small" role="status">
+    <div class="alert alert-secondary py-2 small" role="status" data-dismissible data-dismiss-key="progress-info">
         <i class="bi bi-eye-slash me-1" aria-hidden="true"></i>
         <?= e(__('gamification.enabled_hint')) ?>
         <a href="/ajustes/perfil" class="ms-1"><?= e(__('gamification.enabled')) ?></a>

@@ -50,7 +50,7 @@ foreach ($evolution as $index => $point) {
     </form>
 </div>
 
-<div class="alert alert-secondary py-2 small" role="status">
+<div class="alert alert-secondary py-2 small" role="status" data-dismissible data-dismiss-key="admin-reports-info">
     <i class="bi bi-incognito me-1" aria-hidden="true"></i>
     <?= e(__('admin.stats.privacy_note')) ?>
     · <?= e(__('admin.stats.generated_at', [':date' => format_datetime($stats['generated_at'] ?? null)])) ?>

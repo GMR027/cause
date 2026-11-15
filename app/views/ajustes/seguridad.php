@@ -164,7 +164,7 @@ $pinLength = (int) ($pinLength ?? 6);
                 <?php endif; ?>
 
                 <form method="post" action="/ajustes/seguridad/cerrar-sesiones"
-                      onsubmit="return confirm('<?= e(__('auth.security.close_all_hint')) ?>')">
+                      data-confirm="<?= e(__('auth.security.close_all_hint')) ?>">
                     <?= csrf_field() ?>
                     <button type="submit" class="btn btn-outline-danger w-100"><?= e(__('auth.security.close_all')) ?></button>
                 </form>

@@ -311,7 +311,8 @@ final class WishlistService
                     $user,
                     (int) $item['meta_id'],
                     (new CurrencyService())->toPrincipal($user, $amount, $itemCurrency, $today)['centavos'],
-                    mb_substr(__('wishlist.contribute.withdraw_note', [':name' => (string) $item['nombre']]), 0, 255)
+                    mb_substr(__('wishlist.contribute.withdraw_note', [':name' => (string) $item['nombre']]), 0, 255),
+                    $gastoId !== null && $gastoId > 0 ? $gastoId : null
                 );
             } catch (Throwable $exception) {
                 // La compra ya se registró; solo se avisa que el retiro falló.

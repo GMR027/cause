@@ -26,6 +26,14 @@ return [
         'user' => 'User',
         'name' => 'Name',
     ],
+    'dialog' => [
+        'confirm_title' => 'Confirm this action?',
+        'danger_title' => 'Are you sure you want to continue?',
+        'notice_title' => 'Notice',
+        'confirm' => 'Confirm',
+        'danger' => 'Yes, continue',
+        'ok' => 'Got it',
+    ],
     'actions' => [
         'save' => 'Save',
         'cancel' => 'Cancel',

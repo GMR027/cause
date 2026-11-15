@@ -9,6 +9,12 @@ return [
         'waves' => 'Ondas',
         'finanzas' => 'Garabatos financieros',
         'simbolos' => 'Símbolos de dinero',
+        'monedas' => 'Monedas',
+        'cerdito' => 'Cerditos de ahorro',
+        'graficas' => 'Gráficas de mercado',
+        'tarjetas' => 'Tarjetas y carteras',
+        'billetes' => 'Billetes',
+        'calculadora' => 'Cuentas y calculadora',
     ],
     'errors' => [
         'mode' => 'Elige un modo válido.',

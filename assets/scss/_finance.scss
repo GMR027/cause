@@ -238,3 +238,95 @@
         opacity: 0;
     }
 }
+
+// ---------------------------------------------------------------------------
+// Diálogo de confirmación / aviso (partials/confirm.php)
+// ---------------------------------------------------------------------------
+
+.app-dialog {
+    // En móvil sale como bottom sheet con asa; desde 768px, modal centrado.
+    .offcanvas-body {
+        padding: 1.5rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom));
+    }
+
+    &::before {
+        content: "";
+        display: block;
+        width: 2.5rem;
+        height: .3rem;
+        margin: .6rem auto 0;
+        border-radius: 1rem;
+        background: var(--cauce-border);
+    }
+
+    .btn {
+        min-width: 8.5rem;
+        padding-top: .6rem;
+        padding-bottom: .6rem;
+    }
+
+    @media (max-width: 575.98px) {
+        .btn {
+            width: 100%;
+        }
+    }
+
+    @media (min-width: 768px) {
+        width: min(26rem, calc(100vw - 3rem)) !important;
+
+        &::before {
+            display: none;
+        }
+    }
+}
+
+.app-dialog-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 50%;
+    background: var(--cauce-primary-soft);
+    color: var(--cauce-primary);
+    font-size: 1.6rem;
+
+    &.is-danger {
+        background: rgba(var(--bs-danger-rgb), .12);
+        color: var(--bs-danger);
+    }
+
+    &.is-info {
+        background: rgba(var(--bs-info-rgb), .14);
+        color: var(--bs-info-text-emphasis);
+    }
+}
+
+// Asa visual en todas las hojas inferiores en móvil.
+@media (max-width: 767.98px) {
+    .offcanvas-bottom.finance-sheet,
+    .offcanvas-bottom.app-sheet {
+        box-shadow: 0 -.75rem 2.5rem rgba(0, 0, 0, .18);
+
+        .offcanvas-header {
+            position: relative;
+            padding-top: 1.4rem;
+
+            &::before {
+                content: "";
+                position: absolute;
+                top: .55rem;
+                left: 50%;
+                width: 2.5rem;
+                height: .3rem;
+                border-radius: 1rem;
+                background: var(--cauce-border);
+                transform: translateX(-50%);
+            }
+        }
+    }
+
+    .celebration-modal .modal-dialog {
+        margin: auto 1rem;
+    }
+}

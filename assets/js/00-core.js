@@ -99,12 +99,19 @@
         enfoque: 'mixto',
         fondo: 'ninguno',
         textura: 'dots',
+        opacidad: 30,
     };
 
     const MODES = ['claro', 'oscuro', 'auto'];
     const FOCUS = ['iconos', 'botones', 'mixto'];
     const BACKGROUNDS = ['ninguno', 'radial', 'textura', 'radial_textura'];
-    const TEXTURES = ['dots', 'grid', 'waves', 'finanzas', 'simbolos'];
+    const TEXTURES = ['dots', 'grid', 'waves', 'finanzas', 'simbolos', 'monedas', 'cerdito', 'graficas', 'tarjetas', 'billetes', 'calculadora'];
+
+    const clampOpacity = (value) => {
+        const number = parseInt(value, 10);
+
+        return Number.isNaN(number) ? DEFAULT_THEME.opacidad : Math.min(60, Math.max(5, number));
+    };
 
     const hexToRgb = (hex) => {
         if (!/^#[0-9a-f]{6}$/i.test(hex || '')) {
@@ -155,6 +162,7 @@
             enfoque: FOCUS.includes(source.enfoque) ? source.enfoque : DEFAULT_THEME.enfoque,
             fondo: BACKGROUNDS.includes(source.fondo) ? source.fondo : DEFAULT_THEME.fondo,
             textura: TEXTURES.includes(source.textura) ? source.textura : DEFAULT_THEME.textura,
+            opacidad: clampOpacity(source.opacidad),
         };
     };
 
@@ -164,7 +172,9 @@
         return modo === 'oscuro' || (modo === 'auto' && prefersDark()) ? 'dark' : 'light';
     };
 
-    const applyVars = (element, color) => {
+    const applyVars = (element, color, opacity) => {
+        const alpha = clampOpacity(opacity) / 100;
+
         const [r, g, b] = hexToRgb(color);
 
         element.style.setProperty('--cauce-primary', color);
@@ -172,9 +182,11 @@
         element.style.setProperty('--cauce-primary-hover', shade(color, 0.88));
         element.style.setProperty('--cauce-primary-active', shade(color, 0.78));
         element.style.setProperty('--cauce-primary-soft', 'rgba(' + r + ', ' + g + ', ' + b + ', 0.12)');
+        // Las texturas CSS escalan su opacidad respecto al 30 % por defecto.
+        element.style.setProperty('--cauce-texture-scale', String(alpha / 0.3));
 
         if (window.CauceDoodles) {
-            window.CauceDoodles.apply(element, color);
+            window.CauceDoodles.apply(element, color, alpha);
         }
     };
 
@@ -189,7 +201,7 @@
         target.setAttribute('data-fondo', value.fondo);
         target.setAttribute('data-textura', value.textura);
         target.setAttribute('data-bs-theme', resolveBootstrapTheme(value.modo));
-        applyVars(target, value.color);
+        applyVars(target, value.color, value.opacidad);
 
         if (target === document.documentElement) {
             currentTheme = value;

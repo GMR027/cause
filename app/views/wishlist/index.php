@@ -278,7 +278,7 @@ $dateOnly = static fn (?string $date): string => $date !== null && trim($date) !
                         </button>
 
                         <form method="post" action="/deseos/descartar" class="m-0"
-                              onsubmit="return confirm('<?= e(__($goalLinked && $saved > 0 ? 'wishlist.discard.confirm_saved' : 'wishlist.discard.confirm')) ?>')">
+                              data-confirm="<?= e(__($goalLinked && $saved > 0 ? 'wishlist.discard.confirm_saved' : 'wishlist.discard.confirm')) ?>" data-confirm-danger>
                             <?= csrf_field() ?>
                             <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
                             <button type="submit" class="btn btn-sm btn-outline-danger">
@@ -292,7 +292,7 @@ $dateOnly = static fn (?string $date): string => $date !== null && trim($date) !
     </div>
 <?php endif; ?>
 
-<div class="offcanvas offcanvas-end" tabindex="-1" id="wishlistCreate"
+<div class="offcanvas offcanvas-bottom finance-sheet" tabindex="-1" id="wishlistCreate"
      aria-labelledby="wishlistCreateTitle">
     <div class="offcanvas-header">
         <h2 class="offcanvas-title h5" id="wishlistCreateTitle"><?= e(__('wishlist.add')) ?></h2>
@@ -362,7 +362,7 @@ $dateOnly = static fn (?string $date): string => $date !== null && trim($date) !
     </div>
 </div>
 
-<div class="offcanvas offcanvas-end" tabindex="-1" id="wishlistEdit"
+<div class="offcanvas offcanvas-bottom finance-sheet" tabindex="-1" id="wishlistEdit"
      aria-labelledby="wishlistEditTitle">
     <div class="offcanvas-header">
         <h2 class="offcanvas-title h5" id="wishlistEditTitle"><?= e(__('wishlist.edit')) ?></h2>
@@ -429,7 +429,7 @@ $dateOnly = static fn (?string $date): string => $date !== null && trim($date) !
     </div>
 </div>
 
-<div class="offcanvas offcanvas-end" tabindex="-1" id="wishlistContribute"
+<div class="offcanvas offcanvas-bottom finance-sheet" tabindex="-1" id="wishlistContribute"
      aria-labelledby="wishlistContributeTitle">
     <div class="offcanvas-header">
         <div>
@@ -473,7 +473,7 @@ $dateOnly = static fn (?string $date): string => $date !== null && trim($date) !
     </div>
 </div>
 
-<div class="offcanvas offcanvas-end" tabindex="-1" id="wishlistBuy"
+<div class="offcanvas offcanvas-bottom finance-sheet" tabindex="-1" id="wishlistBuy"
      aria-labelledby="wishlistBuyTitle">
     <div class="offcanvas-header">
         <div>

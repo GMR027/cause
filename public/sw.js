@@ -2,7 +2,7 @@
 
 /* Cauce · service worker de Web Push y shell offline. */
 
-const SHELL_CACHE = 'cauce-shell-v5';
+const SHELL_CACHE = 'cauce-shell-v6';
 const SHELL_ASSETS = [
     '/assets/css/app.min.css',
     '/assets/js/app.min.js',
@@ -82,12 +82,22 @@ self.addEventListener('push', (event) => {
             icon: '/assets/img/icon-192.png',
             badge: '/assets/img/icon-192.png',
             data: { url: payload.url || '/notificaciones' },
+            // Botones de la notificación: abrir o cerrar (✕).
+            actions: [
+                { action: 'open', title: payload.openLabel || 'Ver' },
+                { action: 'close', title: payload.closeLabel || '✕ Cerrar' },
+            ],
         })
     );
 });
 
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
+
+    if (event.action === 'close') {
+        return;
+    }
+
     const url = (event.notification.data && event.notification.data.url) || '/notificaciones';
 
     event.waitUntil(

@@ -101,6 +101,22 @@ portadas (200 × 200 px, JPEG) se guardan en `storage/uploads/portadas/<user_id>
 dentro del PVC `cause-storage`. No es idempotente; `init-db.sh` la aplica una
 sola vez.
 
+### Compartir, acreditar en un paso y suscripciones (2026-11-15)
+
+Migraciones nuevas, todas no idempotentes (`init-db.sh` las aplica una sola vez,
+solo estructura, sin tocar datos existentes):
+
+- `20261114_compartir.sql`: tipo de categoría `compartir` (el frasco Compartir
+  de Cinco frascos deja de sumarse a Donación) y tabla `compartidos`.
+- `20261115_acreditar_temas.sql`: `gastos_recurrentes.no_controlado_hasta`
+  (recurrentes enviados a «no controlado» al acreditar) y
+  `users.tema_textura_opacidad`.
+- `20261115_gasto_vinculos.sql`: `gastos.deuda_exceso_id` y
+  `deuda_exceso_centavos` para deshacer el exceso mandado a deuda al borrar
+  un gasto.
+- `20261115_suscripciones_avisos.sql`: `notificaciones.descartada` (cerrar
+  con X) y campos de seguimiento de suscripciones en `gastos_recurrentes`.
+
 ### Cotizaciones automáticas
 
 El CronJob `cause-quotes` ejecuta `php /var/www/html/bin/quotes.php` con el

@@ -11,7 +11,7 @@ $currentUri = $_SERVER['REQUEST_URI'] ?? '/';
 $flashes = Flash::pull();
 ?>
 <!doctype html>
-<html lang="<?= e($lang) ?>" <?= theme_attributes($theme ?? []) ?>>
+<html lang="<?= e($lang) ?>" <?= theme_attributes($theme ?? []) ?> data-close-label="<?= e(__('common.actions.close')) ?>">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -82,6 +82,8 @@ $flashes = Flash::pull();
             JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE
         ) ?>;
     </script>
+    <?= partial('partials/confirm') ?>
+
     <script src="<?= asset_versioned('js/app.min.js') ?>"></script>
 </body>
 </html>

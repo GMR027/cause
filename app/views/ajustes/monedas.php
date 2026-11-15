@@ -31,7 +31,7 @@ $rates = $rates ?? [];
                         <div class="d-flex flex-wrap gap-2">
                             <?php if ($code !== $principal): ?>
                                 <form method="post" action="/ajustes/monedas/principal" class="m-0"
-                                      onsubmit="return confirm('<?= e(__('currency.confirm_principal')) ?>')">
+                                      data-confirm="<?= e(__('currency.confirm_principal')) ?>">
                                     <?= csrf_field() ?>
                                     <input type="hidden" name="codigo" value="<?= e($code) ?>">
                                     <button type="submit" class="btn btn-sm btn-outline-primary">

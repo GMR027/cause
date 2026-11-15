@@ -39,6 +39,12 @@ final class AsignacionRepository
         }
     }
 
+    public function deleteForIngreso(int $ingresoId, int $userId): void
+    {
+        $stmt = $this->db->prepare('DELETE FROM asignaciones WHERE ingreso_id = ? AND user_id = ?');
+        $stmt->execute([$ingresoId, $userId]);
+    }
+
     /**
      * @return list<array<string, mixed>>
      */

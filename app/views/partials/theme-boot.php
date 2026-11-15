@@ -20,11 +20,14 @@ $doodles = (array) config('doodles', []);
     // Texturas con garabatos financieros: el SVG se tiñe con el color del tema.
     window.CauceDoodles = {
         tiles: <?= json_encode($doodles, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES) ?>,
-        apply: function (element, color) {
+        apply: function (element, color, alpha) {
             var tiles = this.tiles;
+            var opacity = typeof alpha === 'number' && alpha > 0 ? String(alpha) : '0.3';
+
+            element.style.setProperty('--cauce-texture-scale', String(parseFloat(opacity) / 0.3));
 
             Object.keys(tiles).forEach(function (name) {
-                var svg = tiles[name].split('__C__').join(color).split('__A__').join('0.3');
+                var svg = tiles[name].split('__C__').join(color).split('__A__').join(opacity);
 
                 element.style.setProperty(
                     '--cauce-doodle-' + name,
@@ -84,7 +87,8 @@ $doodles = (array) config('doodles', []);
         root.style.setProperty('--cauce-primary-hover', shade(0.88));
         root.style.setProperty('--cauce-primary-active', shade(0.78));
         root.style.setProperty('--cauce-primary-soft', 'rgba(' + r + ', ' + g + ', ' + b + ', 0.12)');
-        window.CauceDoodles.apply(root, color);
+        var opacidad = parseInt(stored.opacidad, 10);
+        window.CauceDoodles.apply(root, color, (isNaN(opacidad) ? 30 : Math.min(60, Math.max(5, opacidad))) / 100);
 
         var meta = document.querySelector('meta[name="theme-color"]');
 

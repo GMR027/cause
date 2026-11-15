@@ -309,7 +309,7 @@ $quickDate = $selectedDate;
     </div>
 </div>
 
-<div class="offcanvas offcanvas-end" tabindex="-1" id="calendarQuick"
+<div class="offcanvas offcanvas-bottom finance-sheet" tabindex="-1" id="calendarQuick"
      aria-labelledby="calendarQuickTitle">
     <div class="offcanvas-header">
         <div>

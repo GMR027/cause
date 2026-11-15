@@ -5,11 +5,26 @@ $subscriptions = $subscriptions ?? [];
 $score = $score ?? [];
 $currency = (string) ($netWorth['currency'] ?? ($currentUser['moneda_activa'] ?? 'MXN'));
 $cash = (int) ($netWorth['cash_centavos'] ?? 0);
-$dataPoints = array_values(array_filter($history, static fn (array $point): bool => !empty($point['has_data'])));
+$series = $series ?? [];
+$range = (string) ($range ?? '6m');
+$ranges = $ranges ?? ['1m', '3m', '6m', '1a', 'todo'];
+
+// Gráfica estilo bolsa: área con degradado, línea base en el valor inicial,
+// eje Y a la derecha y tooltip con cruz (assets/js/89-reports.js).
 $chartWidth = 720;
-$chartHeight = 220;
-$padding = 34;
-$values = array_map(static fn (array $point): int => (int) $point['neto_centavos'], $dataPoints);
+$chartHeight = 260;
+$padLeft = 8;
+$padRight = 78;
+$padTop = 16;
+$padBottom = 30;
+$plotW = $chartWidth - $padLeft - $padRight;
+$plotH = $chartHeight - $padTop - $padBottom;
+$values = array_map(static fn (array $point): int => (int) $point['neto_centavos'], $series);
+$first = $values !== [] ? $values[0] : 0;
+$last = $values !== [] ? $values[count($values) - 1] : 0;
+$change = $last - $first;
+$changePercent = $first !== 0 ? ($change / abs($first)) * 100 : null;
+$trend = $change > 0 ? 'up' : ($change < 0 ? 'down' : 'flat');
 $min = $values !== [] ? min($values) : 0;
 $max = $values !== [] ? max($values) : 0;
 
@@ -18,27 +33,44 @@ if ($min === $max) {
     $max += 100;
 }
 
-$range = max(1, $max - $min);
-$points = [];
-$count = count($history);
-$indexByMonth = [];
+// Un poco de aire arriba y abajo para que la línea no toque los bordes.
+$margin = (int) round(($max - $min) * 0.08);
+$min -= $margin;
+$max += $margin;
+$rangeValue = max(1, $max - $min);
+$count = count($series);
+$xFor = static fn (int $index): float => $padLeft + ($count <= 1 ? $plotW : ($index / ($count - 1)) * $plotW);
+$yFor = static fn (int $value): float => $padTop + (1 - (($value - $min) / $rangeValue)) * $plotH;
+$linePoints = [];
+$chartData = [];
 
-foreach ($history as $index => $point) {
-    $indexByMonth[(string) $point['month']] = $index;
+foreach ($series as $index => $point) {
+    $x = round($xFor($index), 1);
+    $y = round($yFor((int) $point['neto_centavos']), 1);
+    $linePoints[] = $x . ',' . $y;
+    $chartData[] = [
+        'x' => $x,
+        'y' => $y,
+        'date' => format_date($point['fecha'] . ' 12:00:00'),
+        'value' => format_money((int) $point['neto_centavos'], $currency),
+        'change' => format_money((int) $point['neto_centavos'] - $first, $currency),
+        'up' => (int) $point['neto_centavos'] >= $first,
+    ];
 }
 
-foreach ($dataPoints as $point) {
-    $index = $indexByMonth[(string) $point['month']] ?? 0;
-    $x = $padding + ($count <= 1 ? 0 : $index * (($chartWidth - 2 * $padding) / max(1, $count - 1)));
-    $y = $chartHeight - $padding - ((((int) $point['neto_centavos'] - $min) / $range) * ($chartHeight - 2 * $padding));
-    $points[] = round($x, 1) . ',' . round($y, 1);
+if ($count === 1) {
+    array_unshift($linePoints, $padLeft . ',' . explode(',', $linePoints[0])[1]);
 }
 
-$zeroY = null;
-
-if ($min < 0 && $max > 0) {
-    $zeroY = $chartHeight - $padding - (((0 - $min) / $range) * ($chartHeight - 2 * $padding));
-}
+$baseY = round($yFor($first), 1);
+$bottomY = $padTop + $plotH;
+$areaPath = $linePoints !== []
+    ? 'M' . explode(',', $linePoints[0])[0] . ',' . $bottomY . ' L' . implode(' L', $linePoints)
+        . ' L' . explode(',', $linePoints[count($linePoints) - 1])[0] . ',' . $bottomY . ' Z'
+    : '';
+$yTicks = [$max, (int) round(($max + $min) / 2), $min];
+$xTicks = $count <= 1 ? [0] : array_values(array_unique([0, (int) round(($count - 1) / 3), (int) round(2 * ($count - 1) / 3), $count - 1]));
+$lastPoint = $linePoints !== [] ? explode(',', $linePoints[count($linePoints) - 1]) : null;
 ?>
 <div class="page-heading">
     <div>
@@ -121,41 +153,87 @@ if ($min < 0 && $max > 0) {
 
 <?= partial('partials/score-detail', ['score' => $score]) ?>
 
-<div class="surface-card mb-4">
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-        <h2 class="h5 mb-0"><?= e(__('reports.chart.title')) ?></h2>
-        <span class="small text-secondary"><?= e(__('reports.chart.month')) ?></span>
+<div class="surface-card mb-4 stock-card stock-<?= e($trend) ?>">
+    <div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-2">
+        <div>
+            <h2 class="h6 text-secondary mb-1"><?= e(__('reports.chart.title')) ?></h2>
+            <?php if ($series !== []): ?>
+                <div class="stock-value" data-stock-value><?= money_html($last, $currency) ?></div>
+                <div class="stock-change" data-stock-change>
+                    <i class="bi <?= $trend === 'down' ? 'bi-caret-down-fill' : ($trend === 'up' ? 'bi-caret-up-fill' : 'bi-dash') ?>" aria-hidden="true"></i>
+                    <?= e(($change > 0 ? '+' : '') . format_money($change, $currency)) ?>
+                    <?php if ($changePercent !== null): ?>
+                        (<?= e(($change > 0 ? '+' : '') . number_format($changePercent, 2)) ?> %)
+                    <?php endif; ?>
+                    <span class="text-secondary fw-normal">· <?= e(__('reports.chart.ranges_label.' . $range)) ?></span>
+                </div>
+            <?php endif; ?>
+        </div>
+        <nav class="stock-ranges" aria-label="<?= e(__('reports.chart.range')) ?>">
+            <?php foreach ($ranges as $option): ?>
+                <a href="/reportes?rango=<?= e((string) $option) ?>"
+                   class="stock-range <?= $option === $range ? 'active' : '' ?>"
+                   <?= $option === $range ? 'aria-current="true"' : '' ?>>
+                    <?= e(__('reports.chart.ranges.' . (string) $option)) ?>
+                </a>
+            <?php endforeach; ?>
+        </nav>
     </div>
 
-    <?php if ($dataPoints === []): ?>
+    <?php if ($series === []): ?>
         <p class="small text-secondary mb-0"><?= e(__('reports.chart.empty')) ?></p>
     <?php else: ?>
-        <svg viewBox="0 0 <?= $chartWidth ?> <?= $chartHeight ?>" class="report-chart" role="img"
-             aria-label="<?= e(__('reports.chart.title')) ?>">
-            <line x1="<?= $padding ?>" y1="<?= $chartHeight - $padding ?>" x2="<?= $chartWidth - $padding ?>"
-                  y2="<?= $chartHeight - $padding ?>" stroke="currentColor" opacity=".15"></line>
-            <?php if ($zeroY !== null): ?>
-                <line x1="<?= $padding ?>" y1="<?= round($zeroY, 1) ?>" x2="<?= $chartWidth - $padding ?>"
-                      y2="<?= round($zeroY, 1) ?>" stroke="currentColor" opacity=".25" stroke-dasharray="4 4"></line>
-            <?php endif; ?>
-            <polyline points="<?= e(implode(' ', $points)) ?>" fill="none" stroke="currentColor"
-                      stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"></polyline>
-            <?php foreach ($dataPoints as $point): ?>
-                <?php
-                $index = $indexByMonth[(string) $point['month']] ?? 0;
-                $x = $padding + ($count <= 1 ? 0 : $index * (($chartWidth - 2 * $padding) / max(1, $count - 1)));
-                $y = $chartHeight - $padding - ((((int) $point['neto_centavos'] - $min) / $range) * ($chartHeight - 2 * $padding));
-                ?>
-                <circle cx="<?= round($x, 1) ?>" cy="<?= round($y, 1) ?>" r="3.5" fill="currentColor"></circle>
-            <?php endforeach; ?>
-            <?php foreach ($history as $index => $point): ?>
-                <?php if ($index % 2 === 0 || $index === $count - 1): ?>
-                    <?php $x = $padding + ($count <= 1 ? 0 : $index * (($chartWidth - 2 * $padding) / max(1, $count - 1))); ?>
-                    <text x="<?= round($x, 1) ?>" y="<?= $chartHeight - 8 ?>" text-anchor="middle"
-                          font-size="9" fill="currentColor" opacity=".65"><?= e((string) $point['month']) ?></text>
+        <div class="stock-chart-wrap" data-stock-chart
+             data-points="<?= e((string) json_encode($chartData, JSON_UNESCAPED_UNICODE)) ?>"
+             data-width="<?= $chartWidth ?>" data-height="<?= $chartHeight ?>"
+             data-top="<?= $padTop ?>" data-bottom="<?= $bottomY ?>">
+            <svg viewBox="0 0 <?= $chartWidth ?> <?= $chartHeight ?>" class="report-chart stock-chart" role="img"
+                 aria-label="<?= e(__('reports.chart.aria', [
+                     ':first' => format_money($first, $currency),
+                     ':last' => format_money($last, $currency),
+                 ])) ?>">
+                <defs>
+                    <linearGradient id="stockFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="currentColor" stop-opacity=".28"></stop>
+                        <stop offset="100%" stop-color="currentColor" stop-opacity="0"></stop>
+                    </linearGradient>
+                </defs>
+                <?php foreach ($yTicks as $tick): ?>
+                    <?php $ty = round($yFor($tick), 1); ?>
+                    <line x1="<?= $padLeft ?>" y1="<?= $ty ?>" x2="<?= $padLeft + $plotW ?>" y2="<?= $ty ?>"
+                          class="stock-grid"></line>
+                    <text x="<?= $chartWidth - 4 ?>" y="<?= $ty + 4 ?>" text-anchor="end" class="stock-axis">
+                        <?= e(format_money($tick, $currency)) ?>
+                    </text>
+                <?php endforeach; ?>
+                <line x1="<?= $padLeft ?>" y1="<?= $baseY ?>" x2="<?= $padLeft + $plotW ?>" y2="<?= $baseY ?>"
+                      class="stock-baseline"></line>
+                <path d="<?= e($areaPath) ?>" class="stock-area" fill="url(#stockFill)"></path>
+                <polyline points="<?= e(implode(' ', $linePoints)) ?>" class="stock-line" fill="none"></polyline>
+                <?php foreach ($xTicks as $tickIndex): ?>
+                    <text x="<?= round(min($padLeft + $plotW - 20, max($padLeft + 20, $xFor($tickIndex))), 1) ?>"
+                          y="<?= $chartHeight - 8 ?>" text-anchor="middle" class="stock-axis">
+                        <?= e(format_date(($series[$tickIndex]['fecha'] ?? '') . ' 12:00:00')) ?>
+                    </text>
+                <?php endforeach; ?>
+                <?php if ($lastPoint !== null): ?>
+                    <circle cx="<?= e($lastPoint[0]) ?>" cy="<?= e($lastPoint[1]) ?>" r="9" class="stock-pulse"></circle>
+                    <circle cx="<?= e($lastPoint[0]) ?>" cy="<?= e($lastPoint[1]) ?>" r="4" class="stock-dot"></circle>
                 <?php endif; ?>
-            <?php endforeach; ?>
-        </svg>
+                <g class="stock-cursor" data-stock-cursor hidden>
+                    <line y1="<?= $padTop ?>" y2="<?= $bottomY ?>" class="stock-cursor-line"></line>
+                    <circle r="5" class="stock-cursor-dot"></circle>
+                </g>
+            </svg>
+            <div class="stock-tooltip" data-stock-tooltip hidden>
+                <span class="stock-tooltip-value" data-tooltip-value></span>
+                <span class="stock-tooltip-change" data-tooltip-change></span>
+                <span class="stock-tooltip-date" data-tooltip-date></span>
+            </div>
+        </div>
+        <?php if ($count < 2): ?>
+            <p class="small text-secondary mt-2 mb-0"><?= e(__('reports.chart.few_points')) ?></p>
+        <?php endif; ?>
     <?php endif; ?>
 </div>
 

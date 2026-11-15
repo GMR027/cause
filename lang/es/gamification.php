@@ -48,6 +48,7 @@ return [
         'type_ahorro' => 'Ahorro',
         'type_inversion' => 'Inversión',
         'type_donacion' => 'Donación',
+        'type_compartir' => 'Compartir',
         'private' => 'Tu nivel es privado. Solo tú lo ves aquí.',
     ],
     'badges' => [

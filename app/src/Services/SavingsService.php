@@ -1054,7 +1054,7 @@ final class SavingsService
      *
      * @param array<string, mixed> $user
      */
-    public function spendWishGoal(array $user, int $metaId, int $maxPrincipal, string $note): int
+    public function spendWishGoal(array $user, int $metaId, int $maxPrincipal, string $note, ?int $gastoId = null): int
     {
         $meta = $this->requireMeta($user, $metaId);
         $account = $this->requireAccount($user, (int) ($meta['cuenta_id'] ?? 0));
@@ -1082,6 +1082,12 @@ final class SavingsService
             if ($amount > 0) {
                 $this->withdraw($user, null, $metaId, $amount, 'meta_cumplida', $note, 'now');
                 $withdrawn = $target;
+
+                // Si la compra registró un gasto, el retiro queda ligado a él:
+                // al borrar el gasto, el dinero vuelve a la bolsa.
+                if ($gastoId !== null && $gastoId > 0) {
+                    $this->repo->linkLastWithdrawalToGasto((int) $user['id'], $metaId, $gastoId);
+                }
             }
         }
 

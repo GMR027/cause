@@ -143,6 +143,7 @@ CREATE TABLE `users` (
     `tema_enfoque` ENUM('iconos', 'botones', 'mixto') NOT NULL DEFAULT 'mixto',
     `tema_efecto_fondo` ENUM('ninguno', 'radial', 'textura', 'radial_textura') NOT NULL DEFAULT 'ninguno',
     `tema_textura` VARCHAR(40) NULL,
+    `tema_textura_opacidad` TINYINT UNSIGNED NULL,
     `email_verificado_at` DATETIME NULL,
     `email_verificacion_token` VARCHAR(64) NULL,
     `email_verificacion_expira` DATETIME NULL,
@@ -320,7 +321,7 @@ CREATE TABLE `metodo_categorias` (
     `metodo_id` BIGINT UNSIGNED NOT NULL,
     `nombre` VARCHAR(80) NOT NULL,
     `porcentaje` TINYINT UNSIGNED NULL,
-    `tipo` ENUM('controlada', 'ahorro', 'inversion', 'donacion', 'no_controlado') NOT NULL,
+    `tipo` ENUM('controlada', 'ahorro', 'inversion', 'donacion', 'compartir', 'no_controlado') NOT NULL,
     `orden` TINYINT UNSIGNED NOT NULL DEFAULT 0,
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -464,9 +465,16 @@ CREATE TABLE `gastos_recurrentes` (
     `parte_metodo` VARCHAR(60) NOT NULL,
     `subcategoria_id` BIGINT UNSIGNED NULL,
     `deuda_id` BIGINT UNSIGNED NULL,
+    `es_suscripcion` TINYINT(1) NOT NULL DEFAULT 0,
+    `proveedor` VARCHAR(80) NULL,
+    `prueba_hasta` DATE NULL,
+    `recordatorio_dias` TINYINT UNSIGNED NULL,
+    `notas` VARCHAR(255) NULL,
+    `cancelada_at` DATETIME NULL,
     `recurrencia` ENUM('diaria', 'semanal', 'mensual', 'anual') NOT NULL,
     `proxima_ejecucion` DATETIME NOT NULL,
     `activo` TINYINT(1) NOT NULL DEFAULT 1,
+    `no_controlado_hasta` DATETIME NULL,
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
@@ -497,6 +505,8 @@ CREATE TABLE `gastos` (
     `medio_pago` ENUM('efectivo', 'debito', 'credito', 'transferencia', 'otro') NULL,
     `estado` ENUM('asignado', 'pendiente_asignacion', 'no_controlado', 'cerrado') NOT NULL DEFAULT 'asignado',
     `fuente_exceso` ENUM('ahorro', 'inversion', 'ingreso_no_registrado', 'deuda', 'no_lo_se', 'no_aplica') NOT NULL DEFAULT 'no_aplica',
+    `deuda_exceso_id` BIGINT UNSIGNED NULL,
+    `deuda_exceso_centavos` BIGINT NULL,
     `confirmado` TINYINT(1) NOT NULL DEFAULT 1,
     `es_recurrente` TINYINT(1) NOT NULL DEFAULT 0,
     `gasto_recurrente_id` BIGINT UNSIGNED NULL,
@@ -768,6 +778,22 @@ CREATE TABLE `donaciones` (
     CONSTRAINT `fk_donaciones_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE `compartidos` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `user_id` BIGINT UNSIGNED NOT NULL,
+    `monto_centavos` BIGINT NOT NULL,
+    `moneda` CHAR(3) NOT NULL DEFAULT 'MXN',
+    `monto_principal_centavos` BIGINT NULL,
+    `destinatario` VARCHAR(120) NULL,
+    `es_extra` TINYINT(1) NOT NULL DEFAULT 0,
+    `fecha` DATETIME NOT NULL,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_compartidos_user_fecha` (`user_id`, `fecha`),
+    CONSTRAINT `fk_compartidos_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE `pausas_inversion` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     `user_id` BIGINT UNSIGNED NOT NULL,
@@ -873,6 +899,7 @@ CREATE TABLE `notificaciones` (
     `canal` ENUM('inapp', 'push') NOT NULL DEFAULT 'inapp',
     `push_enviado_at` DATETIME NULL,
     `leida` TINYINT(1) NOT NULL DEFAULT 0,
+    `descartada` TINYINT(1) NOT NULL DEFAULT 0,
     `referencia_id` BIGINT UNSIGNED NULL,
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

@@ -17,7 +17,7 @@ $flashes = Flash::pull();
 $isAdmin = $currentUser !== null && ($currentUser['rol'] ?? 'user') === 'admin';
 ?>
 <!doctype html>
-<html lang="<?= e($lang) ?>" <?= theme_attributes($theme) ?>>
+<html lang="<?= e($lang) ?>" <?= theme_attributes($theme) ?> data-close-label="<?= e(__('common.actions.close')) ?>">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -95,6 +95,8 @@ $isAdmin = $currentUser !== null && ($currentUser['rol'] ?? 'user') === 'admin';
             'onboarding' => (int) ($currentUser['onboarding_completado'] ?? 0),
         ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?>;
     </script>
+    <?= partial('partials/confirm') ?>
+
     <script src="<?= asset_versioned('js/app.min.js') ?>"></script>
     <script>
         if ('serviceWorker' in navigator) {

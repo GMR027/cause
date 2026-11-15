@@ -175,6 +175,105 @@ final class DebtRepository
         $stmt->execute([$amount, $amount, $principalAmount, $id, $userId]);
     }
 
+    /**
+     * Deshace un pago: regresa el monto al saldo, reactiva la deuda y borra
+     * el registro del pago.
+     *
+     * @param array<string, mixed> $payment fila de pagos_deuda
+     */
+    public function revertPayment(array $payment): void
+    {
+        $amount = (int) $payment['monto_centavos'];
+        $principal = (int) ($payment['monto_principal_centavos'] ?? $amount);
+        $stmt = $this->db->prepare(
+            'UPDATE deudas SET
+                saldo_actual_centavos = LEAST(monto_total_centavos, saldo_actual_centavos + ?),
+                saldo_actual_principal_centavos = COALESCE(saldo_actual_principal_centavos, 0) + ?,
+                activa = 1, updated_at = NOW()
+             WHERE id = ? AND user_id = ?'
+        );
+        $stmt->execute([$amount, $principal, (int) $payment['deuda_id'], (int) $payment['user_id']]);
+
+        $stmt = $this->db->prepare('DELETE FROM pagos_deuda WHERE id = ? AND user_id = ?');
+        $stmt->execute([(int) $payment['id'], (int) $payment['user_id']]);
+    }
+
+    /**
+     * Resta a una deuda el exceso que le mandó un gasto. Si la deuda nació de
+     * ese exceso y queda en cero sin pagos, se elimina.
+     */
+    public function revertExcess(int $id, int $userId, int $principalExcess): void
+    {
+        $debt = $this->findForUser($id, $userId);
+
+        if ($debt === null || $principalExcess <= 0) {
+            return;
+        }
+
+        $user = (new \Cauce\Repositories\UserRepository())->findById($userId);
+        $currency = (string) ($debt['moneda'] ?? 'MXN');
+        $original = $principalExcess;
+
+        if ($user !== null && $currency !== (string) ($user['moneda_activa'] ?? 'MXN')) {
+            try {
+                $original = (new CurrencyService())->convert(
+                    $user,
+                    $principalExcess,
+                    (string) ($user['moneda_activa'] ?? 'MXN'),
+                    $currency,
+                    gmdate('Y-m-d')
+                )['centavos'];
+            } catch (\RuntimeException) {
+                $original = $principalExcess;
+            }
+        }
+
+        $stmt = $this->db->prepare(
+            'UPDATE deudas SET
+                monto_total_centavos = GREATEST(0, monto_total_centavos - ?),
+                saldo_actual_centavos = GREATEST(0, saldo_actual_centavos - ?),
+                monto_total_principal_centavos = GREATEST(0, COALESCE(monto_total_principal_centavos, 0) - ?),
+                saldo_actual_principal_centavos = GREATEST(0, COALESCE(saldo_actual_principal_centavos, 0) - ?),
+                -- MySQL evalúa las asignaciones en orden: aquí el saldo ya está actualizado.
+                activa = CASE WHEN saldo_actual_centavos > 0 THEN 1 ELSE 0 END,
+                updated_at = NOW()
+             WHERE id = ? AND user_id = ?'
+        );
+        $stmt->execute([$original, $original, $principalExcess, $principalExcess, $id, $userId]);
+
+        $after = $this->findForUser($id, $userId);
+
+        if ($after !== null && (int) $after['monto_total_centavos'] <= 0 && $this->paymentsForDebt($id, $userId) === []) {
+            $this->delete($id, $userId);
+        }
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public function paymentsForGasto(int $gastoId, int $userId): array
+    {
+        $stmt = $this->db->prepare('SELECT * FROM pagos_deuda WHERE gasto_id = ? AND user_id = ?');
+        $stmt->execute([$gastoId, $userId]);
+
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Pagos del período que no registraron gasto (se pagaron directo).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function paymentsWithoutExpense(int $userId, string $inicio, string $fin): array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT * FROM pagos_deuda WHERE user_id = ? AND gasto_id IS NULL AND fecha BETWEEN ? AND ?'
+        );
+        $stmt->execute([$userId, $inicio, $fin]);
+
+        return $stmt->fetchAll();
+    }
+
     public function sumActiveBalance(int $userId): int
     {
         $stmt = $this->db->prepare(

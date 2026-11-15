@@ -539,21 +539,21 @@ $preview: ".theme-preview";
 }
 
 @mixin bg-dots($alpha: .26) {
-    background-image: radial-gradient(rgba(var(--cauce-primary-rgb), $alpha) 1px, transparent 1px);
+    background-image: radial-gradient(rgba(var(--cauce-primary-rgb), calc(#{$alpha} * var(--cauce-texture-scale, 1))) 1px, transparent 1px);
     background-size: 22px 22px;
 }
 
 @mixin bg-grid($alpha: .18) {
     background-image:
-        linear-gradient(rgba(var(--cauce-primary-rgb), $alpha) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(var(--cauce-primary-rgb), $alpha) 1px, transparent 1px);
+        linear-gradient(rgba(var(--cauce-primary-rgb), calc(#{$alpha} * var(--cauce-texture-scale, 1))) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(var(--cauce-primary-rgb), calc(#{$alpha} * var(--cauce-texture-scale, 1))) 1px, transparent 1px);
     background-size: 28px 28px, 28px 28px;
 }
 
 @mixin bg-waves($alpha: .18) {
     background-image: repeating-radial-gradient(
         circle at 0 0,
-        rgba(var(--cauce-primary-rgb), $alpha) 0 1px,
+        rgba(var(--cauce-primary-rgb), calc(#{$alpha} * var(--cauce-texture-scale, 1))) 0 1px,
         transparent 1px 22px
     );
 }
@@ -587,7 +587,7 @@ $preview: ".theme-preview";
 [data-fondo="radial_textura"][data-textura="dots"] body,
 [data-fondo="radial_textura"][data-textura="dots"]#{$preview} {
     @include bg-radial-plus(
-        radial-gradient(rgba(var(--cauce-primary-rgb), .2) 1px, transparent 1px),
+        radial-gradient(rgba(var(--cauce-primary-rgb), calc(.2 * var(--cauce-texture-scale, 1))) 1px, transparent 1px),
         22px
     );
     background-size: auto, 22px 22px;
@@ -596,7 +596,7 @@ $preview: ".theme-preview";
 [data-fondo="radial_textura"][data-textura="grid"] body,
 [data-fondo="radial_textura"][data-textura="grid"]#{$preview} {
     @include bg-radial-plus(
-        linear-gradient(rgba(var(--cauce-primary-rgb), .16) 1px, transparent 1px),
+        linear-gradient(rgba(var(--cauce-primary-rgb), calc(.16 * var(--cauce-texture-scale, 1))) 1px, transparent 1px),
         28px
     );
     background-size: auto, 28px 28px;
@@ -605,13 +605,13 @@ $preview: ".theme-preview";
 [data-fondo="radial_textura"][data-textura="waves"] body,
 [data-fondo="radial_textura"][data-textura="waves"]#{$preview} {
     @include bg-radial-plus(
-        repeating-radial-gradient(circle at 0 0, rgba(var(--cauce-primary-rgb), .14) 0 1px, transparent 1px 24px),
+        repeating-radial-gradient(circle at 0 0, rgba(var(--cauce-primary-rgb), calc(.14 * var(--cauce-texture-scale, 1))) 0 1px, transparent 1px 24px),
         24px
     );
 }
 
 // Garabatos financieros: mosaicos SVG teñidos desde JS (ver partials/theme-boot.php).
-$doodle-sizes: (finanzas: 280px, simbolos: 240px);
+$doodle-sizes: (finanzas: 280px, simbolos: 240px, monedas: 260px, cerdito: 260px, graficas: 260px, tarjetas: 260px, billetes: 260px, calculadora: 260px);
 
 @each $name, $size in $doodle-sizes {
     [data-fondo="textura"][data-textura="#{$name}"] body,
@@ -1340,4 +1340,77 @@ $doodle-sizes: (finanzas: 280px, simbolos: 240px);
 .field-help-tooltip .tooltip-inner {
     max-width: 18rem;
     text-align: left;
+}
+
+// ---------------------------------------------------------------------------
+// Avisos con X (assets/js/06-dismiss.js) y notificaciones descartables
+// ---------------------------------------------------------------------------
+
+.is-dismissible {
+    position: relative;
+    padding-right: 2.6rem !important;
+    transition: opacity .2s ease, transform .2s ease;
+
+    > .dismiss-x {
+        position: absolute;
+        top: .65rem;
+        right: .65rem;
+        width: .7rem;
+        height: .7rem;
+        padding: .45rem;
+        opacity: .55;
+
+        &:hover,
+        &:focus-visible {
+            opacity: 1;
+        }
+    }
+
+    &.is-dismissing {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+}
+
+.insight-row.is-dismissible > .dismiss-x {
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.notification-row {
+    display: flex;
+    align-items: flex-start;
+    gap: .25rem;
+    border-bottom: 1px solid var(--cauce-border);
+    transition: opacity .25s ease, transform .25s ease;
+
+    &:last-child {
+        border-bottom: 0;
+    }
+
+    .notification-item {
+        flex: 1 1 auto;
+        min-width: 0;
+        border-bottom: 0;
+    }
+
+    .notification-dismiss {
+        padding: .95rem .25rem 0;
+
+        .btn-close {
+            width: .7rem;
+            height: .7rem;
+            opacity: .5;
+
+            &:hover,
+            &:focus-visible {
+                opacity: 1;
+            }
+        }
+    }
+
+    &.is-leaving {
+        opacity: 0;
+        transform: translateX(12px);
+    }
 }

@@ -49,12 +49,14 @@ $unread = (int) ($unread ?? 0);
                     'resumen_mensual' => $reference > 0 ? '/resumen?id=' . $reference : '/resumen',
                     'gasto_recurrente' => $reference > 0 ? '/gastos/ver?id=' . $reference : '/movimientos',
                     'recordatorio_deuda' => '/deudas',
+                    'recordatorio_suscripcion', 'fin_prueba_suscripcion' => '/reportes/suscripciones',
                     'soporte_respuesta' => $reference > 0 ? '/soporte/ver?id=' . $reference : '/soporte',
                     'alerta_categoria' => '/inicio',
                     default => '/inicio',
                 };
                 $isUnread = (int) $notification['leida'] === 0;
                 ?>
+                <div class="notification-row" data-notification-row>
                 <a class="notification-item <?= $isUnread ? 'is-unread' : '' ?>"
                    href="<?= e($url) ?>"
                    data-notification-read="<?= (int) $notification['id'] ?>">
@@ -63,6 +65,7 @@ $unread = (int) ($unread ?? 0);
                             'resumen_mensual' => 'bi-journal-text',
                             'gasto_recurrente' => 'bi-receipt',
                             'recordatorio_deuda' => 'bi-credit-card',
+                            'recordatorio_suscripcion', 'fin_prueba_suscripcion' => 'bi-arrow-repeat',
                             'soporte_respuesta' => 'bi-life-preserver',
                             'alerta_categoria' => 'bi-exclamation-triangle',
                             'vacaciones_reactivacion' => 'bi-sun',
@@ -81,6 +84,14 @@ $unread = (int) ($unread ?? 0);
                     </span>
                     <i class="bi bi-chevron-right" aria-hidden="true"></i>
                 </a>
+                <form method="post" action="/notificaciones/descartar" class="notification-dismiss m-0"
+                      data-notification-dismiss>
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="id" value="<?= (int) $notification['id'] ?>">
+                    <button type="submit" class="btn-close" aria-label="<?= e(__('notifications.dismiss')) ?>"
+                            title="<?= e(__('notifications.dismiss')) ?>"></button>
+                </form>
+                </div>
             <?php endforeach; ?>
         </div>
     <?php endif; ?>

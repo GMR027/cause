@@ -27,7 +27,7 @@ $fin = (string) ($summary['periodo_fin'] ?? '');
     </a>
 </div>
 
-<div class="alert alert-info py-2 small">
+<div class="alert alert-info py-2 small" data-dismissible data-dismiss-key="summary-info">
     <i class="bi bi-lock me-1" aria-hidden="true"></i><?= e(__('summary.immutable')) ?>
 </div>
 

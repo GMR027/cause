@@ -83,7 +83,7 @@ $allowedParts = $allowed_parts ?? $parts;
                             </form>
 
                             <form method="post" action="/subcategorias/eliminar" class="m-0"
-                                  onsubmit="return confirm('<?= e(__('subcategories.confirm_delete')) ?>')">
+                                  data-confirm="<?= e(__('subcategories.confirm_delete')) ?>" data-confirm-danger>
                                 <?= csrf_field() ?>
                                 <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
                                 <button type="submit" class="btn btn-sm btn-outline-danger">

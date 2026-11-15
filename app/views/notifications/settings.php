@@ -34,7 +34,7 @@ if ($vacationUntil !== null && trim((string) $vacationUntil) !== '') {
     </div>
 </div>
 
-<div class="alert alert-secondary py-2 small" role="status">
+<div class="alert alert-secondary py-2 small" role="status" data-dismissible data-dismiss-key="notifications-info">
     <i class="bi bi-calendar-event me-1" aria-hidden="true"></i>
     <?= e(__('calendar.ics.hint')) ?>
 </div>

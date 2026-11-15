@@ -8,6 +8,7 @@ use Cauce\Repositories\DonationRepository;
 use Cauce\Repositories\GastoRepository;
 use Cauce\Repositories\InvestmentRepository;
 use Cauce\Repositories\SavingsRepository;
+use Cauce\Repositories\SharingRepository;
 
 /**
  * Cálculo compartido del cumplimiento del método por período.
@@ -52,7 +53,7 @@ final class MethodComplianceService
                 continue;
             }
 
-            if (!in_array($type, ['ahorro', 'inversion', 'donacion'], true) || isset($seenTypes[$type])) {
+            if (!in_array($type, ['ahorro', 'inversion', 'donacion', 'compartir'], true) || isset($seenTypes[$type])) {
                 continue;
             }
 
@@ -73,6 +74,11 @@ final class MethodComplianceService
                     true
                 ),
                 'donacion' => (new DonationRepository())->sumPeriodNormal(
+                    $userId,
+                    $period['inicio'],
+                    $period['fin']
+                ),
+                'compartir' => (new SharingRepository())->sumPeriodNormal(
                     $userId,
                     $period['inicio'],
                     $period['fin']

@@ -143,6 +143,8 @@ final class RecurringExpenseService
                         'fuente_exceso' => 'no_aplica',
                         'tags' => [],
                         'gasto_recurrente_id' => (int) $locked['id'],
+                        'no_controlado' => !empty($locked['no_controlado_hasta'])
+                            && $dateUtc->format('Y-m-d H:i:s') <= (string) $locked['no_controlado_hasta'],
                     ], ['inicio' => $inicio, 'fin' => $fin], $hasIncome);
 
                     $createdNow[] = [

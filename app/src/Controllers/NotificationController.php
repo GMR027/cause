@@ -169,6 +169,22 @@ final class NotificationController
         redirect('/notificaciones');
     }
 
+    public function dismiss(): void
+    {
+        $user = $this->user();
+        $id = (int) input('id', '0');
+
+        if ($id > 0) {
+            $this->repo->dismiss($id, (int) $user['id']);
+        }
+
+        if ($this->wantsJson()) {
+            $this->json(['ok' => true, 'unread' => $this->repo->unreadCount((int) $user['id'])]);
+        }
+
+        redirect('/notificaciones');
+    }
+
     public function subscribe(): void
     {
         $user = $this->user();

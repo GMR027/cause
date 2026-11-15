@@ -369,3 +369,110 @@
     60% { transform: translate(-5px, 3px); }
     80% { transform: translate(4px, -2px); }
 }
+
+// ---------------------------------------------------------------------------
+// Inversión: gráfica de bolsa al alza en lugar del cerdito
+// ---------------------------------------------------------------------------
+
+.money-fx--invest .money-fx-pig {
+    aspect-ratio: 240 / 200;
+}
+
+.money-fx-chart-panel {
+    fill: #0b1f17;
+    stroke: rgba(134, 239, 172, .35);
+    stroke-width: 1.5;
+}
+
+.money-fx-chart-grid line {
+    stroke: rgba(255, 255, 255, .12);
+    stroke-dasharray: 3 5;
+}
+
+.money-fx-chart-area {
+    opacity: 0;
+    animation: money-fx-chart-fade .6s ease-out calc(.5s + var(--fx-level) * .08s) both;
+}
+
+.money-fx-candle {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    animation: money-fx-candle-grow .45s cubic-bezier(.2, 1.4, .4, 1) calc(.25s + var(--i) * .12s) both;
+
+    line {
+        stroke-width: 1.6;
+    }
+
+    &.is-up {
+        fill: #22c55e;
+        stroke: #22c55e;
+    }
+
+    &.is-down {
+        fill: #f87171;
+        stroke: #f87171;
+    }
+}
+
+.money-fx-chart-line {
+    fill: none;
+    stroke: #bbf7d0;
+    stroke-width: 3.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    filter: drop-shadow(0 0 4px rgba(134, 239, 172, .8));
+    animation: money-fx-chart-draw 1.3s ease-out .35s forwards;
+}
+
+.money-fx-chart-arrow {
+    opacity: 0;
+    animation: money-fx-chart-fade .3s ease-out 1.6s forwards;
+
+    circle {
+        fill: #22c55e;
+        stroke: #dcfce7;
+        stroke-width: 2.5;
+    }
+
+    path {
+        fill: none;
+        stroke: #fff;
+        stroke-width: 2.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+}
+
+.money-fx--invest .money-fx-rise b {
+    font-weight: 800;
+}
+
+.money-fx.is-reduced {
+    .money-fx-candle,
+    .money-fx-chart-area,
+    .money-fx-chart-arrow {
+        animation: none;
+        opacity: 1;
+    }
+
+    .money-fx-chart-line {
+        animation: none;
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes money-fx-candle-grow {
+    from { transform: scaleY(0); opacity: 0; }
+    to { transform: scaleY(1); opacity: 1; }
+}
+
+@keyframes money-fx-chart-draw {
+    to { stroke-dashoffset: 0; }
+}
+
+@keyframes money-fx-chart-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}

@@ -130,7 +130,7 @@ final class NotificationRepository
     public function listForUser(int $userId, int $limit = 100, bool $onlyUnread = false): array
     {
         $limit = max(1, min(200, $limit));
-        $where = 'user_id = ?';
+        $where = 'user_id = ? AND descartada = 0';
 
         if ($onlyUnread) {
             $where .= ' AND leida = 0';
@@ -147,7 +147,7 @@ final class NotificationRepository
 
     public function unreadCount(int $userId): int
     {
-        $stmt = $this->db->prepare('SELECT COUNT(*) FROM notificaciones WHERE user_id = ? AND leida = 0');
+        $stmt = $this->db->prepare('SELECT COUNT(*) FROM notificaciones WHERE user_id = ? AND leida = 0 AND descartada = 0');
         $stmt->execute([$userId]);
 
         return (int) $stmt->fetchColumn();
@@ -157,6 +157,18 @@ final class NotificationRepository
     {
         $stmt = $this->db->prepare(
             'UPDATE notificaciones SET leida = 1, updated_at = NOW() WHERE id = ? AND user_id = ?'
+        );
+        $stmt->execute([$id, $userId]);
+    }
+
+    /**
+     * Cierra una notificación (X). La fila se conserva para que su clave no
+     * permita volver a generarla.
+     */
+    public function dismiss(int $id, int $userId): void
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE notificaciones SET descartada = 1, leida = 1, updated_at = NOW() WHERE id = ? AND user_id = ?'
         );
         $stmt->execute([$id, $userId]);
     }

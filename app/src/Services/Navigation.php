@@ -45,6 +45,10 @@ final class Navigation
                     continue;
                 }
 
+                if (!empty($item['requires_category']) && !self::hasCategoryType($user, (string) $item['requires_category'])) {
+                    continue;
+                }
+
                 $item['active'] = false;
                 $items[] = $item;
                 $routes[] = (string) $item['route'];
@@ -108,6 +112,45 @@ final class Navigation
 
         return $currentPath === $route
             || str_starts_with($currentPath, rtrim($route, '/') . '/');
+    }
+
+    /**
+     * ¿El método activo del usuario tiene una categoría de ese tipo con %?
+     * Se usa para mostrar secciones que solo aplican a ciertos métodos.
+     *
+     * @param array<string, mixed>|null $user
+     */
+    public static function hasCategoryType(?array $user, string $type): bool
+    {
+        if ($user === null || !isset($user['id'])) {
+            return false;
+        }
+
+        static $cache = [];
+        $key = (int) $user['id'] . ':' . $type;
+
+        if (array_key_exists($key, $cache)) {
+            return $cache[$key];
+        }
+
+        try {
+            $data = (new MethodService())->activeData($user);
+        } catch (\Throwable) {
+            return $cache[$key] = false;
+        }
+
+        if ($data === null) {
+            return $cache[$key] = false;
+        }
+
+        foreach ($data['method']['categorias'] as $category) {
+            if ((string) ($category['tipo'] ?? '') === $type
+                && (float) ($data['percentages'][(string) $category['nombre']] ?? 0) > 0.001) {
+                return $cache[$key] = true;
+            }
+        }
+
+        return $cache[$key] = false;
     }
 
     /**

@@ -119,7 +119,7 @@ VALUES
     (@metodo_cinco_frascos, 'Inversión', 20, 'inversion', 2),
     (@metodo_cinco_frascos, 'Ahorro', 10, 'ahorro', 3),
     (@metodo_cinco_frascos, 'Donación', 10, 'donacion', 4),
-    (@metodo_cinco_frascos, 'Compartir', 10, 'donacion', 5)
+    (@metodo_cinco_frascos, 'Compartir', 10, 'compartir', 5)
     AS `nuevo`
 ON DUPLICATE KEY UPDATE
     `porcentaje` = `nuevo`.`porcentaje`,

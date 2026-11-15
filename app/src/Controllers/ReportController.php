@@ -22,11 +22,18 @@ final class ReportController
     {
         $user = $this->user();
         $netWorth = new NetWorthService();
+        $range = (string) (input('rango', '6m') ?? '6m');
+
+        if (!array_key_exists($range, NetWorthService::RANGES)) {
+            $range = '6m';
+        }
 
         echo View::render('reports/index', [
             'title' => __('reports.title'),
             'netWorth' => $netWorth->summary($user),
-            'history' => $netWorth->history($user),
+            'series' => $netWorth->series($user, $range),
+            'range' => $range,
+            'ranges' => array_keys(NetWorthService::RANGES),
             'subscriptions' => (new SubscriptionService())->panel($user),
             'score' => (new ScoreService())->panel($user, true),
         ], 'layouts/app');
@@ -36,9 +43,15 @@ final class ReportController
     {
         $user = $this->user();
 
+        $timezone = (new \Cauce\Services\PeriodoService())->userTimezone($user);
+
         echo View::render('reports/subscriptions', array_merge(
             (new SubscriptionService())->panel($user),
-            ['title' => __('reports.subscriptions.title')]
+            [
+                'title' => __('reports.subscriptions.title'),
+                'categories' => (new \Cauce\Services\GastoService())->categoriasGasto($user),
+                'today' => (new \DateTimeImmutable('now', $timezone))->format('Y-m-d'),
+            ]
         ), 'layouts/app');
     }
 

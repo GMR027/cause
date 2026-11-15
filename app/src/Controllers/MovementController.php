@@ -10,6 +10,7 @@ use Cauce\Repositories\SubcategoriaRepository;
 use Cauce\Repositories\TagRepository;
 use Cauce\Services\AuthService;
 use Cauce\Services\GastoService;
+use Cauce\Services\MovementFeedService;
 
 /**
  * Lista de movimientos con filtros y búsqueda.
@@ -67,7 +68,47 @@ final class MovementController
             $filters['q'] = $q;
         }
 
-        $rows = $repo->listForUser((int) $user['id'], $filters);
+        $kind = (string) (input('tipo', 'todos') ?? 'todos');
+
+        if (!in_array($kind, MovementFeedService::KINDS, true)) {
+            $kind = 'todos';
+        }
+
+        // Parte, subcategoría, tag y medio de pago solo existen en gastos.
+        $expenseOnly = isset($filters['parte_metodo']) || isset($filters['subcategoria_id'])
+            || isset($filters['tag_id']) || isset($filters['medio_pago']);
+
+        if ($expenseOnly) {
+            $kind = 'gasto';
+        }
+
+        $rows = in_array($kind, ['todos', 'gasto'], true)
+            ? $repo->listForUser((int) $user['id'], $filters)
+            : [];
+        $feed = [];
+
+        foreach ($rows as $row) {
+            $feed[] = [
+                'tipo' => 'gasto',
+                'id' => (int) $row['id'],
+                'fecha' => (string) $row['fecha'],
+                'monto_centavos' => (int) $row['monto_centavos'],
+                'monto_principal_centavos' => (int) ($row['monto_principal_centavos'] ?? $row['monto_centavos']),
+                'moneda' => (string) $row['moneda'],
+                // Los gastos cerrados no cuentan en los totales del período.
+                'direccion' => ($row['estado'] ?? '') === 'cerrado' ? 'neutral' : 'salida',
+                'gasto' => $row,
+            ];
+        }
+
+        if ($kind !== 'gasto') {
+            $feed = array_merge(
+                $feed,
+                (new MovementFeedService())->nonExpenseRows((int) $user['id'], $kind, $filters)
+            );
+        }
+
+        $feed = MovementFeedService::sort($feed);
         $tagRepo = new TagRepository();
         $tagMap = $tagRepo->forGastos(array_column($rows, 'id'));
         $period = $service->periodoActual($user);
@@ -82,6 +123,10 @@ final class MovementController
         echo View::render('app/movimientos', [
             'title' => __('nav.movimientos'),
             'rows' => $rows,
+            'feed' => $feed,
+            'kind' => $kind,
+            'kinds' => MovementFeedService::KINDS,
+            'totals' => MovementFeedService::totals($feed),
             'tagMap' => $tagMap,
             'tags' => $tagRepo->allForUser((int) $user['id']),
             'periods' => $periods,
@@ -90,10 +135,6 @@ final class MovementController
             'subcategories' => (new SubcategoriaRepository())->allForUser((int) $user['id']),
             'editable' => $editable,
             'filters' => $filters,
-            'total' => array_sum(array_map(
-                static fn (array $row): int => (int) ($row['monto_principal_centavos'] ?? $row['monto_centavos']),
-                $rows
-            )),
         ], 'layouts/app');
     }
 

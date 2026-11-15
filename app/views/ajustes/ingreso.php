@@ -8,6 +8,14 @@ $recurrences = $recurrences ?? [];
 $categories = $categories ?? [];
 $extra = $extra ?? [];
 $errors = $errors ?? [];
+$methodCode = $methodCode ?? null;
+$methodName = $methodName ?? null;
+$methodLabel = null;
+
+if ($methodName !== null) {
+    $methodKey = 'onboarding.methods.' . (string) $methodCode . '.name';
+    $methodLabel = __($methodKey) === $methodKey ? (string) $methodName : __($methodKey);
+}
 ?>
 <div class="page-heading">
     <div>
@@ -18,6 +26,28 @@ $errors = $errors ?? [];
 </div>
 
 <?= partial('partials/errors', ['errors' => $errors]) ?>
+
+<?php if ($categories !== []): ?>
+    <div class="surface-card mb-4">
+        <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-2">
+            <div>
+                <h2 class="h5 mb-1"><?= e(__('settings.ingreso.method_title', [':method' => (string) $methodLabel])) ?></h2>
+                <p class="small text-secondary mb-0"><?= e(__('settings.ingreso.method_hint')) ?></p>
+            </div>
+        </div>
+        <ul class="method-list mt-3">
+            <?php foreach ($categories as $categoria): ?>
+                <li>
+                    <span>
+                        <?= e((string) $categoria['nombre']) ?>
+                        <span class="text-secondary small">(<?= e(__('income.types_category.' . (string) $categoria['tipo'])) ?>)</span>
+                    </span>
+                    <span class="fw-semibold"><?= e((string) round((float) $categoria['porcentaje_usuario'], 2)) ?>%</span>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+    </div>
+<?php endif; ?>
 
 <div class="row g-4">
     <div class="col-12 col-xl-6">
@@ -94,7 +124,8 @@ $errors = $errors ?? [];
                                 <div class="input-group">
                                     <input type="number" class="form-control" id="extra_<?= e((string) $categoria['orden']) ?>"
                                            name="reparto[<?= e($name) ?>]" min="0" max="100" step="1"
-                                           value="<?= (int) ($extra[$name] ?? 0) ?>" data-extra-input>
+                                           value="<?= (int) ($extra[$name] ?? 0) ?>" data-extra-input
+                                           data-method-percent="<?= (int) round((float) $categoria['porcentaje_usuario']) ?>">
                                     <span class="input-group-text">%</span>
                                 </div>
                             </div>
@@ -106,7 +137,12 @@ $errors = $errors ?? [];
                             <?= e(__('settings.ingreso.extra_total')) ?>:
                             <span class="fw-semibold" data-extra-total>0</span>%
                         </span>
-                        <button type="submit" class="btn btn-primary"><?= e(__('common.actions.save')) ?></button>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-outline-secondary" data-extra-use-method>
+                                <?= e(__('settings.ingreso.extra_use_method')) ?>
+                            </button>
+                            <button type="submit" class="btn btn-primary"><?= e(__('common.actions.save')) ?></button>
+                        </div>
                     </div>
 
                     <p class="small text-secondary mt-3 mb-0"><?= e(__('settings.ingreso.extra_fallback')) ?></p>

@@ -117,6 +117,16 @@ $backgrounds = [
                         </option>
                     <?php endforeach; ?>
                 </select>
+
+                <?php $opacityRange = (array) config('themes.texture_opacity', []); ?>
+                <div class="d-flex justify-content-between align-items-center mt-3 mb-1">
+                    <label class="form-label small mb-0" for="opacidad"><?= e(__('settings.temas.texture_opacity')) ?></label>
+                    <span class="small fw-semibold" data-opacity-value><?= (int) ($theme['opacidad'] ?? 30) ?> %</span>
+                </div>
+                <input type="range" class="form-range" id="opacidad" name="opacidad"
+                       min="<?= (int) ($opacityRange['min'] ?? 5) ?>" max="<?= (int) ($opacityRange['max'] ?? 60) ?>"
+                       step="<?= (int) ($opacityRange['step'] ?? 5) ?>" value="<?= (int) ($theme['opacidad'] ?? 30) ?>">
+                <div class="form-text"><?= e(__('settings.temas.texture_opacity_hint')) ?></div>
             </div>
 
             <p class="small text-secondary mb-4" data-theme-contrast>

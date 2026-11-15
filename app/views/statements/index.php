@@ -155,7 +155,7 @@ $errors = $errors ?? [];
                                             <?= e(__('common.actions.view')) ?>
                                         </a>
                                         <form method="post" action="/estado-cuenta/eliminar" class="m-0"
-                                              onsubmit="return confirm('<?= e(__('statements.list.confirm_delete')) ?>')">
+                                              data-confirm="<?= e(__('statements.list.confirm_delete')) ?>" data-confirm-danger>
                                             <?= csrf_field() ?>
                                             <input type="hidden" name="id" value="<?= (int) $document['id'] ?>">
                                             <button type="submit" class="btn btn-sm btn-outline-danger">

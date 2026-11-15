@@ -45,7 +45,7 @@ $consecutive = $consecutive ?? [];
 </div>
 
 <?php if (!empty($paused)): ?>
-    <div class="finance-warning mb-3">
+    <div class="finance-warning mb-3" data-dismissible data-dismiss-key="investment-warning">
         <i class="bi bi-pause-circle" aria-hidden="true"></i>
         <div class="flex-grow-1">
             <strong class="d-block"><?= e(__('investment.paused_title')) ?></strong>
@@ -243,7 +243,7 @@ $consecutive = $consecutive ?? [];
                                 <i class="bi bi-currency-dollar" aria-hidden="true"></i>
                             </button>
                             <form method="post" action="/inversion/posiciones/eliminar" class="m-0"
-                                  onsubmit="return confirm('<?= e(__('finance.confirm_delete')) ?>')">
+                                  data-confirm="<?= e(__('finance.confirm_delete')) ?>" data-confirm-danger>
                                 <?= csrf_field() ?>
                                 <input type="hidden" name="id" value="<?= (int) $position['id'] ?>">
                                 <button type="submit" class="btn btn-sm btn-outline-danger">
@@ -301,7 +301,7 @@ $consecutive = $consecutive ?? [];
                                     <i class="bi bi-pencil" aria-hidden="true"></i>
                                 </button>
                                 <form method="post" action="/inversion/aportaciones/eliminar" class="m-0"
-                                      onsubmit="return confirm('<?= e(__('finance.confirm_delete')) ?>')">
+                                      data-confirm="<?= e(__('finance.confirm_delete')) ?>" data-confirm-danger>
                                     <?= csrf_field() ?>
                                     <input type="hidden" name="id" value="<?= (int) $row['id'] ?>">
                                     <button type="submit" class="btn btn-sm btn-outline-danger">
@@ -344,7 +344,7 @@ $consecutive = $consecutive ?? [];
                                     <i class="bi bi-pencil" aria-hidden="true"></i>
                                 </button>
                                 <form method="post" action="/inversion/retiros/eliminar" class="m-0"
-                                      onsubmit="return confirm('<?= e(__('finance.confirm_delete')) ?>')">
+                                      data-confirm="<?= e(__('finance.confirm_delete')) ?>" data-confirm-danger>
                                     <?= csrf_field() ?>
                                     <input type="hidden" name="id" value="<?= (int) $row['id'] ?>">
                                     <button type="submit" class="btn btn-sm btn-outline-danger">

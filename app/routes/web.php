@@ -40,7 +40,9 @@ use Cauce\Controllers\ReportController;
 use Cauce\Controllers\SavingsController;
 use Cauce\Controllers\SearchController;
 use Cauce\Controllers\SettingsController;
+use Cauce\Controllers\SharingController;
 use Cauce\Controllers\StatementController;
+use Cauce\Controllers\SubscriptionController;
 use Cauce\Controllers\SupportController;
 use Cauce\Controllers\SubcategoryController;
 use Cauce\Controllers\SummaryController;
@@ -155,6 +157,9 @@ $router->group('', static function (Router $routes): void {
     $routes->post('/ingresos/nuevo', [IncomeController::class, 'store']);
     $routes->get('/ingresos/acreditar', [IncomeController::class, 'acreditar']);
     $routes->post('/ingresos/acreditar', [IncomeController::class, 'finalizar']);
+    $routes->get('/ingresos/ver', [IncomeController::class, 'show']);
+    $routes->post('/ingresos/editar', [IncomeController::class, 'update']);
+    $routes->post('/ingresos/eliminar', [IncomeController::class, 'destroy']);
 
     $routes->get('/gastos/nuevo', [ExpenseController::class, 'create']);
     $routes->post('/gastos/nuevo', [ExpenseController::class, 'store']);
@@ -193,6 +198,7 @@ $router->group('', static function (Router $routes): void {
     // Notificaciones: bandeja, ajustes y Web Push
     $routes->get('/notificaciones', [NotificationController::class, 'index']);
     $routes->post('/notificaciones/leer', [NotificationController::class, 'markRead']);
+    $routes->post('/notificaciones/descartar', [NotificationController::class, 'dismiss']);
     $routes->post('/notificaciones/push', [NotificationController::class, 'subscribe']);
     $routes->post('/notificaciones/push/eliminar', [NotificationController::class, 'unsubscribe']);
     $routes->get('/ajustes/notificaciones', [NotificationController::class, 'settings']);
@@ -227,6 +233,10 @@ $router->group('', static function (Router $routes): void {
     $routes->get('/movimientos', [MovementController::class, 'index']);
     $routes->get('/reportes', [ReportController::class, 'index']);
     $routes->get('/reportes/suscripciones', [ReportController::class, 'subscriptions']);
+    $routes->post('/reportes/suscripciones', [SubscriptionController::class, 'store']);
+    $routes->post('/reportes/suscripciones/editar', [SubscriptionController::class, 'update']);
+    $routes->post('/reportes/suscripciones/cancelar', [SubscriptionController::class, 'cancel']);
+    $routes->post('/reportes/suscripciones/reactivar', [SubscriptionController::class, 'reactivate']);
     $routes->post('/reportes/efectivo', [ReportController::class, 'updateCash']);
 
     $routes->get('/ahorro', [SavingsController::class, 'index']);
@@ -271,6 +281,12 @@ $router->group('', static function (Router $routes): void {
     $routes->post('/donacion/activar', [DonationController::class, 'activate']);
     $routes->post('/donacion/editar', [DonationController::class, 'updateDonation']);
     $routes->post('/donacion/eliminar', [DonationController::class, 'deleteDonation']);
+
+    // Compartir (solo si el método tiene esa categoría; p. ej. Cinco frascos)
+    $routes->get('/compartir', [SharingController::class, 'index']);
+    $routes->post('/compartir', [SharingController::class, 'store']);
+    $routes->post('/compartir/editar', [SharingController::class, 'update']);
+    $routes->post('/compartir/eliminar', [SharingController::class, 'delete']);
 
     // Deudas
     $routes->get('/deudas', [DebtController::class, 'index']);

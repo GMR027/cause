@@ -51,6 +51,34 @@ final class IngresoRepository
         return (int) $this->db->lastInsertId();
     }
 
+    public function countForPeriod(int $userId, string $periodoInicio, string $periodoFin): int
+    {
+        $stmt = $this->db->prepare(
+            'SELECT COUNT(*) FROM ingresos WHERE user_id = ? AND periodo_inicio = ? AND periodo_fin = ?'
+        );
+        $stmt->execute([$userId, $periodoInicio, $periodoFin]);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    public function updateMonto(int $id, int $userId, int $amount, int $principalAmount, string $currency): void
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE ingresos SET monto_centavos = ?, monto_principal_centavos = ?, moneda = ?, updated_at = NOW()
+             WHERE id = ? AND user_id = ?'
+        );
+        $stmt->execute([$amount, $principalAmount, $currency, $id, $userId]);
+    }
+
+    /**
+     * Borra el ingreso; asignaciones y justificaciones caen en cascada.
+     */
+    public function delete(int $id, int $userId): void
+    {
+        $stmt = $this->db->prepare('DELETE FROM ingresos WHERE id = ? AND user_id = ?');
+        $stmt->execute([$id, $userId]);
+    }
+
     /**
      * @return array<string, mixed>|null
      */

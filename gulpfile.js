@@ -18,6 +18,8 @@ const paths = {
     ],
     jsApp: [
         'assets/js/00-core.js',
+        'assets/js/05-dialogs.js',
+        'assets/js/06-dismiss.js',
         'assets/js/10-layout.js',
         'assets/js/15-help.js',
         'assets/js/20-theme.js',

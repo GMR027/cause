@@ -96,8 +96,12 @@ final class AppController
             }
         }
 
-        $availableMap = (new GastoService())->disponiblePorParte($user);
-        $availableTotal = array_sum(array_column($availableMap, 'disponible'));
+        $gastoService = new GastoService();
+        $availableMap = $gastoService->disponiblePorParte($user);
+        // Ingreso asignado menos gastos, aportes a ahorro e inversión,
+        // donaciones y Compartir del período.
+        $availableTotal = $gastoService->disponibleTotal($availableMap);
+        $methodStatus = $this->methodStatus($availableMap);
         $finance = (new FinanceSummaryService())->forUser($user);
         $progress = (new GamificationService())->homeCard($user);
         $projection = (new ProjectionService())->forUser($user);
@@ -123,6 +127,7 @@ final class AppController
             'incomeTotal' => $incomeTotal,
             'expenseTotal' => $expenseTotal,
             'availableTotal' => $availableTotal,
+            'methodStatus' => $methodStatus,
             'finance' => $finance,
             'progress' => $progress,
             'projection' => $projection,
@@ -135,6 +140,48 @@ final class AppController
         echo View::render('app/reportes', [
             'title' => __('nav.reportes'),
         ], 'layouts/app');
+    }
+
+    /**
+     * Avance de cada porcentaje del método en el período actual.
+     *
+     * - Ahorro, inversión, donación y compartir se cumplen al registrar al
+     *   menos lo asignado.
+     * - Las categorías de gasto se cumplen al usar su presupuesto sin pasarse;
+     *   si se pasan, quedan como excedidas.
+     *
+     * @param array<string, array{tipo: string, asignado: int, gastado: int, disponible: int}> $map
+     * @return array<string, array{tipo: string, asignado: int, usado: int, progreso: int, estado: string}>
+     */
+    private function methodStatus(array $map): array
+    {
+        $status = [];
+
+        foreach ($map as $name => $category) {
+            $assigned = (int) $category['asignado'];
+            $used = (int) $category['gastado'];
+
+            if ($assigned <= 0) {
+                continue;
+            }
+
+            $isSpending = in_array((string) $category['tipo'], ['controlada', 'no_controlado'], true);
+            $state = match (true) {
+                $isSpending && $used > $assigned => 'excedido',
+                $used >= $assigned => 'cumplido',
+                default => 'pendiente',
+            };
+
+            $status[(string) $name] = [
+                'tipo' => (string) $category['tipo'],
+                'asignado' => $assigned,
+                'usado' => $used,
+                'progreso' => min(100, (int) floor(($used / $assigned) * 100)),
+                'estado' => $state,
+            ];
+        }
+
+        return $status;
     }
 
     /**

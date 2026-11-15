@@ -76,9 +76,76 @@ final class NetWorthService
      */
     public function ensureCurrentSnapshot(array $user): void
     {
+        // Un punto por día: la gráfica de Reportes se ve como la de una acción.
         $timezone = (new PeriodoService())->userTimezone($user);
-        $date = (new DateTimeImmutable('now', $timezone))->format('Y-m-01');
+        $date = (new DateTimeImmutable('now', $timezone))->format('Y-m-d');
         $this->writeSnapshot($user, $date);
+    }
+
+    /** Rangos de la gráfica de patrimonio y cuántos meses abarca cada uno. */
+    public const RANGES = ['1m' => 1, '3m' => 3, '6m' => 6, '1a' => 12, 'todo' => null];
+
+    /**
+     * Serie diaria del patrimonio neto para el rango pedido, en moneda activa.
+     *
+     * @param array<string, mixed> $user
+     * @return list<array{fecha: string, activos_centavos: int, pasivos_centavos: int, neto_centavos: int}>
+     */
+    public function series(array $user, string $range = '6m'): array
+    {
+        $this->ensureCurrentSnapshot($user);
+        $months = array_key_exists($range, self::RANGES) ? self::RANGES[$range] : 6;
+        $timezone = (new PeriodoService())->userTimezone($user);
+        $sql = 'SELECT * FROM patrimonio_snapshots WHERE user_id = ?';
+        $params = [(int) $user['id']];
+
+        if ($months !== null) {
+            $sql .= ' AND fecha >= ?';
+            $params[] = (new DateTimeImmutable('today', $timezone))->modify('-' . $months . ' months')->format('Y-m-d');
+        }
+
+        $stmt = $this->db->prepare($sql . ' ORDER BY fecha ASC, id ASC');
+        $stmt->execute($params);
+        $result = [];
+
+        foreach ($stmt->fetchAll() as $row) {
+            [$assets, $liabilities, $net] = $this->convertRow($user, $row);
+            $result[] = [
+                'fecha' => substr((string) $row['fecha'], 0, 10),
+                'activos_centavos' => $assets,
+                'pasivos_centavos' => $liabilities,
+                'neto_centavos' => $net,
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param array<string, mixed> $user
+     * @param array<string, mixed> $row
+     * @return array{0: int, 1: int, 2: int}
+     */
+    private function convertRow(array $user, array $row): array
+    {
+        $assets = (int) $row['activos_centavos'];
+        $liabilities = (int) $row['pasivos_centavos'];
+        $net = (int) $row['neto_centavos'];
+        $active = (string) ($user['moneda_activa'] ?? 'MXN');
+
+        if ((string) ($row['moneda'] ?? 'MXN') !== $active) {
+            try {
+                $converter = new CurrencyService();
+                $date = substr((string) $row['fecha'], 0, 10);
+                $assets = $converter->convert($user, $assets, (string) $row['moneda'], $active, $date)['centavos'];
+                $liabilities = $converter->convert($user, $liabilities, (string) $row['moneda'], $active, $date)['centavos'];
+                $net = $converter->convert($user, $net, (string) $row['moneda'], $active, $date)['centavos'];
+            } catch (\RuntimeException) {
+                // Sin tasa: se conserva el valor original del snapshot.
+            }
+        }
+
+        return [$assets, $liabilities, $net];
     }
 
     /**
@@ -120,22 +187,9 @@ final class NetWorthService
         for ($i = 0; $i < $months; $i++) {
             $month = $start->modify('+' . $i . ' months');
             $key = $month->format('Y-m');
+            // Con snapshots diarios, cada mes toma su último punto.
             $row = $byMonth[$key] ?? null;
-            $assets = $row !== null ? (int) $row['activos_centavos'] : 0;
-            $liabilities = $row !== null ? (int) $row['pasivos_centavos'] : 0;
-            $net = $row !== null ? (int) $row['neto_centavos'] : 0;
-
-            if ($row !== null && (string) ($row['moneda'] ?? 'MXN') !== (string) ($user['moneda_activa'] ?? 'MXN')) {
-                try {
-                    $converter = new CurrencyService();
-                    $date = substr((string) $row['fecha'], 0, 10);
-                    $assets = $converter->convert($user, $assets, (string) $row['moneda'], (string) ($user['moneda_activa'] ?? 'MXN'), $date)['centavos'];
-                    $liabilities = $converter->convert($user, $liabilities, (string) $row['moneda'], (string) ($user['moneda_activa'] ?? 'MXN'), $date)['centavos'];
-                    $net = $converter->convert($user, $net, (string) $row['moneda'], (string) ($user['moneda_activa'] ?? 'MXN'), $date)['centavos'];
-                } catch (\RuntimeException) {
-                    // Sin tasa: se conserva el valor original del snapshot.
-                }
-            }
+            [$assets, $liabilities, $net] = $row !== null ? $this->convertRow($user, $row) : [0, 0, 0];
 
             $result[] = [
                 'month' => $key,

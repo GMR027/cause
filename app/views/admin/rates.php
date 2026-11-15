@@ -86,7 +86,7 @@ $currencies = $currencies ?? ['MXN', 'USD', 'EUR'];
                                 <div class="d-flex justify-content-end gap-2">
                                 <a href="/admin/monedas?editar=<?= (int) $rate['id'] ?>" class="btn btn-sm btn-outline-secondary"><?= e(__('common.actions.edit')) ?></a>
                                 <form method="post" action="/admin/monedas/eliminar" class="m-0"
-                                      onsubmit="return confirm('<?= e(__('currency.admin.confirm_delete')) ?>')">
+                                      data-confirm="<?= e(__('currency.admin.confirm_delete')) ?>" data-confirm-danger>
                                     <?= csrf_field() ?>
                                     <input type="hidden" name="id" value="<?= (int) $rate['id'] ?>">
                                     <button type="submit" class="btn btn-sm btn-outline-danger">
