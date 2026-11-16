@@ -10,12 +10,18 @@ $extra = $extra ?? [];
 $errors = $errors ?? [];
 $methodCode = $methodCode ?? null;
 $methodName = $methodName ?? null;
-$methodLabel = null;
+$methods = $methods ?? [];
+$selectedMethodId = (int) ($selectedMethodId ?? 0);
+$openMethodEditor = (bool) ($openMethodEditor ?? false);
+$methodLabelOf = static function (?string $code, ?string $name): string {
+    $key = 'onboarding.methods.' . (string) $code . '.name';
 
-if ($methodName !== null) {
-    $methodKey = 'onboarding.methods.' . (string) $methodCode . '.name';
-    $methodLabel = __($methodKey) === $methodKey ? (string) $methodName : __($methodKey);
-}
+    return __($key) === $key ? (string) $name : __($key);
+};
+$methodLabel = $methodName !== null ? $methodLabelOf($methodCode, $methodName) : null;
+$pct = static fn (float $value): string => rtrim(rtrim(number_format($value, 2, '.', ''), '0'), '.');
+$catalogMethods = array_values(array_filter($methods, static fn (array $m): bool => empty($m['propio'])));
+$ownMethods = array_values(array_filter($methods, static fn (array $m): bool => !empty($m['propio'])));
 ?>
 <div class="page-heading">
     <div>
@@ -42,10 +48,120 @@ if ($methodName !== null) {
                         <?= e((string) $categoria['nombre']) ?>
                         <span class="text-secondary small">(<?= e(__('income.types_category.' . (string) $categoria['tipo'])) ?>)</span>
                     </span>
-                    <span class="fw-semibold"><?= e((string) round((float) $categoria['porcentaje_usuario'], 2)) ?>%</span>
+                    <span class="fw-semibold"><?= e($pct((float) $categoria['porcentaje_usuario'])) ?>%</span>
                 </li>
             <?php endforeach; ?>
         </ul>
+
+        <?php if ($methods !== []): ?>
+            <details class="method-editor mt-3" <?= $openMethodEditor ? 'open' : '' ?>>
+                <summary class="btn btn-outline-primary">
+                    <i class="bi bi-sliders me-1" aria-hidden="true"></i><?= e(__('settings.metodo.toggle')) ?>
+                </summary>
+
+                <form method="post" action="/ajustes/ingreso/metodo" class="mt-3" data-method-form>
+                    <?= csrf_field() ?>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="metodo_id"><?= e(__('settings.metodo.choose')) ?></label>
+                        <select class="form-select" id="metodo_id" name="metodo_id" data-method-select>
+                            <optgroup label="<?= e(__('settings.metodo.group_catalog')) ?>">
+                                <?php foreach ($catalogMethods as $method): ?>
+                                    <option value="<?= (int) $method['id'] ?>" <?= (int) $method['id'] === $selectedMethodId ? 'selected' : '' ?>>
+                                        <?= e($methodLabelOf((string) $method['codigo'], (string) $method['nombre'])) ?><?= !empty($method['activo']) ? ' · ' . e(__('settings.metodo.current')) : '' ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </optgroup>
+                            <?php if ($ownMethods !== []): ?>
+                                <optgroup label="<?= e(__('settings.metodo.group_own')) ?>">
+                                    <?php foreach ($ownMethods as $method): ?>
+                                        <option value="<?= (int) $method['id'] ?>" <?= (int) $method['id'] === $selectedMethodId ? 'selected' : '' ?>>
+                                            <?= e((string) $method['nombre']) ?><?= !empty($method['activo']) ? ' · ' . e(__('settings.metodo.current')) : '' ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </optgroup>
+                            <?php endif; ?>
+                        </select>
+                        <div class="form-text"><?= e(__('settings.metodo.choose_hint')) ?></div>
+                    </div>
+
+                    <?php foreach ($methods as $method): ?>
+                        <?php $mid = (int) $method['id']; ?>
+                        <fieldset class="method-panel" data-method-panel="<?= $mid ?>" <?= $mid === $selectedMethodId ? '' : 'hidden disabled' ?>>
+                            <legend class="visually-hidden"><?= e($methodLabelOf((string) $method['codigo'], (string) $method['nombre'])) ?></legend>
+                            <div class="extra-grid">
+                                <?php foreach ($method['categorias'] as $index => $categoria): ?>
+                                    <?php
+                                    $name = (string) $categoria['nombre'];
+                                    $value = (float) ($method['porcentajes'][$name] ?? 0);
+                                    $default = $categoria['porcentaje'] !== null ? (float) $categoria['porcentaje'] : 0.0;
+                                    $inputId = 'pct_' . $mid . '_' . $index;
+                                    ?>
+                                    <div class="extra-row">
+                                        <label class="form-label small mb-1" for="<?= e($inputId) ?>">
+                                            <?= e($name) ?>
+                                            <span class="text-secondary">(<?= e(__('income.types_category.' . (string) $categoria['tipo'])) ?>)</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="<?= e($inputId) ?>"
+                                                   name="porcentajes[<?= $mid ?>][<?= e($name) ?>]" min="0" max="100" step="0.5"
+                                                   value="<?= e($pct($value)) ?>" data-method-input
+                                                   data-default="<?= e($pct($default)) ?>">
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+
+                            <div class="d-flex flex-wrap gap-2 mt-2">
+                                <?php if (empty($method['propio'])): ?>
+                                    <button type="button" class="btn btn-sm btn-link px-0" data-method-reset>
+                                        <?= e(__('settings.metodo.reset')) ?>
+                                    </button>
+                                <?php else: ?>
+                                    <a class="btn btn-sm btn-link px-0" href="/ajustes/ingreso/metodos/editar?id=<?= $mid ?>">
+                                        <i class="bi bi-pencil me-1" aria-hidden="true"></i><?= e(__('settings.metodo.edit')) ?>
+                                    </a>
+                                    <?php if (empty($method['activo'])): ?>
+                                        <button type="submit" class="btn btn-sm btn-link link-danger px-0" form="delete-method-<?= $mid ?>">
+                                            <i class="bi bi-trash me-1" aria-hidden="true"></i><?= e(__('settings.metodo.delete')) ?>
+                                        </button>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                                <a class="btn btn-sm btn-link px-0" href="/ajustes/ingreso/metodos/nuevo?desde=<?= $mid ?>">
+                                    <i class="bi bi-copy me-1" aria-hidden="true"></i><?= e(__('settings.metodo.copy')) ?>
+                                </a>
+                            </div>
+                        </fieldset>
+                    <?php endforeach; ?>
+
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+                        <span class="small text-secondary">
+                            <?= e(__('settings.ingreso.extra_total')) ?>:
+                            <span class="fw-semibold" data-method-total>0</span>%
+                        </span>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a href="/ajustes/ingreso/metodos/nuevo" class="btn btn-outline-secondary">
+                                <i class="bi bi-plus-lg me-1" aria-hidden="true"></i><?= e(__('settings.metodo.new')) ?>
+                            </a>
+                            <button type="submit" class="btn btn-primary"><?= e(__('settings.metodo.apply')) ?></button>
+                        </div>
+                    </div>
+
+                    <p class="small text-secondary mt-3 mb-0"><?= e(__('settings.metodo.future_note')) ?></p>
+                </form>
+
+                <?php foreach ($ownMethods as $method): ?>
+                    <?php if (empty($method['activo'])): ?>
+                        <form method="post" action="/ajustes/ingreso/metodos/eliminar" id="delete-method-<?= (int) $method['id'] ?>"
+                              data-confirm="<?= e(__('settings.metodo.delete_confirm')) ?>" data-confirm-danger hidden>
+                            <?= csrf_field() ?>
+                            <input type="hidden" name="id" value="<?= (int) $method['id'] ?>">
+                        </form>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </details>
+        <?php endif; ?>
     </div>
 <?php endif; ?>
 

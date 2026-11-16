@@ -401,6 +401,16 @@ final class ExpensePlannerService
             $sections[$section]['items_centavos'] += (int) $item['monto_centavos'];
         }
 
+        // Igual que en Ajustes → Ingreso: solo las categorías con porcentaje
+        // en el método vigente. Una categoría en 0 % solo se muestra si algo
+        // apunta a ella, para no esconder compromisos ni conceptos.
+        $sections = array_filter(
+            $sections,
+            static fn (array $section): bool => $section['porcentaje'] > 0.001
+                || $section['commitments'] !== []
+                || $section['items'] !== []
+        );
+
         foreach ($sections as &$section) {
             $section['disponible_centavos'] = $section['asignado_centavos'] - $section['comprometido_centavos'];
             $section['excedido'] = $section['disponible_centavos'] < 0;

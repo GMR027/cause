@@ -27,6 +27,9 @@ $pct = static fn (float $value): string => rtrim(rtrim(number_format($value, 1, 
                         <span class="planner-section-name">
                             <i class="bi <?= e((string) ($section['icon'] ?? 'bi-dot')) ?> text-primary" aria-hidden="true"></i>
                             <?= e((string) $label) ?>
+                            <?php if (!$isOrphan): ?>
+                                <span class="text-secondary small fw-normal">(<?= e(__('income.types_category.' . (string) ($section['tipo'] ?? 'controlada'))) ?>)</span>
+                            <?php endif; ?>
                         </span>
                         <?php if (!$isOrphan && (float) ($section['porcentaje'] ?? 0) > 0): ?>
                             <span class="planner-section-percent">

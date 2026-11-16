@@ -2,6 +2,7 @@
 $netWorth = $netWorth ?? [];
 $history = $history ?? [];
 $subscriptions = $subscriptions ?? [];
+$frequent = $frequent ?? ['days' => 90, 'items' => [], 'max' => 0];
 $score = $score ?? [];
 $currency = (string) ($netWorth['currency'] ?? ($currentUser['moneda_activa'] ?? 'MXN'));
 $cash = (int) ($netWorth['cash_centavos'] ?? 0);
@@ -273,5 +274,45 @@ $lastPoint = $linePoints !== [] ? explode(',', $linePoints[count($linePoints) - 
                 </div>
             </div>
         </div>
+    <?php endif; ?>
+</div>
+
+<div class="surface-card mt-4">
+    <div class="mb-3">
+        <h2 class="h5 mb-0"><?= e(__('reports.frequent.title')) ?></h2>
+        <p class="small text-secondary mb-0"><?= e(__('reports.frequent.hint', [':days' => (string) $frequent['days']])) ?></p>
+    </div>
+
+    <?php if ($frequent['items'] === []): ?>
+        <p class="small text-secondary mb-0"><?= e(__('reports.frequent.empty')) ?></p>
+    <?php else: ?>
+        <ol class="frequent-list list-unstyled mb-0">
+            <?php foreach ($frequent['items'] as $i => $item): ?>
+                <?php $width = $frequent['max'] > 0 ? max(4, (int) round($item['veces'] * 100 / $frequent['max'])) : 0; ?>
+                <li class="frequent-item">
+                    <span class="frequent-rank"><?= $i + 1 ?></span>
+                    <div class="frequent-body">
+                        <div class="d-flex flex-wrap justify-content-between gap-2">
+                            <div class="text-truncate">
+                                <span class="fw-semibold"><?= e($item['label']) ?></span>
+                                <?php if ($item['part'] !== ''): ?>
+                                    <span class="small text-secondary">· <?= e($item['part']) ?></span>
+                                <?php endif; ?>
+                            </div>
+                            <span class="small fw-semibold text-nowrap">
+                                <?= e($item['veces'] === 1 ? __('reports.frequent.times_one') : __('reports.frequent.times', [':count' => (string) $item['veces']])) ?>
+                            </span>
+                        </div>
+                        <div class="frequent-bar" role="img" aria-label="<?= e(__('reports.frequent.aria')) ?>: <?= $width ?>%">
+                            <span style="width: <?= $width ?>%"></span>
+                        </div>
+                        <div class="small text-secondary d-flex flex-wrap gap-3">
+                            <span><?= e(__('reports.frequent.total')) ?>: <?= money_html($item['total'], $currency) ?></span>
+                            <span><?= e(__('reports.frequent.average')) ?>: <?= money_html($item['promedio'], $currency) ?></span>
+                        </div>
+                    </div>
+                </li>
+            <?php endforeach; ?>
+        </ol>
     <?php endif; ?>
 </div>

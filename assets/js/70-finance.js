@@ -343,16 +343,30 @@
                 return;
             }
 
+            const typeByClass = {
+                sofipo: ['sofipo', 'OTRO', 'calculado'],
+                acciones: ['accion', 'EUA', 'manual'],
+                fibras: ['fibra', 'BMV', 'manual'],
+                cetes_bonos: ['cetes', 'CETES', 'calculado'],
+                fondos: ['fondo', 'OTRO', 'manual'],
+                cripto: ['cripto', 'CRIPTO', 'manual'],
+            };
+            const defaults = typeByClass[button.getAttribute('data-portfolio-class') || ''] || ['otro', 'OTRO', 'calculado'];
+
             positionForm.setAttribute('action', '/inversion/posiciones');
             value(positionForm.querySelector('[name="id"]'), '');
+            value(positionForm.querySelector('[name="portafolio_id"]'), button.getAttribute('data-portfolio') || '');
             value(positionForm.querySelector('[name="nombre"]'), '');
-            value(positionForm.querySelector('[name="tipo"]'), 'accion');
-            value(positionForm.querySelector('[name="mercado"]'), 'EUA');
+            value(positionForm.querySelector('[name="tipo"]'), defaults[0]);
+            value(positionForm.querySelector('[name="mercado"]'), defaults[1]);
+            value(positionForm.querySelector('[name="tasa_anual"]'), '');
+            value(positionForm.querySelector('[name="fecha_vencimiento"]'), '');
+            value(positionForm.querySelector('[name="notas"]'), '');
             value(positionForm.querySelector('[name="ticker"]'), '');
             value(positionForm.querySelector('[name="simbolo_proveedor"]'), '');
             value(positionForm.querySelector('[name="cantidad"]'), '1');
             value(positionForm.querySelector('[name="costo_total"]'), '');
-            value(positionForm.querySelector('[name="modo_valor"]'), 'manual');
+            value(positionForm.querySelector('[name="modo_valor"]'), defaults[2]);
             value(positionForm.querySelector('[name="valor_manual"]'), '');
             value(positionForm.querySelector('[name="fecha_valor"]'), '');
             syncPositionMode();
@@ -367,6 +381,10 @@
 
             positionForm.setAttribute('action', '/inversion/posiciones/editar');
             value(positionForm.querySelector('[name="id"]'), button.getAttribute('data-position-id') || '');
+            value(positionForm.querySelector('[name="portafolio_id"]'), button.getAttribute('data-position-portfolio') || '');
+            value(positionForm.querySelector('[name="tasa_anual"]'), button.getAttribute('data-position-rate') || '');
+            value(positionForm.querySelector('[name="fecha_vencimiento"]'), button.getAttribute('data-position-maturity') || '');
+            value(positionForm.querySelector('[name="notas"]'), button.getAttribute('data-position-notes') || '');
             value(positionForm.querySelector('[name="tipo"]'), button.getAttribute('data-position-type') || 'otro');
             value(positionForm.querySelector('[name="mercado"]'), button.getAttribute('data-position-market') || 'OTRO');
             value(positionForm.querySelector('[name="ticker"]'), button.getAttribute('data-position-ticker') || '');

@@ -80,7 +80,7 @@ return [
         'back' => 'Volver al planeador',
         'completed_notice' => 'Este plan ya se completó.',
         'past_notice' => 'La fecha de este plan ya pasó. Es de solo lectura; puedes duplicarlo para volver a usarlo.',
-        'method_changed' => 'Tu método cambió desde que guardaste este plan. Actualiza los compromisos para recalcularlo.',
+        'method_changed' => 'Tu método o sus porcentajes cambiaron desde que guardaste este plan. Actualiza los compromisos para recalcularlo.',
         'snapshot_notice' => 'El detalle conserva el cálculo original del plan.',
     ],
     'summary' => [

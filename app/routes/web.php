@@ -144,6 +144,11 @@ $router->group('', static function (Router $routes): void {
     $routes->get('/ajustes/ingreso', [SettingsController::class, 'ingreso']);
     $routes->post('/ajustes/ingreso/recurrencia', [SettingsController::class, 'updateRecurrencia']);
     $routes->post('/ajustes/ingreso/extra', [SettingsController::class, 'updateExtra']);
+    $routes->post('/ajustes/ingreso/metodo', [SettingsController::class, 'updateMetodo']);
+    $routes->get('/ajustes/ingreso/metodos/nuevo', [SettingsController::class, 'nuevoMetodo']);
+    $routes->get('/ajustes/ingreso/metodos/editar', [SettingsController::class, 'editarMetodo']);
+    $routes->post('/ajustes/ingreso/metodos/guardar', [SettingsController::class, 'guardarMetodo']);
+    $routes->post('/ajustes/ingreso/metodos/eliminar', [SettingsController::class, 'eliminarMetodo']);
     $routes->get('/ajustes/temas', [SettingsController::class, 'temas']);
     $routes->post('/ajustes/temas', [SettingsController::class, 'updateTemas']);
     $routes->get('/ajustes/compartir', [SettingsController::class, 'compartir']);
@@ -275,9 +280,13 @@ $router->group('', static function (Router $routes): void {
     $routes->post('/inversion/retirar', [InvestmentController::class, 'withdraw']);
     $routes->post('/inversion/pausar', [InvestmentController::class, 'pause']);
     $routes->get('/inversion/tipos', [InvestmentController::class, 'instruments']);
-    $routes->post('/inversion/tipos', [InvestmentController::class, 'storeInstrument']);
-    $routes->post('/inversion/tipos/editar', [InvestmentController::class, 'updateInstrument']);
-    $routes->post('/inversion/tipos/eliminar', [InvestmentController::class, 'deleteInstrument']);
+    $routes->post('/inversion/portafolios', [InvestmentController::class, 'storePortfolio']);
+    $routes->post('/inversion/portafolios/editar', [InvestmentController::class, 'updatePortfolio']);
+    $routes->post('/inversion/portafolios/eliminar', [InvestmentController::class, 'deletePortfolio']);
+    $routes->post('/inversion/posiciones/mover', [InvestmentController::class, 'movePosition']);
+    $routes->post('/inversion/rendimientos', [InvestmentController::class, 'storeYield']);
+    $routes->post('/inversion/rendimientos/editar', [InvestmentController::class, 'updateYield']);
+    $routes->post('/inversion/rendimientos/eliminar', [InvestmentController::class, 'deleteYield']);
     $routes->post('/inversion/porcentaje', [InvestmentController::class, 'adjustPercentage']);
     $routes->post('/inversion/posiciones', [InvestmentController::class, 'storePosition']);
     $routes->post('/inversion/posiciones/editar', [InvestmentController::class, 'updatePosition']);

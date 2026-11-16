@@ -45,6 +45,16 @@ return [
         'empty' => 'Not enough history yet. The first snapshot is saved this month.',
         'month' => 'Month',
     ],
+    'frequent' => [
+        'title' => 'Your most frequent expenses',
+        'hint' => 'Top 10 from the last :days days, excluding subscriptions and recurring expenses.',
+        'times' => ':count times',
+        'times_one' => 'Once',
+        'total' => 'Total',
+        'average' => 'Average',
+        'empty' => 'Not enough expenses yet. Use subcategories or notes so they show up here.',
+        'aria' => 'Relative frequency',
+    ],
     'subscriptions' => [
         'title' => 'Subscriptions',
         'subtitle' => 'Record your subscriptions and keep track of how much you pay, when they charge and which ones you could cancel.',

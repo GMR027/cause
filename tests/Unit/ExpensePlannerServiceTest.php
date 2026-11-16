@@ -43,6 +43,23 @@ final class ExpensePlannerServiceTest extends TestCase
         self::assertSame([], $this->service->buildSections($this->categories, $this->percentages, $reparto, [])[0]['commitments']);
     }
 
+    public function test_sections_match_the_active_categories_of_the_method(): void
+    {
+        $categories = array_merge($this->categories, [
+            ['nombre' => 'Donación', 'porcentaje' => null, 'tipo' => 'donacion', 'orden' => 4],
+        ]);
+        $percentages = $this->percentages + ['Donación' => 0.0];
+        $reparto = (new RepartoService())->repartirIngreso(100000, $percentages);
+
+        $names = array_column($this->service->buildSections($categories, $percentages, $reparto, []), 'nombre');
+        self::assertSame(['Gastos', 'Ahorro', 'Inversión'], $names);
+
+        // Si algo apunta a una categoría en 0 %, se muestra para no esconderlo.
+        $commitments = [['nombre' => 'Diezmo', 'monto_centavos' => 1000, 'seccion' => 'Donación']];
+        $names = array_column($this->service->buildSections($categories, $percentages, $reparto, $commitments), 'nombre');
+        self::assertContains('Donación', $names);
+    }
+
     public function test_commitments_and_items_are_grouped_by_section(): void
     {
         $reparto = (new RepartoService())->repartirIngreso(100000, $this->percentages);

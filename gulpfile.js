@@ -29,6 +29,7 @@ const paths = {
         'assets/js/60-expenses.js',
         'assets/js/62-planner.js',
         'assets/js/70-finance.js',
+        'assets/js/71-portfolios.js',
         'assets/js/75-moves.js',
         'assets/js/80-notifications.js',
         'assets/js/84-money-fx.js',

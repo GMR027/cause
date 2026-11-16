@@ -80,7 +80,7 @@ return [
         'back' => 'Back to planner',
         'completed_notice' => 'This plan is already completed.',
         'past_notice' => 'This plan date has passed. It is read-only; you can duplicate it to use it again.',
-        'method_changed' => 'Your method changed since you saved this plan. Update commitments to recalculate it.',
+        'method_changed' => 'Your method or its percentages changed since you saved this plan. Update commitments to recalculate it.',
         'snapshot_notice' => 'The detail keeps the original calculation of the plan.',
     ],
     'summary' => [

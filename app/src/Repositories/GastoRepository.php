@@ -491,4 +491,39 @@ final class GastoRepository
 
         return $usage;
     }
+
+    /**
+     * Gastos más frecuentes desde una fecha (UTC): agrupa por subcategoría o,
+     * si no tiene, por la nota normalizada. Excluye recurrentes y sin confirmar.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function topFrequent(int $userId, string $desdeUtc, int $limit = 10): array
+    {
+        $limit = max(1, min(50, $limit));
+        $stmt = $this->db->prepare(
+            "SELECT
+                CASE WHEN subcategoria_id IS NOT NULL THEN CONCAT('s', subcategoria_id)
+                     ELSE CONCAT('n', LOWER(TRIM(LEFT(nota, 120)))) END AS clave,
+                MAX(subcategoria_nombre) AS subcategoria_nombre,
+                SUBSTRING_INDEX(GROUP_CONCAT(TRIM(LEFT(nota, 120)) ORDER BY fecha DESC SEPARATOR '\\n'), '\\n', 1) AS nota,
+                SUBSTRING_INDEX(GROUP_CONCAT(parte_metodo ORDER BY fecha DESC SEPARATOR '\\n'), '\\n', 1) AS parte_metodo,
+                COUNT(*) AS veces,
+                COALESCE(SUM(COALESCE(monto_principal_centavos, monto_centavos)), 0) AS total,
+                MAX(fecha) AS ultima
+             FROM gastos
+             WHERE user_id = ?
+               AND fecha >= ?
+               AND confirmado = 1
+               AND es_recurrente = 0
+               AND estado <> 'cerrado'
+               AND (subcategoria_id IS NOT NULL OR (nota IS NOT NULL AND TRIM(nota) <> ''))
+             GROUP BY clave
+             ORDER BY veces DESC, total DESC
+             LIMIT {$limit}"
+        );
+        $stmt->execute([$userId, $desdeUtc]);
+
+        return $stmt->fetchAll();
+    }
 }

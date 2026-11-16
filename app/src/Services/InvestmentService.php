@@ -17,13 +17,9 @@ use Throwable;
 final class InvestmentService
 {
     public const INSTRUMENTS = ['fondo', 'cripto', 'cetes', 'acciones', 'otro'];
-    /** Valor del select que indica "crear un tipo nuevo" al aportar. */
-    public const NEW_INSTRUMENT = '__nuevo';
+    public const POSITION_TYPES = ['accion', 'etf', 'fibra', 'cripto', 'cetes', 'bono', 'sofipo', 'pagare', 'fondo', 'otro'];
     /** Prefijo de la clave de un tipo de inversión propio: `u<id>`. */
     private const CUSTOM_PREFIX = 'u';
-    private const CUSTOM_LIMIT = 30;
-    private const NAME_MIN = 2;
-    private const NAME_MAX = 60;
     private const WITHDRAW_REASONS = ['liquidez', 'meta_cumplida', 'rebalanceo', 'otro'];
 
     private InvestmentRepository $repo;
@@ -43,16 +39,11 @@ final class InvestmentService
         $period = $support->period($user);
         $pauses = new PauseService();
         $pauses->refresh($user);
+        (new PortfolioService())->ensureMigrated($user);
         $status = $pauses->status($user);
         $consecutive = $pauses->consecutive($user);
-        $totals = $this->repo->totalsByInstrument((int) $user['id']);
+        $byInstrument = $this->repo->totalsByInstrument((int) $user['id']);
         $custom = $this->customInstruments((int) $user['id']);
-        $instruments = $this->instrumentKeys(array_keys($custom));
-        $byInstrument = [];
-
-        foreach ($instruments as $instrument) {
-            $byInstrument[$instrument] = (int) ($totals[$instrument] ?? 0);
-        }
 
         $contributions = $this->repo->recentContributions((int) $user['id'], 15);
         $withdrawals = $this->repo->recentWithdrawals((int) $user['id'], 15);
@@ -76,6 +67,11 @@ final class InvestmentService
             'contributions' => $contributions,
             'withdrawals' => $withdrawals,
             'positions' => $portfolio['positions'],
+            'portfolios' => $portfolio['portfolios'],
+            'portfolio_totals' => $portfolio['totals'],
+            'yields' => (new PortfolioService())->recentYields($user, 15),
+            'portfolio_names' => $this->portfolioNames((int) $user['id']),
+            'position_names' => $this->positionNames($portfolio['positions']),
             'portfolio_value_centavos' => $portfolio['value_centavos'],
             'portfolio_cost_centavos' => $portfolio['cost_centavos'],
             'portfolio_market_centavos' => $portfolio['market_centavos'],
@@ -90,7 +86,6 @@ final class InvestmentService
             'pause' => $status['pause'],
             'consecutive' => $consecutive,
             'can_adjust' => (new FinanceSupportService())->categoryNamesByType($user, 'inversion') !== [],
-            'instruments' => $instruments,
             'instrument_labels' => $custom,
             'withdraw_reasons' => self::WITHDRAW_REASONS,
             'currency' => (string) ($user['moneda_activa'] ?? 'MXN'),
@@ -107,17 +102,17 @@ final class InvestmentService
     }
 
     /**
+     * Valor de mercado de cada posición activa (sin portafolios).
+     *
      * @param array<string, mixed> $user
-     * @return array<string, mixed>
+     * @return list<array<string, mixed>>
      */
-    private function portfolio(array $user): array
+    public function valuePositions(array $user): array
     {
         $positions = $this->repo->positionsForUser((int) $user['id']);
         $principal = (string) ($user['moneda_activa'] ?? 'MXN');
         $converter = new CurrencyService();
         $rows = [];
-        $costTotal = 0;
-        $marketTotal = 0;
 
         foreach ($positions as $position) {
             $currency = (string) ($position['moneda'] ?? 'MXN');
@@ -166,8 +161,6 @@ final class InvestmentService
             }
 
             $difference = $value - $cost;
-            $costTotal += $cost;
-            $marketTotal += $value;
 
             $rows[] = array_merge($position, [
                 'valor_principal_centavos' => $value,
@@ -182,17 +175,36 @@ final class InvestmentService
             ]);
         }
 
-        $contributed = $this->repo->sumContributions((int) $user['id'])
-            - $this->repo->sumWithdrawals((int) $user['id']);
-        $unassigned = max(0, $contributed - $costTotal);
+        return $rows;
+    }
+
+    /**
+     * Totales de inversión a partir de los portafolios.
+     *
+     * @param array<string, mixed> $user
+     * @return array<string, mixed>
+     */
+    private function portfolio(array $user): array
+    {
+        $summary = (new PortfolioService())->summary($user);
+        $totals = $summary['totals'];
+        $positions = [];
+
+        foreach ($summary['portfolios'] as $group) {
+            foreach ($group['instruments'] as $instrument) {
+                $positions[] = $instrument;
+            }
+        }
 
         return [
-            'positions' => $rows,
-            'cost_centavos' => $costTotal,
-            'market_centavos' => $marketTotal,
-            'unassigned_centavos' => $unassigned,
-            'value_centavos' => $marketTotal + $unassigned,
-            'difference_centavos' => $marketTotal - $costTotal,
+            'positions' => $positions,
+            'portfolios' => $summary['portfolios'],
+            'totals' => $totals,
+            'cost_centavos' => (int) $totals['instruments_cost'],
+            'market_centavos' => (int) $totals['instruments_value'],
+            'unassigned_centavos' => (int) $totals['cash'],
+            'value_centavos' => (int) $totals['value'],
+            'difference_centavos' => (int) $totals['instruments_value'] - (int) $totals['instruments_cost'],
         ];
     }
 
@@ -243,7 +255,7 @@ final class InvestmentService
             $currencyInput !== '' ? $currencyInput : (string) ($user['moneda_activa'] ?? 'MXN')
         );
 
-        $types = ['accion', 'etf', 'cripto', 'cetes', 'fondo', 'otro'];
+        $types = self::POSITION_TYPES;
         $markets = ['BMV', 'EUA', 'CRIPTO', 'CETES', 'OTRO'];
 
         if ($name === '') {
@@ -262,7 +274,7 @@ final class InvestmentService
             throw new InvalidArgumentException('investment.errors.position_cost');
         }
 
-        if (!in_array($mode, ['automatico', 'manual'], true)) {
+        if (!in_array($mode, ['automatico', 'manual', 'calculado'], true)) {
             throw new InvalidArgumentException('investment.errors.position_mode');
         }
 
@@ -322,6 +334,7 @@ final class InvestmentService
         }
 
         $valueDate = $valueDate !== '' ? $valueDate . ' 12:00:00' : null;
+        $extraFields = $this->positionExtras($user, $data, $existing);
 
         if ($id === null) {
             return $this->repo->createPosition(
@@ -338,7 +351,8 @@ final class InvestmentService
                 $mode,
                 $manualValue,
                 $manualPrincipal,
-                $valueDate
+                $valueDate,
+                $extraFields
             );
         }
 
@@ -357,10 +371,58 @@ final class InvestmentService
             $mode,
             $manualValue,
             $manualPrincipal,
-            $valueDate
+            $valueDate,
+            $extraFields
         );
 
+        if ((int) ($existing['portafolio_id'] ?? 0) !== $extraFields['portafolio_id']) {
+            (new PortfolioService())->moveInstrument($user, $id, $extraFields['portafolio_id']);
+        }
+
         return $id;
+    }
+
+    /**
+     * Portafolio, tasa, vencimiento y notas de un instrumento.
+     *
+     * @param array<string, mixed> $user
+     * @param array<string, mixed> $data
+     * @param array<string, mixed>|null $existing
+     * @return array{portafolio_id: int, tasa_anual: ?string, fecha_vencimiento: ?string, notas: ?string}
+     */
+    private function positionExtras(array $user, array $data, ?array $existing): array
+    {
+        $portfolioId = (int) ($data['portafolio_id'] ?? 0);
+
+        if ($portfolioId <= 0 && $existing !== null) {
+            $portfolioId = (int) ($existing['portafolio_id'] ?? 0);
+        }
+
+        $portfolioId = (int) (new PortfolioService())->find($user, $portfolioId)['id'];
+        $rate = trim(str_replace(',', '.', (string) ($data['tasa_anual'] ?? '')));
+
+        if ($rate !== '' && (!is_numeric($rate) || (float) $rate < 0 || (float) $rate > 1000)) {
+            throw new InvalidArgumentException('investment.errors.position_rate');
+        }
+
+        $maturity = trim((string) ($data['fecha_vencimiento'] ?? ''));
+
+        if ($maturity !== '') {
+            $date = DateTimeImmutable::createFromFormat('!Y-m-d', $maturity);
+
+            if ($date === false || $date->format('Y-m-d') !== $maturity) {
+                throw new InvalidArgumentException('investment.errors.position_maturity');
+            }
+        }
+
+        $notes = trim((string) ($data['notas'] ?? ''));
+
+        return [
+            'portafolio_id' => $portfolioId,
+            'tasa_anual' => $rate !== '' ? number_format((float) $rate, 4, '.', '') : null,
+            'fecha_vencimiento' => $maturity !== '' ? $maturity : null,
+            'notas' => $notes !== '' ? mb_substr($notes, 0, 255) : null,
+        ];
     }
 
     /**
@@ -410,28 +472,26 @@ final class InvestmentService
     }
 
     /**
+     * Aporta a un portafolio y, opcionalmente, a uno de sus instrumentos.
+     * Sin instrumento, el dinero queda como efectivo del portafolio.
+     *
      * @param array<string, mixed> $user
      * @return array<string, mixed>
      */
     public function contribute(
         array $user,
         int $amount,
-        string $instrument,
+        int $portfolioId,
+        int $positionId,
         string $date,
         bool $extra,
-        ?string $currency = null,
-        string $newInstrumentName = ''
+        ?string $currency = null
     ): array {
         if ($amount <= 0) {
             throw new InvalidArgumentException('El monto debe ser mayor que cero.');
         }
 
-        $newName = $instrument === self::NEW_INSTRUMENT ? $this->normalizeName($newInstrumentName) : null;
-
-        if ($newName === null) {
-            $this->assertInstrument((int) $user['id'], $instrument);
-        }
-
+        [$portfolio, $position] = $this->target($user, $portfolioId, $positionId);
         $support = new FinanceSupportService();
         $utc = $support->toUtc($date, $user);
         $this->assertCurrent($user, $utc);
@@ -445,37 +505,35 @@ final class InvestmentService
             $currencyInput !== '' ? $currencyInput : (string) ($user['moneda_activa'] ?? 'MXN')
         );
 
-        if ($newName !== null) {
-            // Se crea al final, cuando el resto de la aportación ya es válido,
-            // para no dejar tipos huérfanos si algo falla antes.
-            $instrument = $this->findOrCreateInstrument((int) $user['id'], $newName);
-        }
-
         $this->repo->createContribution(
             (int) $user['id'],
             $amount,
             $currency,
-            $instrument,
+            $this->legacyKey($portfolio),
             $extra,
-            $utc->format('Y-m-d H:i:s')
+            $utc->format('Y-m-d H:i:s'),
+            (int) $portfolio['id'],
+            $position !== null ? (int) $position['id'] : null
         );
 
         return $this->status($user);
     }
 
     /**
+     * Retira de un instrumento o del efectivo de un portafolio. Con motivo
+     * «rebalanceo» registra además una aportación extra al destino.
+     *
      * @param array<string, mixed> $user
      * @param array<string, mixed> $data
      * @return array<string, mixed>
      */
-    public function withdraw(array $user, int $amount, string $instrument, array $data, ?string $currency = null): array
+    public function withdraw(array $user, int $amount, int $portfolioId, int $positionId, array $data, ?string $currency = null): array
     {
         if ($amount <= 0) {
             throw new InvalidArgumentException('El monto debe ser mayor que cero.');
         }
 
-        $this->assertInstrument((int) $user['id'], $instrument);
-
+        [$portfolio, $position] = $this->target($user, $portfolioId, $positionId);
         $reason = (string) ($data['motivo'] ?? '');
 
         if (!in_array($reason, self::WITHDRAW_REASONS, true)) {
@@ -489,26 +547,31 @@ final class InvestmentService
         $currency = (new CurrencyService())->validateCode(
             $currencyInput !== '' ? $currencyInput : (string) ($user['moneda_activa'] ?? 'MXN')
         );
-        $accumulated = $this->accumulated((int) $user['id'], $instrument);
         $principalAmount = (new CurrencyService())->toPrincipal($user, $amount, $currency, $utc->format('Y-m-d'))['centavos'];
 
-        if ($principalAmount > $accumulated) {
+        if ($principalAmount > $this->availableIn($user, (int) $portfolio['id'], $position !== null ? (int) $position['id'] : 0)) {
             throw new RuntimeException('No puedes retirar más de lo acumulado en ese instrumento.');
         }
 
-        $target = trim((string) ($data['destino_instrumento'] ?? ''));
+        $rebalance = $reason === 'rebalanceo';
+        $target = null;
+        $targetPosition = null;
 
-        if ($reason === 'rebalanceo') {
-            if (!$this->isValidInstrument((int) $user['id'], $target)) {
+        if ($rebalance) {
+            $targetPortfolioId = (int) ($data['destino_portafolio_id'] ?? 0);
+            $targetPositionId = (int) ($data['destino_posicion_id'] ?? 0);
+
+            try {
+                [$target, $targetPosition] = $this->target($user, $targetPortfolioId, $targetPositionId);
+            } catch (Throwable) {
                 throw new InvalidArgumentException('Elige un instrumento de destino válido.');
             }
 
-            if ($target === $instrument) {
+            if ((int) $target['id'] === (int) $portfolio['id']
+                && ($targetPosition['id'] ?? 0) === ($position['id'] ?? 0)) {
                 throw new InvalidArgumentException('El instrumento de destino debe ser distinto del origen.');
             }
         }
-
-        $rebalance = $reason === 'rebalanceo';
 
         $db = Database::connection();
         $note = isset($data['motivo_texto']) && trim((string) $data['motivo_texto']) !== ''
@@ -522,20 +585,24 @@ final class InvestmentService
                 (int) $user['id'],
                 $amount,
                 $currency,
-                $instrument,
+                $this->legacyKey($portfolio),
                 $reason,
                 $note,
-                $utc->format('Y-m-d H:i:s')
+                $utc->format('Y-m-d H:i:s'),
+                (int) $portfolio['id'],
+                $position !== null ? (int) $position['id'] : null
             );
 
-            if ($rebalance) {
+            if ($rebalance && $target !== null) {
                 $repo->createContribution(
                     (int) $user['id'],
                     $amount,
                     $currency,
-                    $target,
+                    $this->legacyKey($target),
                     true,
-                    $utc->format('Y-m-d H:i:s')
+                    $utc->format('Y-m-d H:i:s'),
+                    (int) $target['id'],
+                    $targetPosition !== null ? (int) $targetPosition['id'] : null
                 );
             }
 
@@ -550,8 +617,98 @@ final class InvestmentService
 
         return [
             'rebalanced' => $rebalance,
-            'target' => $rebalance ? $target : null,
+            'target' => $rebalance ? (string) $target['nombre'] : null,
         ];
+    }
+
+    /**
+     * Portafolio (obligatorio) e instrumento (opcional) del usuario.
+     *
+     * @param array<string, mixed> $user
+     * @return array{0: array<string, mixed>, 1: array<string, mixed>|null}
+     */
+    private function target(array $user, int $portfolioId, int $positionId): array
+    {
+        $portfolio = (new PortfolioService())->find($user, $portfolioId);
+        $position = null;
+
+        if ($positionId > 0) {
+            $position = $this->repo->findPosition($positionId, (int) $user['id']);
+
+            if ($position === null || (int) ($position['portafolio_id'] ?? 0) !== (int) $portfolio['id']) {
+                throw new InvalidArgumentException('investment.errors.position_not_found');
+            }
+        }
+
+        return [$portfolio, $position];
+    }
+
+    /**
+     * Lo que se puede retirar: el valor del instrumento o el efectivo del portafolio.
+     *
+     * @param array<string, mixed> $user
+     */
+    private function availableIn(array $user, int $portfolioId, int $positionId): int
+    {
+        foreach ((new PortfolioService())->summary($user)['portfolios'] as $group) {
+            if ((int) $group['id'] !== $portfolioId) {
+                continue;
+            }
+
+            if ($positionId === 0) {
+                return (int) $group['cash'];
+            }
+
+            foreach ($group['instruments'] as $instrument) {
+                if ((int) $instrument['id'] === $positionId) {
+                    return (int) $instrument['valor_principal_centavos'];
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * Clave de `instrumento` para movimientos nuevos (compatibilidad con
+     * pausas, exportación, búsqueda y patrimonio).
+     *
+     * @param array<string, mixed> $portfolio
+     */
+    private function legacyKey(array $portfolio): string
+    {
+        $legacy = (string) ($portfolio['instrumento_legado'] ?? '');
+
+        return $legacy !== '' ? $legacy : PortfolioService::legacyForClass((string) ($portfolio['clase'] ?? 'otro'));
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function portfolioNames(int $userId): array
+    {
+        $names = [];
+
+        foreach ((new \Cauce\Repositories\PortfolioRepository())->forUser($userId) as $row) {
+            $names[(int) $row['id']] = (string) $row['nombre'];
+        }
+
+        return $names;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $positions
+     * @return array<int, string>
+     */
+    private function positionNames(array $positions): array
+    {
+        $names = [];
+
+        foreach ($positions as $position) {
+            $names[(int) $position['id']] = (string) $position['nombre'];
+        }
+
+        return $names;
     }
 
     /**
@@ -730,141 +887,7 @@ final class InvestmentService
         return $map;
     }
 
-    /**
-     * Lista para la vista de administración de tipos propios.
-     *
-     * @return list<array{id: int, key: string, nombre: string}>
-     */
-    public function customInstrumentList(int $userId): array
-    {
-        $list = [];
-
-        foreach ($this->repo->customInstruments($userId) as $row) {
-            $list[] = [
-                'id' => (int) $row['id'],
-                'key' => self::CUSTOM_PREFIX . (int) $row['id'],
-                'nombre' => (string) $row['nombre'],
-            ];
-        }
-
-        return $list;
-    }
-
-    /**
-     * @param array<string, mixed> $user
-     */
-    public function createInstrument(array $user, string $name): string
-    {
-        $userId = (int) $user['id'];
-        $name = $this->normalizeName($name);
-
-        if ($this->builtInKeyForName($name) !== null
-            || $this->repo->findCustomInstrumentByName($userId, $name) !== null) {
-            throw new InvalidArgumentException('investment.errors.instrument_duplicate');
-        }
-
-        return $this->insertInstrument($userId, $name);
-    }
-
-    /**
-     * @param array<string, mixed> $user
-     */
-    public function renameInstrument(array $user, int $id, string $name): void
-    {
-        $userId = (int) $user['id'];
-
-        if ($this->repo->findCustomInstrument($userId, $id) === null) {
-            throw new RuntimeException('investment.errors.instrument_not_found');
-        }
-
-        $name = $this->normalizeName($name);
-
-        if ($this->builtInKeyForName($name) !== null) {
-            throw new InvalidArgumentException('investment.errors.instrument_duplicate');
-        }
-
-        $existing = $this->repo->findCustomInstrumentByName($userId, $name);
-
-        if ($existing !== null && (int) $existing['id'] !== $id) {
-            throw new InvalidArgumentException('investment.errors.instrument_duplicate');
-        }
-
-        $this->repo->renameCustomInstrument($userId, $id, $name);
-    }
-
-    /**
-     * @param array<string, mixed> $user
-     */
-    public function deleteInstrument(array $user, int $id): void
-    {
-        $userId = (int) $user['id'];
-
-        if ($this->repo->findCustomInstrument($userId, $id) === null) {
-            throw new RuntimeException('investment.errors.instrument_not_found');
-        }
-
-        if ($this->repo->instrumentUsage($userId, self::CUSTOM_PREFIX . $id) > 0) {
-            throw new RuntimeException('investment.errors.instrument_in_use');
-        }
-
-        $this->repo->deleteCustomInstrument($userId, $id);
-    }
-
-    /**
-     * Predefinidos, luego los propios y "otro" al final.
-     *
-     * @param list<string> $customKeys
-     * @return list<string>
-     */
-    private function instrumentKeys(array $customKeys): array
-    {
-        $builtIn = array_values(array_diff(self::INSTRUMENTS, ['otro']));
-
-        return array_merge($builtIn, $customKeys, ['otro']);
-    }
-
-    private function isValidInstrument(int $userId, string $instrument): bool
-    {
-        if (in_array($instrument, self::INSTRUMENTS, true)) {
-            return true;
-        }
-
-        if (preg_match('/^' . self::CUSTOM_PREFIX . '([1-9][0-9]*)$/', $instrument, $match) !== 1) {
-            return false;
-        }
-
-        return $this->repo->findCustomInstrument($userId, (int) $match[1]) !== null;
-    }
-
-    private function assertInstrument(int $userId, string $instrument): void
-    {
-        if (!$this->isValidInstrument($userId, $instrument)) {
-            throw new InvalidArgumentException('Instrumento inválido.');
-        }
-    }
-
-    /**
-     * Clave predefinida cuyo nombre (en cualquier idioma) coincide con `$name`.
-     */
-    private function builtInKeyForName(string $name): ?string
-    {
-        $needle = mb_strtolower($name);
-
-        foreach (['es', 'en'] as $locale) {
-            $file = base_path('lang/' . $locale . '/investment.php');
-            $labels = is_file($file) ? ((require $file)['instruments'] ?? []) : [];
-
-            foreach (self::INSTRUMENTS as $key) {
-                if ($needle === $key || $needle === mb_strtolower((string) ($labels[$key] ?? ''))) {
-                    return $key;
-                }
-            }
-        }
-
-        return null;
-    }
-
-    private function validPastDate(string $value): bool
+            private function validPastDate(string $value): bool
     {
         $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
 
@@ -873,60 +896,7 @@ final class InvestmentService
             && $value <= gmdate('Y-m-d', strtotime('+1 day'));
     }
 
-    private function normalizeName(string $name): string
-    {
-        $name = preg_replace('/[\p{C}]+/u', '', $name) ?? '';
-        $name = trim(preg_replace('/\s+/u', ' ', $name) ?? '');
-        $length = mb_strlen($name);
-
-        if ($length < self::NAME_MIN || $length > self::NAME_MAX) {
-            throw new InvalidArgumentException('investment.errors.instrument_name');
-        }
-
-        return $name;
-    }
-
-    private function findOrCreateInstrument(int $userId, string $name): string
-    {
-        $builtIn = $this->builtInKeyForName($name);
-
-        if ($builtIn !== null) {
-            return $builtIn;
-        }
-
-        $existing = $this->repo->findCustomInstrumentByName($userId, $name);
-
-        if ($existing !== null) {
-            return self::CUSTOM_PREFIX . (int) $existing['id'];
-        }
-
-        return $this->insertInstrument($userId, $name);
-    }
-
-    private function insertInstrument(int $userId, string $name): string
-    {
-        if ($this->repo->countCustomInstruments($userId) >= self::CUSTOM_LIMIT) {
-            throw new RuntimeException('investment.errors.instrument_limit');
-        }
-
-        try {
-            return self::CUSTOM_PREFIX . $this->repo->createCustomInstrument($userId, $name);
-        } catch (\PDOException $exception) {
-            if ((string) $exception->getCode() === '23000') {
-                throw new InvalidArgumentException('investment.errors.instrument_duplicate');
-            }
-
-            throw $exception;
-        }
-    }
-
-    private function accumulated(int $userId, string $instrument): int
-    {
-        return $this->repo->sumContributions($userId, $instrument)
-            - $this->repo->sumWithdrawals($userId, $instrument);
-    }
-
-    /**
+            /**
      * @param array<string, mixed> $user
      */
     private function assertCurrent(array $user, \DateTimeImmutable $date): void

@@ -181,6 +181,25 @@ final class PlannerController
 
         if ($active !== null && $plan['metodo_id'] !== null) {
             $methodChanged = (int) $active['method']['id'] !== (int) $plan['metodo_id'];
+
+            // Un reajuste de porcentajes del mismo método también deja el
+            // plan desactualizado.
+            if (!$methodChanged) {
+                $current = array_filter($active['percentages'], static fn (float $v): bool => $v > 0.001);
+                $stored = json_decode((string) ($plan['porcentajes_json'] ?? ''), true);
+                $saved = array_filter(
+                    array_map('floatval', is_array($stored) ? $stored : []),
+                    static fn (float $v): bool => $v > 0.001
+                );
+                ksort($current);
+                ksort($saved);
+                $methodChanged = array_keys($current) !== array_keys($saved)
+                    || array_filter(
+                        $current,
+                        static fn (float $v, string $k): bool => abs($v - (float) ($saved[$k] ?? 0)) > 0.01,
+                        ARRAY_FILTER_USE_BOTH
+                    ) !== [];
+            }
         }
 
         echo View::render('planner/show', [

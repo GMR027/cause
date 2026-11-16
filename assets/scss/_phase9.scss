@@ -253,3 +253,51 @@
         }
     }
 }
+
+// ---------------------------------------------------------------------------
+// Top 10 de gastos frecuentes (reports/index.php)
+// ---------------------------------------------------------------------------
+
+.frequent-list {
+    display: grid;
+    gap: .75rem;
+}
+
+.frequent-item {
+    display: flex;
+    gap: .75rem;
+    align-items: flex-start;
+}
+
+.frequent-rank {
+    flex: 0 0 1.75rem;
+    height: 1.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: .8rem;
+    font-weight: 700;
+    background: rgba(var(--cauce-primary-rgb), .12);
+    color: var(--cauce-primary);
+}
+
+.frequent-body {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.frequent-bar {
+    height: .4rem;
+    margin: .3rem 0;
+    border-radius: 1rem;
+    background: var(--cauce-surface-muted);
+    overflow: hidden;
+
+    span {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+        background: var(--cauce-primary);
+    }
+}

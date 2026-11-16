@@ -167,17 +167,20 @@ final class InvestmentRepository
         string $currency,
         string $instrument,
         bool $extra,
-        string $date
+        string $date,
+        ?int $portfolioId = null,
+        ?int $positionId = null
     ): int {
         $stmt = $this->db->prepare(
             'INSERT INTO aportaciones_inversion
-                (user_id, monto_centavos, monto_principal_centavos, moneda, instrumento, es_extra, fecha, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())'
+                (user_id, monto_centavos, monto_principal_centavos, moneda, instrumento, portafolio_id, posicion_id,
+                 es_extra, fecha, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())'
         );
         $stmt->execute([
             $userId, $amount,
             (new CurrencyService())->toPrincipalForUserId($userId, $amount, $currency, substr($date, 0, 10)),
-            $currency, $instrument, $extra ? 1 : 0, $date,
+            $currency, $instrument, $portfolioId, $positionId, $extra ? 1 : 0, $date,
         ]);
 
         return (int) $this->db->lastInsertId();
@@ -190,18 +193,20 @@ final class InvestmentRepository
         string $instrument,
         string $reason,
         ?string $text,
-        string $date
+        string $date,
+        ?int $portfolioId = null,
+        ?int $positionId = null
     ): int {
         $stmt = $this->db->prepare(
             'INSERT INTO retiros_inversion
-                (user_id, monto_centavos, monto_principal_centavos, moneda, instrumento,
+                (user_id, monto_centavos, monto_principal_centavos, moneda, instrumento, portafolio_id, posicion_id,
                  motivo_catalogo, motivo_texto, fecha, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())'
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())'
         );
         $stmt->execute([
             $userId, $amount,
             (new CurrencyService())->toPrincipalForUserId($userId, $amount, $currency, substr($date, 0, 10)),
-            $currency, $instrument, $reason, $text, $date,
+            $currency, $instrument, $portfolioId, $positionId, $reason, $text, $date,
         ]);
 
         return (int) $this->db->lastInsertId();
@@ -352,20 +357,23 @@ final class InvestmentRepository
         string $valueMode,
         ?int $manualValueCents,
         ?int $manualValuePrincipalCents,
-        ?string $manualValueDate
+        ?string $manualValueDate,
+        array $extra = []
     ): int {
         $stmt = $this->db->prepare(
             'INSERT INTO inversiones_posiciones
-                (user_id, tipo, mercado, ticker, simbolo_proveedor, nombre, moneda, cantidad,
+                (user_id, portafolio_id, tipo, mercado, ticker, simbolo_proveedor, nombre, moneda, cantidad,
                  costo_total_centavos, costo_total_principal_centavos, modo_valor,
                  valor_manual_centavos, valor_manual_principal_centavos, fecha_valor_manual,
+                 tasa_anual, fecha_vencimiento, notas,
                  activo, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, NOW(), NOW())'
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, NOW(), NOW())'
         );
         $stmt->execute([
-            $userId, $type, $market, $ticker, $providerSymbol, $name, $currency, $quantity,
+            $userId, $extra['portafolio_id'] ?? null, $type, $market, $ticker, $providerSymbol, $name, $currency, $quantity,
             $costCents, $costPrincipalCents, $valueMode,
             $manualValueCents, $manualValuePrincipalCents, $manualValueDate,
+            $extra['tasa_anual'] ?? null, $extra['fecha_vencimiento'] ?? null, $extra['notas'] ?? null,
         ]);
 
         return (int) $this->db->lastInsertId();
@@ -386,20 +394,22 @@ final class InvestmentRepository
         string $valueMode,
         ?int $manualValueCents,
         ?int $manualValuePrincipalCents,
-        ?string $manualValueDate
+        ?string $manualValueDate,
+        array $extra = []
     ): void {
         $stmt = $this->db->prepare(
             'UPDATE inversiones_posiciones SET
                 tipo = ?, mercado = ?, ticker = ?, simbolo_proveedor = ?, nombre = ?, moneda = ?,
                 cantidad = ?, costo_total_centavos = ?, costo_total_principal_centavos = ?,
                 modo_valor = ?, valor_manual_centavos = ?, valor_manual_principal_centavos = ?,
-                fecha_valor_manual = ?, updated_at = NOW()
+                fecha_valor_manual = ?, tasa_anual = ?, fecha_vencimiento = ?, notas = ?, updated_at = NOW()
              WHERE id = ? AND user_id = ?'
         );
         $stmt->execute([
             $type, $market, $ticker, $providerSymbol, $name, $currency, $quantity,
             $costCents, $costPrincipalCents, $valueMode,
             $manualValueCents, $manualValuePrincipalCents, $manualValueDate,
+            $extra['tasa_anual'] ?? null, $extra['fecha_vencimiento'] ?? null, $extra['notas'] ?? null,
             $id, $userId,
         ]);
     }

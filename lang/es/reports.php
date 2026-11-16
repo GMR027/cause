@@ -45,6 +45,16 @@ return [
         'empty' => 'Aún no hay historial suficiente. El primer snapshot se guarda este mes.',
         'month' => 'Mes',
     ],
+    'frequent' => [
+        'title' => 'Tus gastos más frecuentes',
+        'hint' => 'Top 10 de los últimos :days días, sin contar suscripciones ni recurrentes.',
+        'times' => ':count veces',
+        'times_one' => '1 vez',
+        'total' => 'Total',
+        'average' => 'Promedio',
+        'empty' => 'Aún no hay suficientes gastos. Usa subcategorías o notas para que aparezcan aquí.',
+        'aria' => 'Frecuencia relativa',
+    ],
     'subscriptions' => [
         'title' => 'Suscripciones',
         'subtitle' => 'Registra tus suscripciones y lleva el control de cuánto pagas, cuándo se cobran y cuáles podrías cancelar.',

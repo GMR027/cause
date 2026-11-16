@@ -109,6 +109,57 @@ final class MethodServiceTest extends TestCase
     /**
      * @return list<array{nombre: string, porcentaje: ?int, tipo: string, orden: int}>
      */
+    public function test_clean_percentages_rellena_ceros_y_valida_suma(): void
+    {
+        $result = $this->service->cleanPercentages($this->categories503020(), [
+            'Necesidades' => '55',
+            'Deseos' => '25,5',
+            'Ahorro' => '19.5',
+        ]);
+
+        self::assertSame([], $result['errors']);
+        self::assertSame(
+            ['Necesidades' => 55.0, 'Deseos' => 25.5, 'Ahorro' => 19.5, 'Donación' => 0.0],
+            $result['percentages']
+        );
+
+        $bad = $this->service->cleanPercentages($this->categories503020(), ['Necesidades' => 50, 'Ahorro' => 20]);
+        self::assertContains('settings.metodo.errors.sum', $bad['errors']);
+
+        $noSpending = $this->service->cleanPercentages($this->categories503020(), ['Ahorro' => 100]);
+        self::assertContains('settings.metodo.errors.no_spending', $noSpending['errors']);
+    }
+
+    public function test_clean_custom_valida_filas(): void
+    {
+        $ok = $this->service->cleanCustom('  Mi   reparto ', [
+            ['nombre' => 'Casa', 'tipo' => 'controlada', 'porcentaje' => '60'],
+            ['nombre' => '', 'tipo' => 'ahorro', 'porcentaje' => ''],
+            ['nombre' => 'Colchón', 'tipo' => 'ahorro', 'porcentaje' => '25'],
+            ['nombre' => 'Bolsa', 'tipo' => 'inversion', 'porcentaje' => '15', 'id' => '7'],
+        ]);
+
+        self::assertSame([], $ok['errors']);
+        self::assertSame('Mi reparto', $ok['nombre']);
+        self::assertCount(3, $ok['categorias']);
+        self::assertSame(7, $ok['categorias'][2]['id']);
+
+        $bad = $this->service->cleanCustom('X', [
+            ['nombre' => 'Casa', 'tipo' => 'controlada', 'porcentaje' => '50'],
+            ['nombre' => 'casa', 'tipo' => 'ahorro', 'porcentaje' => '50'],
+            ['nombre' => 'Otro', 'tipo' => 'no_controlado', 'porcentaje' => '10'],
+        ]);
+
+        self::assertContains('settings.metodo.errors.name', $bad['errors']);
+        self::assertContains('settings.metodo.errors.duplicate', $bad['errors']);
+        self::assertContains('settings.metodo.errors.type', $bad['errors']);
+
+        $noSpending = $this->service->cleanCustom('Solo ahorro', [
+            ['nombre' => 'Ahorro', 'tipo' => 'ahorro', 'porcentaje' => '100'],
+        ]);
+        self::assertContains('settings.metodo.errors.no_spending', $noSpending['errors']);
+    }
+
     private function categories503020(): array
     {
         return [

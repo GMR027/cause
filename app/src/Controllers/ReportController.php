@@ -8,6 +8,7 @@ use Cauce\Helpers\Flash;
 use Cauce\Helpers\Logger;
 use Cauce\Helpers\View;
 use Cauce\Services\AuthService;
+use Cauce\Services\FrequentExpensesService;
 use Cauce\Services\NetWorthService;
 use Cauce\Services\ScoreService;
 use Cauce\Services\SubscriptionService;
@@ -35,6 +36,7 @@ final class ReportController
             'range' => $range,
             'ranges' => array_keys(NetWorthService::RANGES),
             'subscriptions' => (new SubscriptionService())->panel($user),
+            'frequent' => (new FrequentExpensesService())->top($user),
             'score' => (new ScoreService())->panel($user, true),
         ], 'layouts/app');
     }

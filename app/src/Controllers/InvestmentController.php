@@ -10,6 +10,7 @@ use Cauce\Helpers\View;
 use Cauce\Services\MoneyFxService;
 use Cauce\Services\AuthService;
 use Cauce\Services\InvestmentService;
+use Cauce\Services\PortfolioService;
 use Throwable;
 
 final class InvestmentController
@@ -42,13 +43,11 @@ final class InvestmentController
             $result = $this->service->contribute(
                 $user,
                 $amount,
-                trim((string) input('instrumento_nuevo', '')) !== ''
-                    ? InvestmentService::NEW_INSTRUMENT
-                    : (string) input('instrumento', ''),
+                (int) ($_POST['portafolio_id'] ?? 0),
+                (int) ($_POST['posicion_id'] ?? 0),
                 (string) input('fecha', 'now'),
                 !empty($_POST['es_extra']),
-                (string) input('moneda', ''),
-                (string) input('instrumento_nuevo', '')
+                (string) input('moneda', '')
             );
             Flash::success('investment.flash.contributed');
             MoneyFxService::queue($user, 'invest', $amount, (string) input('moneda', ''));
@@ -69,12 +68,20 @@ final class InvestmentController
         $amount = parse_money_cents((string) input('monto', '')) ?? 0;
 
         try {
-            $result = $this->service->withdraw($user, $amount, (string) input('instrumento', ''), [
-                'motivo' => (string) input('motivo', ''),
-                'motivo_texto' => input('motivo_texto'),
-                'fecha' => (string) input('fecha', 'now'),
-                'destino_instrumento' => (string) input('destino_instrumento', ''),
-            ], (string) input('moneda', ''));
+            $result = $this->service->withdraw(
+                $user,
+                $amount,
+                (int) ($_POST['portafolio_id'] ?? 0),
+                (int) ($_POST['posicion_id'] ?? 0),
+                [
+                    'motivo' => (string) input('motivo', ''),
+                    'motivo_texto' => input('motivo_texto'),
+                    'fecha' => (string) input('fecha', 'now'),
+                    'destino_portafolio_id' => (int) ($_POST['destino_portafolio_id'] ?? 0),
+                    'destino_posicion_id' => (int) ($_POST['destino_posicion_id'] ?? 0),
+                ],
+                (string) input('moneda', '')
+            );
             Flash::success('investment.flash.withdrawn');
 
             if (!empty($result['rebalanced'])) {
@@ -89,56 +96,145 @@ final class InvestmentController
         redirect('/inversion');
     }
 
+    /**
+     * Los tipos propios se reemplazaron por portafolios.
+     */
     public function instruments(): void
     {
-        $user = $this->user();
-
-        echo View::render('investment/instruments', [
-            'title' => __('investment.custom.title'),
-            'customInstruments' => $this->service->customInstrumentList((int) $user['id']),
-        ], 'layouts/app');
+        $this->user();
+        redirect('/inversion');
     }
 
-    public function storeInstrument(): void
+    public function storePortfolio(): void
     {
         $user = $this->user();
 
         try {
-            $this->service->createInstrument($user, (string) input('nombre', ''));
-            Flash::success('investment.flash.instrument_created');
+            (new PortfolioService())->create(
+                $user,
+                (string) input('nombre', ''),
+                (string) input('clase', 'otro'),
+                (string) input('institucion', '')
+            );
+            Flash::success('investment.flash.portfolio_created');
         } catch (Throwable $exception) {
             $this->flashFinanceError($exception);
         }
 
-        redirect('/inversion/tipos');
+        redirect('/inversion');
     }
 
-    public function updateInstrument(): void
+    public function updatePortfolio(): void
     {
         $user = $this->user();
 
         try {
-            $this->service->renameInstrument($user, (int) ($_POST['id'] ?? 0), (string) input('nombre', ''));
-            Flash::success('investment.flash.instrument_updated');
+            (new PortfolioService())->update(
+                $user,
+                (int) ($_POST['id'] ?? 0),
+                (string) input('nombre', ''),
+                (string) input('clase', 'otro'),
+                (string) input('institucion', '')
+            );
+            Flash::success('investment.flash.portfolio_updated');
         } catch (Throwable $exception) {
             $this->flashFinanceError($exception);
         }
 
-        redirect('/inversion/tipos');
+        redirect('/inversion');
     }
 
-    public function deleteInstrument(): void
+    public function deletePortfolio(): void
     {
         $user = $this->user();
 
         try {
-            $this->service->deleteInstrument($user, (int) ($_POST['id'] ?? 0));
-            Flash::success('investment.flash.instrument_deleted');
+            (new PortfolioService())->delete($user, (int) ($_POST['id'] ?? 0));
+            Flash::success('investment.flash.portfolio_deleted');
         } catch (Throwable $exception) {
             $this->flashFinanceError($exception);
         }
 
-        redirect('/inversion/tipos');
+        redirect('/inversion');
+    }
+
+    public function movePosition(): void
+    {
+        $user = $this->user();
+
+        try {
+            (new PortfolioService())->moveInstrument($user, (int) ($_POST['id'] ?? 0), (int) ($_POST['portafolio_id'] ?? 0));
+            Flash::success('investment.flash.position_moved');
+        } catch (Throwable $exception) {
+            $this->flashFinanceError($exception);
+        }
+
+        redirect('/inversion');
+    }
+
+    public function storeYield(): void
+    {
+        $user = $this->user();
+
+        try {
+            $result = (new PortfolioService())->recordYield($user, $this->yieldData() + [
+                'portafolio_id' => (int) ($_POST['portafolio_id'] ?? 0),
+                'posicion_id' => (int) ($_POST['posicion_id'] ?? 0),
+                'destino' => (string) input('destino', 'reinvertido'),
+            ]);
+            if ($result['ingreso_id'] !== null) {
+                Flash::success('investment.flash.yield_paid');
+                redirect('/ingresos/acreditar?id=' . $result['ingreso_id']);
+            }
+
+            Flash::success('investment.flash.yield_recorded');
+        } catch (Throwable $exception) {
+            $this->flashFinanceError($exception);
+        }
+
+        redirect('/inversion');
+    }
+
+    public function updateYield(): void
+    {
+        $user = $this->user();
+
+        try {
+            (new PortfolioService())->updateYield($user, (int) ($_POST['id'] ?? 0), $this->yieldData());
+            Flash::success('investment.flash.movement_updated');
+        } catch (Throwable $exception) {
+            $this->flashFinanceError($exception);
+        }
+
+        redirect('/inversion');
+    }
+
+    public function deleteYield(): void
+    {
+        $user = $this->user();
+
+        try {
+            (new PortfolioService())->deleteYield($user, (int) ($_POST['id'] ?? 0));
+            Flash::success('investment.flash.movement_deleted');
+        } catch (Throwable $exception) {
+            $this->flashFinanceError($exception);
+        }
+
+        redirect('/inversion');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function yieldData(): array
+    {
+        return [
+            'tipo' => (string) input('tipo', ''),
+            'monto_centavos' => parse_money_cents((string) input('monto', '')) ?? 0,
+            'moneda' => (string) input('moneda', ''),
+            'fecha' => (string) input('fecha', 'now'),
+            'nota' => (string) input('nota', ''),
+        ];
     }
 
     public function pause(): void
@@ -284,6 +380,10 @@ final class InvestmentController
             'modo_valor' => (string) input('modo_valor', 'manual'),
             'valor_manual_centavos' => parse_money_cents((string) input('valor_manual', '')) ?? 0,
             'fecha_valor' => (string) input('fecha_valor', ''),
+            'portafolio_id' => (int) ($_POST['portafolio_id'] ?? 0),
+            'tasa_anual' => (string) input('tasa_anual', ''),
+            'fecha_vencimiento' => (string) input('fecha_vencimiento', ''),
+            'notas' => (string) input('notas', ''),
         ];
     }
 

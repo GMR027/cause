@@ -42,6 +42,7 @@ final class CurrencyRecalculationService
         $this->recalcSimple($userId, 'retiros_ahorro', 'monto_centavos', 'monto_principal_centavos', 'fecha', $principal);
         $this->recalcSimple($userId, 'aportaciones_inversion', 'monto_centavos', 'monto_principal_centavos', 'fecha', $principal);
         $this->recalcSimple($userId, 'retiros_inversion', 'monto_centavos', 'monto_principal_centavos', 'fecha', $principal);
+        $this->recalcSimple($userId, 'inversiones_rendimientos', 'monto_centavos', 'monto_principal_centavos', 'fecha', $principal);
         $this->recalcSimple($userId, 'donaciones', 'monto_centavos', 'monto_principal_centavos', 'fecha', $principal);
         $this->recalcSimple($userId, 'compartidos', 'monto_centavos', 'monto_principal_centavos', 'fecha', $principal);
         $this->recalcSimple($userId, 'pagos_deuda', 'monto_centavos', 'monto_principal_centavos', 'fecha', $principal);
@@ -100,7 +101,7 @@ final class CurrencyRecalculationService
         $allowed = [
             'ingresos', 'no_controlado', 'gastos_recurrentes', 'plantillas_gasto',
             'movimientos', 'aportaciones_ahorro', 'retiros_ahorro',
-            'aportaciones_inversion', 'retiros_inversion', 'donaciones', 'compartidos',
+            'aportaciones_inversion', 'retiros_inversion', 'inversiones_rendimientos', 'donaciones', 'compartidos',
             'pagos_deuda', 'lista_deseos', 'metas_ahorro',
         ];
 

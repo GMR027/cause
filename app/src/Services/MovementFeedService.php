@@ -209,13 +209,27 @@ final class MovementFeedService
     private function investments(int $userId, string $inicio, string $fin, string $q): array
     {
         $labels = (new InvestmentService())->customInstruments($userId);
-        $label = static fn (string $key): string => (string) ($labels[$key] ?? __('investment.instruments.' . $key));
+        $portfolios = $this->names('SELECT id, nombre FROM inversiones_portafolios WHERE user_id = ?', $userId);
+        $positions = $this->names('SELECT id, nombre FROM inversiones_posiciones WHERE user_id = ?', $userId);
+        $label = static function (array $row) use ($labels, $portfolios, $positions): string {
+            $portfolio = $portfolios[(int) ($row['portafolio_id'] ?? 0)] ?? null;
+
+            if ($portfolio === null) {
+                $key = (string) ($row['instrumento'] ?? 'otro');
+
+                return (string) ($labels[$key] ?? __('investment.instruments.' . $key));
+            }
+
+            $position = $positions[(int) ($row['posicion_id'] ?? 0)] ?? null;
+
+            return $position !== null ? $portfolio . ' · ' . $position : $portfolio;
+        };
         $rows = [];
 
         [$where, $params] = $this->base($userId, $inicio, $fin, 'fecha');
 
         foreach ($this->select('SELECT * FROM aportaciones_inversion', $where, $params) as $row) {
-            $instrument = $label((string) $row['instrumento']);
+            $instrument = $label($row);
 
             if ($q !== '' && mb_stripos($instrument, $q) === false) {
                 continue;
@@ -228,7 +242,7 @@ final class MovementFeedService
         [$where, $params] = $this->base($userId, $inicio, $fin, 'fecha');
 
         foreach ($this->select('SELECT * FROM retiros_inversion', $where, $params) as $row) {
-            $instrument = $label((string) $row['instrumento']);
+            $instrument = $label($row);
             $text = (string) ($row['motivo_texto'] ?? '');
 
             if ($q !== '' && mb_stripos($instrument . ' ' . $text, $q) === false) {
@@ -239,7 +253,51 @@ final class MovementFeedService
             $rows[] = $this->row('inversion', $row, __('expenses.feed.investment_out'), $detail, 'entrada', '/inversion');
         }
 
+        [$where, $params] = $this->base($userId, $inicio, $fin, 'fecha');
+
+        foreach ($this->select('SELECT * FROM inversiones_rendimientos', $where, $params) as $row) {
+            $instrument = $label($row);
+            $note = (string) ($row['nota'] ?? '');
+            $type = (string) $row['tipo'];
+
+            if ($q !== '' && mb_stripos($instrument . ' ' . $note, $q) === false) {
+                continue;
+            }
+
+            // Siempre neutral: un rendimiento pagado ya aparece como su ingreso extra.
+            $loss = in_array($type, ['baja', 'comision'], true);
+            $detail = $this->joinText(
+                $instrument,
+                $loss ? null : __('investment.yields.destinations.' . (string) $row['destino']),
+                $note
+            );
+            $rows[] = $this->row(
+                'inversion',
+                $row,
+                __('investment.yields.types.' . $type),
+                $detail,
+                'neutral',
+                '/inversion'
+            );
+        }
+
         return $rows;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function names(string $sql, int $userId): array
+    {
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$userId]);
+        $names = [];
+
+        foreach ($stmt->fetchAll() as $row) {
+            $names[(int) $row['id']] = (string) $row['nombre'];
+        }
+
+        return $names;
     }
 
     /**

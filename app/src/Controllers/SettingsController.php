@@ -9,6 +9,7 @@ use Cauce\Helpers\Flash;
 use Cauce\Helpers\Logger;
 use Cauce\Helpers\PasswordHasher;
 use Cauce\Helpers\View;
+use Cauce\Repositories\MetodoRepository;
 use Cauce\Repositories\RecoveryRepository;
 use Cauce\Repositories\SessionRepository;
 use Cauce\Repositories\UserRepository;
@@ -414,6 +415,179 @@ final class SettingsController
         redirect('/ajustes/ingreso');
     }
 
+    public function updateMetodo(): void
+    {
+        $user = $this->user();
+        $metodoId = (int) input('metodo_id', '0');
+        $all = $_POST['porcentajes'] ?? [];
+        $input = is_array($all) && is_array($all[$metodoId] ?? null) ? $all[$metodoId] : [];
+
+        try {
+            $errors = (new MethodService())->changeMethod($user, $metodoId, $input);
+        } catch (Throwable $exception) {
+            Logger::error('No se pudo cambiar el método', ['exception' => $exception->getMessage()]);
+            $errors = ['settings.metodo.errors.generic'];
+        }
+
+        if ($errors !== []) {
+            $this->renderIngreso($user, array_map(static fn (string $key): string => __($key), $errors), [
+                'metodo_id' => $metodoId,
+                'porcentajes' => [$metodoId => $input],
+            ]);
+            return;
+        }
+
+        Flash::success('settings.metodo.saved');
+        redirect('/ajustes/ingreso');
+    }
+
+    public function nuevoMetodo(): void
+    {
+        $user = $this->user();
+        $base = null;
+        $fromId = (int) input('desde', '0');
+
+        // Partir de un método existente (catálogo o propio) como plantilla.
+        foreach ((new MethodService())->selectable($user) as $method) {
+            if ((int) $method['id'] === $fromId) {
+                $base = $method;
+                break;
+            }
+        }
+
+        $rows = [];
+
+        if ($base !== null) {
+            foreach ($base['categorias'] as $categoria) {
+                $value = (float) ($base['porcentajes'][(string) $categoria['nombre']] ?? 0);
+
+                if ($value <= 0 && (string) $categoria['tipo'] !== 'controlada') {
+                    continue;
+                }
+
+                $rows[] = [
+                    'id' => null,
+                    'nombre' => (string) $categoria['nombre'],
+                    'tipo' => (string) $categoria['tipo'],
+                    'porcentaje' => (string) (int) round($value),
+                ];
+            }
+        }
+
+        $this->renderMetodoForm($user, null, '', $rows, true);
+    }
+
+    public function editarMetodo(): void
+    {
+        $user = $this->user();
+        $method = (new MetodoRepository())->findOwned((int) input('id', '0'), (int) $user['id']);
+
+        if ($method === null) {
+            Flash::error('settings.metodo.errors.unknown');
+            redirect('/ajustes/ingreso');
+        }
+
+        $rows = array_map(static fn (array $categoria): array => [
+            'id' => (int) $categoria['id'],
+            'nombre' => (string) $categoria['nombre'],
+            'tipo' => (string) $categoria['tipo'],
+            'porcentaje' => (string) (int) ($categoria['porcentaje'] ?? 0),
+        ], $method['categorias']);
+
+        $this->renderMetodoForm($user, $method, (string) $method['nombre'], $rows, false);
+    }
+
+    public function guardarMetodo(): void
+    {
+        $user = $this->user();
+        $id = (int) input('id', '0');
+        $id = $id > 0 ? $id : null;
+        $rows = $_POST['categorias'] ?? [];
+        $rows = is_array($rows) ? array_values($rows) : [];
+        $nombre = (string) input('nombre', '');
+        $activate = input('activar') === '1';
+
+        try {
+            $result = (new MethodService())->saveCustom($user, $id, $nombre, $rows, $activate);
+        } catch (Throwable $exception) {
+            Logger::error('No se pudo guardar el método propio', ['exception' => $exception->getMessage()]);
+            $result = ['id' => $id, 'errors' => ['settings.metodo.errors.generic']];
+        }
+
+        if ($result['errors'] !== []) {
+            $method = $id !== null ? (new MetodoRepository())->findOwned($id, (int) $user['id']) : null;
+            $clean = array_map(static fn (mixed $row): array => [
+                'id' => is_array($row) && is_scalar($row['id'] ?? null) ? (int) $row['id'] : null,
+                'nombre' => is_array($row) && is_scalar($row['nombre'] ?? null) ? (string) $row['nombre'] : '',
+                'tipo' => is_array($row) && is_scalar($row['tipo'] ?? null) ? (string) $row['tipo'] : 'controlada',
+                'porcentaje' => is_array($row) && is_scalar($row['porcentaje'] ?? null) ? (string) $row['porcentaje'] : '',
+            ], $rows);
+
+            $this->renderMetodoForm(
+                $user,
+                $method,
+                $nombre,
+                $clean,
+                $activate,
+                array_map(static fn (string $key): string => __($key), $result['errors'])
+            );
+            return;
+        }
+
+        Flash::success($id === null ? 'settings.metodo.created' : 'settings.metodo.updated');
+        redirect('/ajustes/ingreso');
+    }
+
+    public function eliminarMetodo(): void
+    {
+        $user = $this->user();
+        $errors = (new MethodService())->deleteCustom($user, (int) input('id', '0'));
+
+        if ($errors !== []) {
+            Flash::error($errors[0]);
+        } else {
+            Flash::success('settings.metodo.deleted');
+        }
+
+        redirect('/ajustes/ingreso');
+    }
+
+    /**
+     * @param array<string, mixed>|null $method
+     * @param list<array{id: ?int, nombre: string, tipo: string, porcentaje: string}> $rows
+     * @param list<string> $errors
+     */
+    private function renderMetodoForm(
+        array $user,
+        ?array $method,
+        string $nombre,
+        array $rows,
+        bool $activate,
+        array $errors = []
+    ): void {
+        $active = (new MethodService())->activeData($user);
+        $isActive = $method !== null && $active !== null && (int) $active['method']['id'] === (int) $method['id'];
+
+        if ($rows === []) {
+            $rows = [
+                ['id' => null, 'nombre' => '', 'tipo' => 'controlada', 'porcentaje' => ''],
+                ['id' => null, 'nombre' => '', 'tipo' => 'ahorro', 'porcentaje' => ''],
+            ];
+        }
+
+        echo View::render('ajustes/metodo-form', [
+            'title' => $method === null ? __('settings.metodo.new_title') : __('settings.metodo.edit_title'),
+            'method' => $method,
+            'nombre' => $nombre,
+            'rows' => $rows,
+            'activate' => $activate,
+            'isActive' => $isActive,
+            'types' => MethodService::CUSTOM_TYPES,
+            'maxRows' => MethodService::CUSTOM_MAX_CATEGORIES,
+            'errors' => $errors,
+        ], 'layouts/app');
+    }
+
     /**
      * @param list<string> $errors
      * @param array<string, mixed>|null $old
@@ -424,7 +598,21 @@ final class SettingsController
         // Solo las categorías que tu método vigente usa (con % > 0).
         $categories = $service->categoriasActivas($user);
         $defaultName = $categories !== [] ? $service->categoriaExtraPorDefecto($categories) : null;
-        $methodData = (new MethodService())->activeData($user);
+        $methodService = new MethodService();
+        $methodData = $methodService->activeData($user);
+        $methods = $methodService->selectable($user);
+
+        // Si el formulario de método volvió con errores, conserva lo enviado.
+        $selectedMethodId = (int) ($old['metodo_id'] ?? ($methodData['method']['id'] ?? 0));
+
+        foreach ((array) ($old['porcentajes'] ?? []) as $oldId => $values) {
+            foreach ($methods as &$candidate) {
+                if ((int) $candidate['id'] === (int) $oldId && is_array($values)) {
+                    $candidate['porcentajes'] = array_merge($candidate['porcentajes'], $values);
+                }
+            }
+            unset($candidate);
+        }
 
         $extra = $old['extra'] ?? null;
         $extra = is_array($extra) ? $extra : ($service->extraGuardado($user) ?? []);
@@ -449,6 +637,9 @@ final class SettingsController
             'categories' => $categories,
             'methodCode' => $methodData['method']['codigo'] ?? null,
             'methodName' => $methodData['method']['nombre'] ?? null,
+            'methods' => $methods,
+            'selectedMethodId' => $selectedMethodId,
+            'openMethodEditor' => isset($old['metodo_id']),
             'extra' => $extra,
             'errors' => $errors,
         ], 'layouts/app');

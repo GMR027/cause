@@ -489,3 +489,104 @@
         margin: auto 1rem;
     }
 }
+
+// ---------------------------------------------------------------------------
+// Portafolios de inversión (investment/index.php + 71-portfolios.js)
+// ---------------------------------------------------------------------------
+
+.portfolio-list {
+    display: grid;
+    gap: .75rem;
+}
+
+.portfolio-card {
+    border: 1px solid var(--cauce-border);
+    border-radius: 1rem;
+    background: var(--cauce-surface);
+
+    &[open] .portfolio-chevron {
+        transform: rotate(180deg);
+    }
+}
+
+.portfolio-summary {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .85rem 1rem;
+    cursor: pointer;
+    list-style: none;
+
+    &::-webkit-details-marker {
+        display: none;
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--cauce-primary);
+        outline-offset: 2px;
+        border-radius: 1rem;
+    }
+}
+
+.portfolio-icon {
+    flex: 0 0 2.4rem;
+    height: 2.4rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: .75rem;
+    background: var(--cauce-primary-soft);
+    color: var(--cauce-primary);
+    font-size: 1.1rem;
+}
+
+.portfolio-title {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.portfolio-figures {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.portfolio-chevron {
+    color: var(--bs-secondary-color);
+    transition: transform .2s ease;
+}
+
+.portfolio-body {
+    padding: 0 1rem 1rem;
+}
+
+.instrument-row {
+    align-items: flex-start;
+}
+
+.instrument-side {
+    flex: 0 0 auto;
+    font-variant-numeric: tabular-nums;
+}
+
+.min-w-0 {
+    min-width: 0;
+}
+
+@media (max-width: 575.98px) {
+    .portfolio-summary {
+        flex-wrap: wrap;
+    }
+
+    .portfolio-figures {
+        flex: 1 0 100%;
+        display: flex;
+        justify-content: space-between;
+        text-align: left;
+        padding-left: 3.15rem;
+    }
+
+    .portfolio-chevron {
+        display: none;
+    }
+}

@@ -56,7 +56,9 @@ DROP TABLE IF EXISTS `push_suscripciones`;
 DROP TABLE IF EXISTS `notificaciones_config`;
 DROP TABLE IF EXISTS `pausas_inversion`;
 DROP TABLE IF EXISTS `inversiones_precios`;
+DROP TABLE IF EXISTS `inversiones_rendimientos`;
 DROP TABLE IF EXISTS `inversiones_posiciones`;
+DROP TABLE IF EXISTS `inversiones_portafolios`;
 DROP TABLE IF EXISTS `inversiones_fondos`;
 DROP TABLE IF EXISTS `donaciones`;
 DROP TABLE IF EXISTS `retiros_inversion`;
@@ -304,6 +306,7 @@ CREATE TABLE `hogar_miembros` (
 
 CREATE TABLE `metodos` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `user_id` BIGINT UNSIGNED NULL,
     `codigo` VARCHAR(40) NOT NULL,
     `nombre` VARCHAR(80) NOT NULL,
     `descripcion_corta` VARCHAR(255) NOT NULL,
@@ -311,11 +314,14 @@ CREATE TABLE `metodos` (
     `icono` VARCHAR(60) NULL,
     `es_cultural` TINYINT(1) NOT NULL DEFAULT 0,
     `orden` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    `archivado_at` DATETIME NULL,
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     UNIQUE KEY `uq_metodos_codigo` (`codigo`),
-    KEY `idx_metodos_orden` (`orden`)
+    KEY `idx_metodos_orden` (`orden`),
+    KEY `idx_metodos_user_id` (`user_id`, `archivado_at`),
+    CONSTRAINT `fk_metodos_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `metodo_categorias` (
@@ -718,6 +724,77 @@ CREATE TABLE `transferencias_ahorro` (
 
 -- Tipos de inversión propios del usuario; los movimientos los referencian
 -- con la clave `u<id>` en la columna `instrumento`.
+CREATE TABLE `inversiones_portafolios` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `user_id` BIGINT UNSIGNED NOT NULL,
+    `nombre` VARCHAR(80) NOT NULL,
+    `clase` ENUM('sofipo', 'acciones', 'fibras', 'cetes_bonos', 'fondos', 'cripto', 'otro') NOT NULL DEFAULT 'otro',
+    `institucion` VARCHAR(120) NULL,
+    `instrumento_legado` VARCHAR(40) NULL,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uniq_inversiones_portafolios_user_nombre` (`user_id`, `nombre`),
+    CONSTRAINT `fk_inversiones_portafolios_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `inversiones_posiciones` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `user_id` BIGINT UNSIGNED NOT NULL,
+    `portafolio_id` BIGINT UNSIGNED NULL,
+    `tipo` ENUM('accion', 'etf', 'cripto', 'cetes', 'fondo', 'sofipo', 'fibra', 'pagare', 'bono', 'otro') NOT NULL DEFAULT 'otro',
+    `mercado` ENUM('BMV', 'EUA', 'CRIPTO', 'CETES', 'OTRO') NOT NULL DEFAULT 'OTRO',
+    `ticker` VARCHAR(32) NULL,
+    `simbolo_proveedor` VARCHAR(64) NULL,
+    `nombre` VARCHAR(120) NOT NULL,
+    `moneda` CHAR(3) NOT NULL DEFAULT 'MXN',
+    `cantidad` DECIMAL(24,8) NOT NULL DEFAULT 1,
+    `costo_total_centavos` BIGINT NOT NULL DEFAULT 0,
+    `costo_total_principal_centavos` BIGINT NULL,
+    `modo_valor` ENUM('automatico', 'manual', 'calculado') NOT NULL DEFAULT 'manual',
+    `valor_manual_centavos` BIGINT NULL,
+    `valor_manual_principal_centavos` BIGINT NULL,
+    `fecha_valor_manual` DATETIME NULL,
+    `tasa_anual` DECIMAL(7,4) NULL,
+    `fecha_vencimiento` DATE NULL,
+    `notas` VARCHAR(255) NULL,
+    `activo` TINYINT(1) NOT NULL DEFAULT 1,
+    `portada_path` VARCHAR(80) NULL,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_inversiones_posiciones_user_activo` (`user_id`, `activo`),
+    KEY `idx_inversiones_posiciones_simbolo` (`simbolo_proveedor`),
+    KEY `idx_inversiones_posiciones_portafolio` (`portafolio_id`),
+    CONSTRAINT `fk_inversiones_posiciones_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_inversiones_posiciones_portafolio` FOREIGN KEY (`portafolio_id`) REFERENCES `inversiones_portafolios` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `inversiones_rendimientos` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `user_id` BIGINT UNSIGNED NOT NULL,
+    `portafolio_id` BIGINT UNSIGNED NOT NULL,
+    `posicion_id` BIGINT UNSIGNED NULL,
+    `tipo` ENUM('interes', 'dividendo', 'renta', 'baja', 'comision') NOT NULL,
+    `monto_centavos` BIGINT NOT NULL,
+    `moneda` CHAR(3) NOT NULL DEFAULT 'MXN',
+    `monto_principal_centavos` BIGINT NULL,
+    `destino` ENUM('reinvertido', 'pagado') NOT NULL DEFAULT 'reinvertido',
+    `ingreso_id` BIGINT UNSIGNED NULL,
+    `fecha` DATETIME NOT NULL,
+    `nota` VARCHAR(255) NULL,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_inversiones_rendimientos_user_fecha` (`user_id`, `fecha`),
+    KEY `idx_inversiones_rendimientos_portafolio` (`portafolio_id`),
+    KEY `idx_inversiones_rendimientos_posicion` (`posicion_id`),
+    CONSTRAINT `fk_inversiones_rendimientos_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_inversiones_rendimientos_portafolio` FOREIGN KEY (`portafolio_id`) REFERENCES `inversiones_portafolios` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_inversiones_rendimientos_posicion` FOREIGN KEY (`posicion_id`) REFERENCES `inversiones_posiciones` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_inversiones_rendimientos_ingreso` FOREIGN KEY (`ingreso_id`) REFERENCES `ingresos` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE `instrumentos_inversion` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     `user_id` BIGINT UNSIGNED NOT NULL,
@@ -736,6 +813,8 @@ CREATE TABLE `aportaciones_inversion` (
     `moneda` CHAR(3) NOT NULL DEFAULT 'MXN',
     `monto_principal_centavos` BIGINT NULL,
     `instrumento` VARCHAR(40) NOT NULL,
+    `portafolio_id` BIGINT UNSIGNED NULL,
+    `posicion_id` BIGINT UNSIGNED NULL,
     `es_extra` TINYINT(1) NOT NULL DEFAULT 0,
     `fecha` DATETIME NOT NULL,
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -743,7 +822,11 @@ CREATE TABLE `aportaciones_inversion` (
     PRIMARY KEY (`id`),
     KEY `idx_aportaciones_inversion_user_fecha` (`user_id`, `fecha`),
     KEY `idx_aportaciones_inversion_instrumento` (`instrumento`),
-    CONSTRAINT `fk_aportaciones_inversion_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+    KEY `idx_aportaciones_inversion_portafolio` (`portafolio_id`),
+    KEY `idx_aportaciones_inversion_posicion` (`posicion_id`),
+    CONSTRAINT `fk_aportaciones_inversion_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_aportaciones_inversion_portafolio` FOREIGN KEY (`portafolio_id`) REFERENCES `inversiones_portafolios` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_aportaciones_inversion_posicion` FOREIGN KEY (`posicion_id`) REFERENCES `inversiones_posiciones` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `retiros_inversion` (
@@ -753,6 +836,8 @@ CREATE TABLE `retiros_inversion` (
     `moneda` CHAR(3) NOT NULL DEFAULT 'MXN',
     `monto_principal_centavos` BIGINT NULL,
     `instrumento` VARCHAR(40) NOT NULL,
+    `portafolio_id` BIGINT UNSIGNED NULL,
+    `posicion_id` BIGINT UNSIGNED NULL,
     `motivo_catalogo` ENUM('liquidez', 'meta_cumplida', 'rebalanceo', 'otro') NOT NULL,
     `motivo_texto` VARCHAR(255) NULL,
     `fecha` DATETIME NOT NULL,
@@ -761,7 +846,11 @@ CREATE TABLE `retiros_inversion` (
     PRIMARY KEY (`id`),
     KEY `idx_retiros_inversion_user_fecha` (`user_id`, `fecha`),
     KEY `idx_retiros_inversion_instrumento` (`instrumento`),
-    CONSTRAINT `fk_retiros_inversion_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+    KEY `idx_retiros_inversion_portafolio` (`portafolio_id`),
+    KEY `idx_retiros_inversion_posicion` (`posicion_id`),
+    CONSTRAINT `fk_retiros_inversion_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_retiros_inversion_portafolio` FOREIGN KEY (`portafolio_id`) REFERENCES `inversiones_portafolios` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_retiros_inversion_posicion` FOREIGN KEY (`posicion_id`) REFERENCES `inversiones_posiciones` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `donaciones` (
@@ -829,32 +918,6 @@ CREATE TABLE `inversiones_fondos` (
     PRIMARY KEY (`id`),
     KEY `idx_inversiones_fondos_user` (`user_id`),
     CONSTRAINT `fk_inversiones_fondos_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `inversiones_posiciones` (
-    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    `user_id` BIGINT UNSIGNED NOT NULL,
-    `tipo` ENUM('accion', 'etf', 'cripto', 'cetes', 'fondo', 'otro') NOT NULL DEFAULT 'otro',
-    `mercado` ENUM('BMV', 'EUA', 'CRIPTO', 'CETES', 'OTRO') NOT NULL DEFAULT 'OTRO',
-    `ticker` VARCHAR(32) NULL,
-    `simbolo_proveedor` VARCHAR(64) NULL,
-    `nombre` VARCHAR(120) NOT NULL,
-    `moneda` CHAR(3) NOT NULL DEFAULT 'MXN',
-    `cantidad` DECIMAL(24,8) NOT NULL DEFAULT 1,
-    `costo_total_centavos` BIGINT NOT NULL DEFAULT 0,
-    `costo_total_principal_centavos` BIGINT NULL,
-    `modo_valor` ENUM('automatico', 'manual') NOT NULL DEFAULT 'manual',
-    `valor_manual_centavos` BIGINT NULL,
-    `valor_manual_principal_centavos` BIGINT NULL,
-    `fecha_valor_manual` DATETIME NULL,
-    `activo` TINYINT(1) NOT NULL DEFAULT 1,
-    `portada_path` VARCHAR(80) NULL,
-    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (`id`),
-    KEY `idx_inversiones_posiciones_user_activo` (`user_id`, `activo`),
-    KEY `idx_inversiones_posiciones_simbolo` (`simbolo_proveedor`),
-    CONSTRAINT `fk_inversiones_posiciones_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `inversiones_precios` (
