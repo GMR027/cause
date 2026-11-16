@@ -117,6 +117,15 @@ final class DebtService
         $debt = $this->requireDebt($user, $id);
         $normalized = $this->normalize($user, $data, $debt);
         $this->repo->update($id, (int) $user['id'], $normalized);
+
+        // Editar el saldo a cero también es liquidarla: se festeja igual.
+        if ((int) $debt['activa'] === 1 && !$normalized['activa']) {
+            DebtPaidFxService::queue($user, array_merge($debt, [
+                'nombre' => $normalized['nombre'],
+                'monto_total_centavos' => $normalized['monto_total_centavos'],
+                'moneda' => $normalized['moneda'],
+            ]));
+        }
     }
 
     /**
@@ -239,6 +248,11 @@ final class DebtService
             $principalPayment = (new CurrencyService())->toPrincipal($user, $amount, (string) $debt['moneda'], $utc->format('Y-m-d'))['centavos'];
             $this->repo->reduceBalance($debtId, (int) $user['id'], $amount, $principalPayment);
             $this->db->commit();
+            $settled = $amount >= $balance;
+
+            if ($settled) {
+                DebtPaidFxService::queue($user, $debt);
+            }
 
             return [
                 'payment_id' => $paymentId,
@@ -246,6 +260,7 @@ final class DebtService
                 'expense' => $expense,
                 'amount_centavos' => $amount,
                 'debt' => $debt,
+                'settled' => $settled,
             ];
         } catch (Throwable $exception) {
             if ($this->db->inTransaction()) {
@@ -375,6 +390,16 @@ final class DebtService
 
             return $type === 'controlada' || str_contains($name, 'deuda');
         }));
+    }
+
+    /**
+     * Categoría del método a la que se asignan los pagos de deuda.
+     *
+     * @param array<string, mixed> $user
+     */
+    public function defaultPaymentCategory(array $user): ?string
+    {
+        return $this->defaultCategory($this->paymentCategories($user));
     }
 
     /**

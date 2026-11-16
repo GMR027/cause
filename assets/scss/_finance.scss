@@ -50,6 +50,165 @@
     .finance-tile-donation { color: #f48fb1; }
 }
 
+// Iconos con vida en Inicio: el cerdito recibe monedas, la gráfica se dibuja
+// y destella, el corazón late y suelta corazoncitos. Cada uno con su ritmo
+// para que no se muevan a la vez; al pasar el puntero van más rápido.
+.finance-tile-icon {
+    position: relative;
+    isolation: isolate;
+    --tile-speed: 1;
+
+    i {
+        line-height: 1;
+    }
+}
+
+.finance-tile-glyph {
+    position: relative;
+    z-index: 1;
+    display: inline-block;
+}
+
+.finance-tile:hover .finance-tile-icon,
+.finance-tile:focus-visible .finance-tile-icon {
+    --tile-speed: .55;
+}
+
+// Ahorro: cae una moneda y el cerdito rebota al recibirla.
+.finance-tile-savings {
+    .finance-tile-glyph {
+        transform-origin: 50% 90%;
+        animation: tile-piggy-catch calc(3.4s * var(--tile-speed)) ease-in-out infinite;
+    }
+
+    .finance-tile-coin {
+        position: absolute;
+        top: .2rem;
+        left: 50%;
+        margin-left: -.32rem;
+        font-size: .65rem;
+        color: #e3a512;
+        opacity: 0;
+        animation: tile-coin-drop calc(3.4s * var(--tile-speed)) ease-in infinite;
+    }
+}
+
+// Inversión: la línea se traza de izquierda a derecha y brillan estrellas.
+.finance-tile-investment {
+    overflow: hidden;
+
+    .finance-tile-glyph {
+        animation: tile-chart-draw calc(4.2s * var(--tile-speed)) cubic-bezier(.45, 0, .2, 1) .6s infinite;
+    }
+
+    .finance-tile-sparkle {
+        position: absolute;
+        top: .2rem;
+        right: .2rem;
+        font-size: .6rem;
+        color: #f2b705;
+        opacity: 0;
+        animation: tile-sparkle calc(4.2s * var(--tile-speed)) ease-out .6s infinite;
+    }
+
+    // Destello que barre el fondo.
+    &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, .55) 50%, transparent 70%);
+        transform: translateX(-120%);
+        animation: tile-shine calc(4.2s * var(--tile-speed)) ease-in-out .6s infinite;
+    }
+}
+
+// Donación: latido doble y corazoncitos que suben.
+.finance-tile-donation {
+    .finance-tile-glyph {
+        animation: tile-heartbeat calc(2.6s * var(--tile-speed)) ease-in-out 1.2s infinite;
+    }
+
+    .finance-tile-float {
+        position: absolute;
+        bottom: .35rem;
+        left: 55%;
+        font-size: .5rem;
+        opacity: 0;
+        animation: tile-heart-float calc(2.6s * var(--tile-speed)) ease-out 1.5s infinite;
+    }
+
+    .finance-tile-float-2 {
+        left: 22%;
+        font-size: .4rem;
+        animation-delay: 2.4s;
+    }
+}
+
+[data-bs-theme="dark"] .finance-tile-investment::after {
+    background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, .18) 50%, transparent 70%);
+}
+
+@keyframes tile-coin-drop {
+    0%, 8% { opacity: 0; transform: translateY(-.7rem) rotate(0); }
+    14% { opacity: 1; }
+    34% { opacity: 1; transform: translateY(.35rem) rotate(200deg); }
+    40%, 100% { opacity: 0; transform: translateY(.55rem) rotate(240deg) scale(.4); }
+}
+
+@keyframes tile-piggy-catch {
+    0%, 32%, 70%, 100% { transform: none; }
+    38% { transform: scale(1.12, .86); }
+    46% { transform: scale(.94, 1.08) translateY(-.15rem); }
+    54% { transform: rotate(-6deg); }
+    62% { transform: rotate(4deg); }
+}
+
+@keyframes tile-chart-draw {
+    0% { clip-path: inset(0 100% 0 0); transform: none; }
+    40% { clip-path: inset(0 0 0 0); transform: none; }
+    48% { transform: translate(.08rem, -.12rem) scale(1.1); }
+    56%, 100% { clip-path: inset(0 0 0 0); transform: none; }
+}
+
+@keyframes tile-sparkle {
+    0%, 38% { opacity: 0; transform: scale(.3) rotate(0); }
+    48% { opacity: 1; transform: scale(1.2) rotate(20deg); }
+    64%, 100% { opacity: 0; transform: scale(.6) rotate(40deg); }
+}
+
+@keyframes tile-shine {
+    0%, 40% { transform: translateX(-120%); }
+    62%, 100% { transform: translateX(120%); }
+}
+
+@keyframes tile-heartbeat {
+    0%, 40%, 100% { transform: scale(1); }
+    8% { transform: scale(1.22); }
+    16% { transform: scale(.96); }
+    24% { transform: scale(1.14); }
+}
+
+@keyframes tile-heart-float {
+    0% { opacity: 0; transform: translate(0, 0) scale(.5); }
+    20% { opacity: .9; }
+    100% { opacity: 0; transform: translate(.35rem, -1.6rem) scale(1.1) rotate(15deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .finance-tile-icon *,
+    .finance-tile-icon::after {
+        animation: none !important;
+    }
+
+    .finance-tile-coin,
+    .finance-tile-sparkle,
+    .finance-tile-float,
+    .finance-tile-investment::after {
+        display: none;
+    }
+}
+
 .finance-tile-body {
     display: flex;
     flex-direction: column;

@@ -30,4 +30,12 @@ final class MoneyFxServiceTest extends TestCase
         self::assertSame(5, MoneyFxService::level(5000000, 0));
         self::assertSame(1, MoneyFxService::level(-500, 0));
     }
+
+    public function test_tipos_disponibles_incluyen_deseos_compartir_e_ingreso(): void
+    {
+        self::assertContains('wish', MoneyFxService::KINDS);
+        self::assertContains('share', MoneyFxService::KINDS);
+        self::assertContains('income', MoneyFxService::KINDS);
+        self::assertContains('plan', MoneyFxService::KINDS);
+    }
 }

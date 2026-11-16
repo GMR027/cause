@@ -1,0 +1,587 @@
+// ---------------------------------------------------------------------------
+// Deuda liquidada: la cadena se rompe, cae el sello y hay fuegos artificiales
+// ---------------------------------------------------------------------------
+
+.debt-paid {
+    position: fixed;
+    inset: 0;
+    z-index: 1062;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    --debt-paid-gold: #f6c64f;
+    --debt-paid-gold-dark: #b7790a;
+}
+
+.debt-paid-backdrop {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(40rem 30rem at 50% 45%, rgba(var(--cauce-primary-rgb), .35), transparent 70%),
+        rgba(6, 16, 14, .62);
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    transition: opacity .4s ease;
+}
+
+.debt-paid-card {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 23rem;
+    max-height: calc(100dvh - 2rem);
+    overflow-y: auto;
+    padding: 1.25rem 1.4rem 1.4rem;
+    text-align: center;
+    background: var(--bs-body-bg);
+    border: 1px solid rgba(var(--cauce-primary-rgb), .25);
+    border-radius: 1.4rem;
+    box-shadow: 0 1.6rem 4rem rgba(0, 0, 0, .35);
+    transform: scale(.6) translateY(3rem);
+    opacity: 0;
+    transition: transform .6s cubic-bezier(.2, 1.4, .4, 1), opacity .3s ease;
+
+    &::before {
+        content: "";
+        position: absolute;
+        inset: 0 0 auto;
+        height: 10rem;
+        background: radial-gradient(20rem 9rem at 50% 0, rgba(var(--cauce-primary-rgb), .22), transparent 70%);
+        pointer-events: none;
+    }
+
+    &.is-stamped {
+        animation: debt-paid-shake .45s cubic-bezier(.36, .07, .19, .97) both;
+    }
+}
+
+.debt-paid-dismiss {
+    position: absolute;
+    top: .8rem;
+    right: .8rem;
+    z-index: 2;
+    font-size: .7rem;
+}
+
+// Escenario del sello.
+.debt-paid-stage {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 9.5rem;
+    margin: .25rem auto .5rem;
+}
+
+.debt-paid-rays {
+    position: absolute;
+    width: 13rem;
+    height: 13rem;
+    border-radius: 50%;
+    background: repeating-conic-gradient(
+        from 0deg,
+        rgba(var(--cauce-primary-rgb), .22) 0deg 10deg,
+        transparent 10deg 30deg
+    );
+    mask-image: radial-gradient(circle, #000 25%, transparent 68%);
+    -webkit-mask-image: radial-gradient(circle, #000 25%, transparent 68%);
+    opacity: 0;
+    transform: scale(.4);
+}
+
+.debt-paid-ring {
+    position: absolute;
+    width: 5.6rem;
+    height: 5.6rem;
+    border: 3px solid rgba(var(--cauce-primary-rgb), .45);
+    border-radius: 50%;
+    opacity: 0;
+}
+
+.debt-paid-chain {
+    position: absolute;
+    top: 50%;
+    width: 7.2rem;
+    height: 2.4rem;
+    margin-top: -1.2rem;
+    fill: none;
+    stroke: #8a94a0;
+    stroke-width: 6;
+    stroke-linecap: round;
+    filter: drop-shadow(0 .2rem .25rem rgba(0, 0, 0, .25));
+
+    &-left {
+        right: 50%;
+        margin-right: -.6rem;
+    }
+
+    &-right {
+        left: 50%;
+        margin-left: -.6rem;
+    }
+}
+
+[data-bs-theme="dark"] .debt-paid-chain {
+    stroke: #aab4bf;
+}
+
+.debt-paid-spark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: .45rem;
+    height: .45rem;
+    margin: -.225rem 0 0 -.225rem;
+    border-radius: 50%;
+    background: var(--debt-paid-gold);
+    box-shadow:
+        0 0 .5rem var(--debt-paid-gold),
+        1.4rem -1.2rem 0 -.05rem #ffe9a8,
+        -1.5rem -1rem 0 -.05rem var(--debt-paid-gold),
+        1.2rem 1.3rem 0 -.08rem #fff,
+        -1.1rem 1.4rem 0 -.05rem #ffe9a8;
+    opacity: 0;
+    transform: scale(.2);
+
+    &-2 {
+        transform: scale(.2) rotate(60deg);
+    }
+
+    &-3 {
+        transform: scale(.2) rotate(-70deg);
+    }
+}
+
+.debt-paid-seal {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 5.6rem;
+    height: 5.6rem;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 3rem;
+    background: radial-gradient(circle at 32% 28%, #6fe0b8, var(--cauce-primary) 62%, #0b4f42);
+    box-shadow:
+        0 0 0 .35rem rgba(var(--cauce-primary-rgb), .18),
+        0 .8rem 1.8rem rgba(var(--cauce-primary-rgb), .45);
+    opacity: 0;
+    transform: scale(0) rotate(-120deg);
+
+    i {
+        filter: drop-shadow(0 .15rem .15rem rgba(0, 0, 0, .25));
+    }
+
+    // Brillo que cruza el sello.
+    &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, .55) 50%, transparent 65%);
+        background-size: 250% 100%;
+        background-position: 120% 0;
+    }
+}
+
+.debt-paid-stamp {
+    position: absolute;
+    right: calc(50% - 6.4rem);
+    bottom: .2rem;
+    padding: .15rem .65rem;
+    border: .2rem double #d6336c;
+    border-radius: .4rem;
+    color: #d6336c;
+    background: rgba(255, 255, 255, .85);
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    opacity: 0;
+    transform: rotate(-14deg) scale(3.2);
+}
+
+[data-bs-theme="dark"] .debt-paid-stamp {
+    color: #ff7aa2;
+    border-color: #ff7aa2;
+    background: rgba(20, 20, 24, .85);
+}
+
+.debt-paid-eyebrow {
+    display: block;
+    margin-bottom: .2rem;
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--cauce-primary);
+}
+
+.debt-paid-title {
+    margin-bottom: .35rem;
+    font-size: 1.55rem;
+    font-weight: 800;
+}
+
+.debt-paid-body {
+    margin-bottom: 1rem;
+    color: var(--bs-secondary-color);
+    font-size: .95rem;
+
+    strong {
+        color: var(--bs-body-color);
+    }
+}
+
+.debt-paid-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(5.5rem, 1fr));
+    gap: .5rem;
+    margin: 0 0 1rem;
+    padding: 0;
+    list-style: none;
+
+    li {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: .1rem;
+        padding: .6rem .4rem;
+        border-radius: .85rem;
+        background: var(--cauce-primary-soft);
+        min-width: 0;
+    }
+
+    i {
+        color: var(--cauce-primary);
+        font-size: 1.1rem;
+    }
+
+    strong {
+        font-size: 1.05rem;
+        font-variant-numeric: tabular-nums;
+        overflow-wrap: anywhere;
+    }
+
+    span {
+        font-size: .72rem;
+        color: var(--bs-secondary-color);
+    }
+}
+
+.debt-paid-next {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    margin-bottom: 1.1rem;
+    font-weight: 600;
+    font-size: .9rem;
+
+    i {
+        color: var(--cauce-primary);
+    }
+}
+
+// Sin deudas: dorado y trofeo.
+.debt-paid-free {
+    .debt-paid-seal {
+        color: #fff8e1;
+        background: radial-gradient(circle at 32% 28%, #fff1c2, var(--debt-paid-gold) 55%, var(--debt-paid-gold-dark));
+        box-shadow:
+            0 0 0 .35rem rgba(246, 198, 79, .25),
+            0 .8rem 2rem rgba(217, 154, 11, .55);
+    }
+
+    .debt-paid-ring {
+        border-color: rgba(246, 198, 79, .6);
+    }
+
+    .debt-paid-rays {
+        background: repeating-conic-gradient(
+            from 0deg,
+            rgba(246, 198, 79, .35) 0deg 10deg,
+            transparent 10deg 30deg
+        );
+    }
+
+    .debt-paid-card {
+        border-color: rgba(246, 198, 79, .55);
+        box-shadow:
+            0 0 0 .2rem rgba(246, 198, 79, .2),
+            0 1.6rem 4rem rgba(0, 0, 0, .35);
+    }
+
+    .debt-paid-title {
+        background: linear-gradient(90deg, var(--debt-paid-gold-dark), #f6c64f, var(--cauce-primary), var(--debt-paid-gold-dark));
+        background-size: 300% 100%;
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    .debt-paid-next {
+        padding: .55rem .8rem;
+        border-radius: .85rem;
+        background: rgba(246, 198, 79, .16);
+
+        i {
+            color: var(--debt-paid-gold-dark);
+        }
+    }
+}
+
+// Elementos de texto que entran después del sello.
+.debt-paid-eyebrow,
+.debt-paid-title,
+.debt-paid-body,
+.debt-paid-next,
+.debt-paid-continue {
+    opacity: 0;
+    transform: translateY(.8rem);
+}
+
+.debt-paid-stats li {
+    opacity: 0;
+    transform: scale(.6);
+}
+
+// Línea de tiempo.
+.debt-paid.is-visible {
+    .debt-paid-backdrop {
+        opacity: 1;
+    }
+
+    .debt-paid-card {
+        transform: none;
+        opacity: 1;
+    }
+
+    .debt-paid-chain-left {
+        animation:
+            debt-paid-tension .45s ease-in-out .25s both,
+            debt-paid-snap-left .8s cubic-bezier(.2, .7, .3, 1) .75s both;
+    }
+
+    .debt-paid-chain-right {
+        animation:
+            debt-paid-tension .45s ease-in-out .25s both reverse,
+            debt-paid-snap-right .8s cubic-bezier(.2, .7, .3, 1) .75s both;
+    }
+
+    .debt-paid-spark {
+        animation: debt-paid-spark .7s ease-out .75s both;
+    }
+
+    .debt-paid-spark-2 {
+        animation-name: debt-paid-spark-2;
+        animation-delay: .8s;
+    }
+
+    .debt-paid-spark-3 {
+        animation-name: debt-paid-spark-3;
+        animation-delay: .85s;
+    }
+
+    .debt-paid-seal {
+        animation: debt-paid-seal .7s cubic-bezier(.2, 1.5, .4, 1) .85s both;
+
+        &::after {
+            animation: debt-paid-shine 2.4s ease-in-out 1.6s infinite;
+        }
+    }
+
+    .debt-paid-rays {
+        animation:
+            debt-paid-rays-in .6s ease-out .95s both,
+            debt-paid-spin 14s linear .95s infinite;
+    }
+
+    .debt-paid-ring {
+        animation: debt-paid-ring 1.8s ease-out 1s infinite;
+    }
+
+    .debt-paid-ring-2 {
+        animation-delay: 1.6s;
+    }
+
+    .debt-paid-stamp {
+        animation: debt-paid-stamp .32s cubic-bezier(.5, 0, .75, 0) 1.1s both;
+    }
+
+    .debt-paid-eyebrow,
+    .debt-paid-title,
+    .debt-paid-body,
+    .debt-paid-next,
+    .debt-paid-continue {
+        animation: debt-paid-rise .5s cubic-bezier(.2, 1.2, .4, 1) both;
+    }
+
+    .debt-paid-eyebrow { animation-delay: 1.35s; }
+    .debt-paid-title { animation-delay: 1.45s; }
+    .debt-paid-body { animation-delay: 1.55s; }
+    .debt-paid-next { animation-delay: calc(1.8s + var(--stats, 3) * .12s); }
+    .debt-paid-continue { animation-delay: 2.1s; }
+
+    .debt-paid-stats li {
+        animation: debt-paid-pop .5s cubic-bezier(.2, 1.6, .4, 1) both;
+        animation-delay: calc(1.65s + var(--i, 0) * .12s);
+    }
+
+    &.debt-paid-free .debt-paid-title {
+        animation:
+            debt-paid-rise .5s cubic-bezier(.2, 1.2, .4, 1) 1.45s both,
+            debt-paid-gradient 4s linear 2s infinite;
+    }
+}
+
+.debt-paid.is-leaving {
+    .debt-paid-backdrop,
+    .debt-paid-card {
+        opacity: 0;
+        transition-duration: .35s;
+    }
+
+    .debt-paid-card {
+        transform: scale(.9);
+    }
+}
+
+.debt-paid-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    transition: opacity .45s ease;
+
+    &.is-leaving {
+        opacity: 0;
+    }
+}
+
+@keyframes debt-paid-tension {
+    0%, 100% { transform: translateX(0) rotate(0); }
+    20% { transform: translateX(-2px) rotate(-2deg); }
+    40% { transform: translateX(2px) rotate(2deg); }
+    60% { transform: translateX(-3px) rotate(-3deg); }
+    80% { transform: translateX(3px) rotate(3deg); }
+}
+
+@keyframes debt-paid-snap-left {
+    0% { transform: none; opacity: 1; }
+    100% { transform: translate(-5rem, 2.5rem) rotate(-55deg); opacity: 0; }
+}
+
+@keyframes debt-paid-snap-right {
+    0% { transform: none; opacity: 1; }
+    100% { transform: translate(5rem, 2.8rem) rotate(60deg); opacity: 0; }
+}
+
+@keyframes debt-paid-spark {
+    0% { opacity: 1; transform: scale(.2); }
+    100% { opacity: 0; transform: scale(2.6); }
+}
+
+@keyframes debt-paid-spark-2 {
+    0% { opacity: 1; transform: scale(.2) rotate(60deg); }
+    100% { opacity: 0; transform: scale(2.2) rotate(60deg); }
+}
+
+@keyframes debt-paid-spark-3 {
+    0% { opacity: 1; transform: scale(.2) rotate(-70deg); }
+    100% { opacity: 0; transform: scale(2.9) rotate(-70deg); }
+}
+
+@keyframes debt-paid-seal {
+    0% { opacity: 0; transform: scale(0) rotate(-120deg); }
+    70% { opacity: 1; transform: scale(1.15) rotate(8deg); }
+    100% { opacity: 1; transform: none; }
+}
+
+@keyframes debt-paid-shine {
+    0%, 60% { background-position: 120% 0; }
+    100% { background-position: -120% 0; }
+}
+
+@keyframes debt-paid-rays-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes debt-paid-spin {
+    from { transform: scale(1) rotate(0); }
+    to { transform: scale(1) rotate(360deg); }
+}
+
+@keyframes debt-paid-ring {
+    0% { transform: scale(.9); opacity: .8; }
+    100% { transform: scale(2); opacity: 0; }
+}
+
+@keyframes debt-paid-stamp {
+    0% { opacity: 0; transform: rotate(-14deg) scale(3.2); }
+    100% { opacity: 1; transform: rotate(-14deg) scale(1); }
+}
+
+@keyframes debt-paid-shake {
+    0%, 100% { transform: none; }
+    15% { transform: translate(-6px, 3px) rotate(-1deg); }
+    30% { transform: translate(5px, -3px) rotate(1deg); }
+    45% { transform: translate(-4px, 2px); }
+    60% { transform: translate(3px, -1px); }
+    80% { transform: translate(-1px, 1px); }
+}
+
+@keyframes debt-paid-rise {
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes debt-paid-pop {
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes debt-paid-gradient {
+    to { background-position: 300% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .debt-paid-backdrop,
+    .debt-paid-card {
+        transition: none !important;
+    }
+
+    .debt-paid *,
+    .debt-paid *::before,
+    .debt-paid *::after {
+        animation: none !important;
+    }
+
+    // Estado final directo: sello y textos visibles, cadena oculta.
+    .debt-paid-chain,
+    .debt-paid-spark,
+    .debt-paid-ring,
+    .debt-paid-canvas {
+        display: none;
+    }
+
+    .debt-paid-seal,
+    .debt-paid-rays,
+    .debt-paid-eyebrow,
+    .debt-paid-title,
+    .debt-paid-body,
+    .debt-paid-next,
+    .debt-paid-continue,
+    .debt-paid-stats li {
+        opacity: 1;
+        transform: none;
+    }
+
+    .debt-paid-stamp {
+        opacity: 1;
+        transform: rotate(-14deg);
+    }
+}

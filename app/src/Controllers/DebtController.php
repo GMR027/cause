@@ -104,13 +104,17 @@ final class DebtController
                 !empty($_POST['registrar_gasto']),
                 input('parte_metodo')
             );
-            Flash::success('debts.flash.payment_saved');
-            MoneyFxService::queue(
-                $user,
-                'out',
-                (int) ($result['amount_centavos'] ?? 0),
-                (string) ($result['debt']['moneda'] ?? '')
-            );
+            Flash::success(!empty($result['settled']) ? 'debts.flash.paid_off' : 'debts.flash.payment_saved');
+
+            // Al liquidarla no va el cerdito roto: la festeja DebtPaidFxService.
+            if (empty($result['settled'])) {
+                MoneyFxService::queue(
+                    $user,
+                    'out',
+                    (int) ($result['amount_centavos'] ?? 0),
+                    (string) ($result['debt']['moneda'] ?? '')
+                );
+            }
 
             if (!empty($result['expense']['excedido'])) {
                 Flash::warning('debts.flash.payment_excess');

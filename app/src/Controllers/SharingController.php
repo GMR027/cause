@@ -8,6 +8,7 @@ use Cauce\Controllers\Concerns\FinanceErrorTrait;
 use Cauce\Helpers\Flash;
 use Cauce\Helpers\View;
 use Cauce\Services\AuthService;
+use Cauce\Services\MoneyFxService;
 use Cauce\Services\SharingService;
 use Throwable;
 
@@ -55,6 +56,8 @@ final class SharingController
             } else {
                 Flash::success('sharing.flash.created');
             }
+
+            MoneyFxService::queue($user, 'share', $amount, (string) input('moneda', ''));
         } catch (Throwable $exception) {
             $this->flashFinanceError($exception);
         }

@@ -84,6 +84,8 @@ $isAdmin = $currentUser !== null && ($currentUser['rol'] ?? 'user') === 'admin';
              data-close="<?= e(__('common.actions.close')) ?>"></div>
     <?php endif; ?>
 
+    <?= partial('partials/debt-paid', ['debtPaid' => \Cauce\Services\DebtPaidFxService::pull()]) ?>
+
     <script>
         window.CauceI18n = <?= json_encode(
             $jsI18n ?? [],

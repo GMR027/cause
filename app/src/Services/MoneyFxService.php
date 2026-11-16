@@ -8,15 +8,18 @@ use Cauce\Repositories\IngresoRepository;
 use Throwable;
 
 /**
- * Animación tras mover dinero (cerdito al ahorrar o gastar, gráfica de bolsa al invertir).
+ * Animación tras mover dinero.
  *
  * El controlador encola el evento antes de redirigir y el layout lo pinta en
- * la siguiente página: verde al ahorrar, azul al invertir y rojo (roto) en
- * gastos, pagos de deuda y retiros. La intensidad (1-5) crece con el monto.
+ * la siguiente página: verde al ahorrar, gráfica de bolsa al invertir, rojo
+ * (roto) en gastos, pagos de deuda y retiros, regalo con estrellas al apuntar
+ * un deseo, corazón con manos al compartir, un banco que escupe billetes al
+ * registrar un ingreso y una hoja de plan que se escribe y se sella al
+ * guardar un planeador. La intensidad (1-5) crece con el monto.
  */
 final class MoneyFxService
 {
-    public const KINDS = ['save', 'invest', 'out'];
+    public const KINDS = ['save', 'invest', 'out', 'wish', 'share', 'income', 'plan'];
     private const SESSION_KEY = '_money_fx';
 
     /**
@@ -60,10 +63,19 @@ final class MoneyFxService
             $label = number_format($amount / 100, 2) . ' ' . $currency;
         }
 
+        $prefix = $kind === 'out' ? '−' : ($kind === 'plan' ? '' : '+');
+
+        // Un plan no es un movimiento de dinero: su monto suele ser el ingreso
+        // completo, así que la proporción siempre daría nivel 5. Para el plan
+        // usamos los umbrales absolutos y así la celebración va con su tamaño.
+        $level = $kind === 'plan'
+            ? self::level($principalAmount, 0)
+            : self::level($principalAmount, $income);
+
         $_SESSION[self::SESSION_KEY] = [
             'kind' => $kind,
-            'level' => self::level($principalAmount, $income),
-            'label' => ($kind === 'out' ? '−' : '+') . $label,
+            'level' => $level,
+            'label' => $prefix . $label,
         ];
     }
 

@@ -10,6 +10,7 @@ use Cauce\Helpers\View;
 use Cauce\Repositories\AsignacionRepository;
 use Cauce\Repositories\IngresoRepository;
 use Cauce\Repositories\MetodoRepository;
+use Cauce\Repositories\PlanRepository;
 use Cauce\Repositories\UsuarioMetodoRepository;
 use Cauce\Repositories\DebtRepository;
 use Cauce\Repositories\GastoRepository;
@@ -17,8 +18,10 @@ use Cauce\Repositories\RecurringExpenseRepository;
 use Cauce\Repositories\SavingsRepository;
 use Cauce\Repositories\WishlistRepository;
 use Cauce\Services\AuthService;
+use Cauce\Services\CurrencyService;
 use Cauce\Services\DebtService;
 use Cauce\Services\IngresoService;
+use Cauce\Services\MoneyFxService;
 use Cauce\Services\OnboardingService;
 use Cauce\Services\PeriodoService;
 use Throwable;
@@ -59,6 +62,25 @@ final class IncomeController
             ? (string) $user['tipo_ingreso']
             : 'variable';
 
+        $prefillAmount = parse_money_cents((string) input('monto', ''));
+
+        if ($prefillAmount !== null && $prefillAmount > 0) {
+            $defaultAmount = $prefillAmount;
+        }
+
+        $planId = (int) input('plan_id', '0');
+        $plan = $planId > 0 ? (new PlanRepository())->findForUser($planId, (int) $user['id']) : null;
+
+        if ($plan === null || (string) $plan['estado'] !== 'activo') {
+            $planId = 0;
+        }
+
+        $selectedCurrency = strtoupper((string) input('moneda', (string) ($user['moneda_activa'] ?? 'MXN')));
+
+        if (!in_array($selectedCurrency, CurrencyService::SUPPORTED, true)) {
+            $selectedCurrency = (string) ($user['moneda_activa'] ?? 'MXN');
+        }
+
         echo View::render('income/nuevo', [
             'title' => __('income.nuevo.title'),
             'method' => $method,
@@ -67,6 +89,8 @@ final class IncomeController
             'type' => $type,
             'types' => (array) config('ingreso.types', []),
             'errors' => [],
+            'planId' => $planId,
+            'selectedCurrency' => $selectedCurrency,
         ], 'layouts/flow');
     }
 
@@ -75,6 +99,8 @@ final class IncomeController
         $user = $this->user();
         $amount = parse_money_cents((string) input('monto', ''));
         $type = (string) input('tipo', 'variable');
+        $planId = (int) input('plan_id', '0');
+        $selectedCurrency = strtoupper((string) input('moneda', ''));
         $errors = [];
 
         if ($amount === null || $amount <= 0) {
@@ -86,7 +112,7 @@ final class IncomeController
         }
 
         if ($errors !== []) {
-            $this->renderCreate($user, $errors, $amount ?? 0, $type);
+            $this->renderCreate($user, $errors, $amount ?? 0, $type, $planId, $selectedCurrency);
             return;
         }
 
@@ -106,9 +132,15 @@ final class IncomeController
                     str_contains($message, 'moneda') => __('currency.errors.invalid'),
                     default => __('income.errors.generic'),
                 },
-            ], (int) $amount, $type);
+            ], (int) $amount, $type, $planId, $selectedCurrency);
             return;
         }
+
+        if ($planId > 0) {
+            (new PlanRepository())->markCompleted($planId, (int) $user['id'], (int) $result['ingreso_id']);
+        }
+
+        MoneyFxService::queue($user, 'income', (int) $amount, (string) input('moneda', ''));
 
         redirect('/ingresos/acreditar?id=' . $result['ingreso_id']);
     }
@@ -310,14 +342,24 @@ final class IncomeController
     /**
      * @param list<string> $errors
      */
-    private function renderCreate(array $user, array $errors, int $amountCents, string $type): void
-    {
+    private function renderCreate(
+        array $user,
+        array $errors,
+        int $amountCents,
+        string $type,
+        int $planId = 0,
+        string $selectedCurrency = ''
+    ): void {
         $active = (new UsuarioMetodoRepository())->activeForUser((int) $user['id']);
         $method = $active !== null ? (new MetodoRepository())->findById((int) $active['metodo_id']) : null;
 
         if ($method === null) {
             Flash::error('income.errors.no_method');
             redirect('/ajustes/ingreso');
+        }
+
+        if ($selectedCurrency === '') {
+            $selectedCurrency = (string) ($user['moneda_activa'] ?? 'MXN');
         }
 
         echo View::render('income/nuevo', [
@@ -328,6 +370,8 @@ final class IncomeController
             'type' => $type,
             'types' => (array) config('ingreso.types', []),
             'errors' => $errors,
+            'planId' => $planId,
+            'selectedCurrency' => $selectedCurrency,
         ], 'layouts/flow');
     }
 

@@ -11,6 +11,7 @@ return [
     'registrar' => 'Registrar',
     'perfil' => 'Perfil',
     'inicio' => 'Inicio',
+    'planeador' => 'Planeador de gastos',
     'movimientos' => 'Movimientos',
     'reportes' => 'Reportes',
     'ahorro' => 'Ahorro',

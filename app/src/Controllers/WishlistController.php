@@ -44,8 +44,15 @@ final class WishlistController
         $user = $this->user();
 
         try {
-            $this->service->create($user, $this->dataFromPost());
+            $data = $this->dataFromPost();
+            $this->service->create($user, $data);
             Flash::success('wishlist.flash.created');
+            MoneyFxService::queue(
+                $user,
+                'wish',
+                (int) ($data['monto_estimado_centavos'] ?? 0),
+                (string) ($data['moneda'] ?? '')
+            );
         } catch (Throwable $exception) {
             $this->flashError($exception);
         }
@@ -124,7 +131,7 @@ final class WishlistController
         try {
             $result = $this->service->contribute($user, $id, $amount, (string) input('fecha', 'now'));
             Flash::success($result['created'] ? 'wishlist.flash.contributed_first' : 'wishlist.flash.contributed');
-            MoneyFxService::queue($user, 'save', $amount, (string) ($result['status']['currency'] ?? ''));
+            MoneyFxService::queue($user, 'wish', $amount, (string) ($result['status']['currency'] ?? ''));
 
             if (!empty($result['status']['over_percentage'])) {
                 Flash::warning('finance.flash.over_percentage');

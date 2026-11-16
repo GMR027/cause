@@ -230,7 +230,8 @@ $format = static fn (int $cents): string => money_html($cents, $currency);
     <div class="col-12 col-md-4">
         <a class="finance-tile" href="/ahorro">
             <span class="finance-tile-icon finance-tile-savings" aria-hidden="true">
-                <i class="bi bi-piggy-bank"></i>
+                <i class="bi bi-coin finance-tile-coin"></i>
+                <i class="bi bi-piggy-bank finance-tile-glyph"></i>
             </span>
             <span class="finance-tile-body">
                 <span class="finance-tile-label"><?= e(__('savings.card.title')) ?></span>
@@ -257,7 +258,8 @@ $format = static fn (int $cents): string => money_html($cents, $currency);
     <div class="col-12 col-md-4">
         <a class="finance-tile" href="/inversion">
             <span class="finance-tile-icon finance-tile-investment" aria-hidden="true">
-                <i class="bi bi-graph-up-arrow"></i>
+                <i class="bi bi-graph-up-arrow finance-tile-glyph"></i>
+                <i class="bi bi-stars finance-tile-sparkle"></i>
             </span>
             <span class="finance-tile-body">
                 <span class="finance-tile-label"><?= e(__('investment.card.title')) ?></span>
@@ -273,7 +275,9 @@ $format = static fn (int $cents): string => money_html($cents, $currency);
     <div class="col-12 col-md-4">
         <a class="finance-tile" href="/donacion">
             <span class="finance-tile-icon finance-tile-donation" aria-hidden="true">
-                <i class="bi bi-heart"></i>
+                <i class="bi bi-heart-fill finance-tile-glyph"></i>
+                <i class="bi bi-heart-fill finance-tile-float"></i>
+                <i class="bi bi-heart-fill finance-tile-float finance-tile-float-2"></i>
             </span>
             <span class="finance-tile-body">
                 <span class="finance-tile-label"><?= e(__('donation.card.title')) ?></span>

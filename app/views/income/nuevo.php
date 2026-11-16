@@ -6,6 +6,8 @@ $defaultAmount = (int) ($defaultAmount ?? 0);
 $type = (string) ($type ?? 'variable');
 $types = $types ?? [];
 $errors = $errors ?? [];
+$planId = (int) ($planId ?? 0);
+$selectedCurrency = (string) ($selectedCurrency ?? ($currentUser['moneda_activa'] ?? 'MXN'));
 $methodKey = $method !== null ? 'onboarding.methods.' . (string) $method['codigo'] . '.name' : '';
 $methodName = $methodKey !== '' ? __($methodKey) : '';
 $methodName = $methodName === $methodKey ? (string) ($method['nombre'] ?? '') : $methodName;
@@ -34,6 +36,13 @@ $methodName = $methodName === $methodKey ? (string) ($method['nombre'] ?? '') : 
 
     <form method="post" action="/ingresos/nuevo" data-income-form>
         <?= csrf_field() ?>
+        <?php if ($planId > 0): ?>
+            <input type="hidden" name="plan_id" value="<?= $planId ?>">
+            <div class="alert alert-info py-2">
+                <i class="bi bi-clipboard-check me-1" aria-hidden="true"></i>
+                <?= e(__('planner.show.register_income')) ?>
+            </div>
+        <?php endif; ?>
 
         <div class="mb-4">
             <label class="form-label fw-semibold" for="monto"><?= e(__('income.nuevo.amount_label')) ?></label>
@@ -42,7 +51,7 @@ $methodName = $methodName === $methodKey ? (string) ($method['nombre'] ?? '') : 
                 <input type="number" class="form-control" id="monto" name="monto"
                        value="<?= e(number_format($defaultAmount / 100, 2, '.', '')) ?>"
                        min="0.01" step="0.01" inputmode="decimal" required autofocus>
-                <span class="income-currency"><?= e((string) ($currentUser['moneda_activa'] ?? 'MXN')) ?></span>
+                <span class="income-currency"><?= e($selectedCurrency) ?></span>
             </div>
             <div class="form-text"><?= e(__('income.nuevo.amount_hint')) ?></div>
         </div>
@@ -50,7 +59,7 @@ $methodName = $methodName === $methodKey ? (string) ($method['nombre'] ?? '') : 
         <div class="mb-4">
             <?= partial('partials/currency-select', [
                 'name' => 'moneda',
-                'selected' => (is_string($_POST['moneda'] ?? null) ? $_POST['moneda'] : (string) ($currentUser['moneda_activa'] ?? 'MXN')),
+                'selected' => $selectedCurrency,
             ]) ?>
         </div>
 

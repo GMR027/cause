@@ -1,0 +1,532 @@
+// Cauce · Planeador de gastos
+
+.planner-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .75rem;
+}
+
+@media (min-width: 768px) {
+    .planner-summary {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+.planner-section {
+    --planner-accent: var(--cauce-primary);
+    position: relative;
+    padding: 1rem 1.1rem 1.05rem;
+    border: 1px solid var(--cauce-border);
+    border-radius: .9rem;
+    background: var(--cauce-surface);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+    transition: border-color .15s ease, background-color .15s ease;
+    container-type: inline-size;
+}
+
+.planner-section::before {
+    content: "";
+    position: absolute;
+    top: .9rem;
+    bottom: .9rem;
+    left: 0;
+    width: 3px;
+    border-radius: 0 999px 999px 0;
+    background: var(--planner-accent);
+    opacity: .7;
+}
+
+.planner-section.is-over {
+    --planner-accent: var(--bs-danger);
+    border-color: rgba(220, 53, 69, .35);
+    background: rgba(220, 53, 69, .035);
+}
+
+.planner-section-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .5rem 1rem;
+    margin-bottom: .85rem;
+}
+
+.planner-section-info {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .4rem .45rem;
+    min-width: 0;
+}
+
+.planner-section-name {
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+    min-width: 0;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.planner-section-name .bi {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: .55rem;
+    background: rgba(var(--cauce-primary-rgb), .12);
+    font-size: .88rem;
+}
+
+.planner-section.is-over .planner-section-name .bi {
+    color: var(--bs-danger);
+    background: rgba(220, 53, 69, .12);
+}
+
+.planner-section-percent {
+    display: inline-flex;
+    align-items: center;
+    padding: .16rem .5rem;
+    border-radius: 999px;
+    background: var(--cauce-surface-muted);
+    color: var(--bs-secondary-color);
+    font-size: .7rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.planner-section-available {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: .1rem;
+    text-align: right;
+    line-height: 1.15;
+    white-space: nowrap;
+}
+
+.planner-section-available-label {
+    font-size: .68rem;
+    color: var(--bs-secondary-color);
+}
+
+.planner-section-available .money-value {
+    font-size: .95rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.planner-section-available.is-negative .money-value {
+    color: var(--bs-danger);
+}
+
+.planner-section-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .4rem;
+    margin-bottom: .85rem;
+}
+
+.planner-metric {
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+    min-width: 0;
+    padding: .5rem .6rem;
+    border-radius: .6rem;
+    background: var(--cauce-surface-muted);
+}
+
+.planner-metric-label {
+    font-size: .66rem;
+    line-height: 1.25;
+    color: var(--bs-secondary-color);
+}
+
+.planner-metric-value {
+    font-size: .86rem;
+    font-weight: 600;
+    line-height: 1.3;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+}
+
+.planner-metric-value.is-negative {
+    color: var(--bs-danger);
+}
+
+.planner-progress {
+    height: .4rem;
+    border-radius: 999px;
+    background: var(--cauce-surface-muted);
+    box-shadow: inset 0 0 0 1px var(--cauce-border);
+    overflow: hidden;
+    margin-bottom: .85rem;
+}
+
+.planner-progress-bar {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--cauce-primary);
+    transition: width .25s ease;
+}
+
+.planner-progress-bar.is-over {
+    background: var(--bs-danger);
+}
+
+.planner-items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+}
+
+.planner-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    padding: .42rem .6rem;
+    border: 1px solid transparent;
+    border-radius: .55rem;
+    background: var(--cauce-surface-muted);
+    font-size: .86rem;
+}
+
+.planner-item-amount {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.planner-item-remove {
+    border: 0;
+    background: transparent;
+    color: var(--bs-danger);
+    padding: 0 .2rem;
+    line-height: 1;
+}
+
+.planner-items-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: .5rem;
+}
+
+.planner-items-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    border-radius: .55rem;
+    --bs-btn-color: var(--cauce-primary);
+    --bs-btn-border-color: rgba(var(--cauce-primary-rgb), .45);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--cauce-primary);
+    --bs-btn-hover-border-color: var(--cauce-primary);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--cauce-primary-hover, var(--cauce-primary));
+    --bs-btn-active-border-color: var(--cauce-primary-hover, var(--cauce-primary));
+    --bs-btn-focus-shadow-rgb: var(--cauce-primary-rgb);
+}
+
+.planner-section-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .25rem .75rem;
+    margin-top: .7rem;
+    padding-top: .65rem;
+    border-top: 1px solid var(--cauce-border);
+    font-size: .78rem;
+    color: var(--bs-secondary-color);
+}
+
+.planner-section-foot [data-planner-planned],
+.planner-section-foot [data-planner-remaining],
+.planner-section-foot .money-value {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--bs-body-color);
+    white-space: nowrap;
+}
+
+.planner-section-foot .is-negative,
+.planner-section-foot .is-negative .money-value,
+.planner-section-foot [data-planner-remaining].is-negative {
+    color: var(--bs-danger);
+}
+
+.planner-editor {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
+.planner-editor-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 11rem) 2.25rem;
+    gap: .35rem;
+    align-items: center;
+    padding: .3rem;
+    border: 1px solid var(--cauce-border);
+    border-radius: .65rem;
+    background: var(--cauce-surface-muted);
+    transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+}
+
+.planner-editor-row:focus-within {
+    border-color: rgba(var(--cauce-primary-rgb), .5);
+    box-shadow: 0 0 0 .15rem rgba(var(--cauce-primary-rgb), .1);
+    background: var(--cauce-surface);
+}
+
+.planner-amount-field {
+    min-width: 0;
+    width: 100%;
+    flex-wrap: nowrap;
+
+    .input-group-text {
+        padding-inline: .5rem;
+        font-size: .68rem;
+        font-weight: 600;
+        letter-spacing: .02em;
+        color: var(--bs-secondary-color);
+        background: var(--cauce-surface);
+        border-color: var(--cauce-border);
+    }
+
+    .form-control {
+        min-width: 0;
+        font-variant-numeric: tabular-nums;
+    }
+
+    &:focus-within .input-group-text {
+        color: var(--cauce-primary);
+        border-color: var(--cauce-primary);
+    }
+}
+
+.planner-editor-row .planner-item-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    border-radius: .5rem;
+    transition: background-color .15s ease, color .15s ease;
+
+    &:hover,
+    &:focus-visible {
+        background: rgba(220, 53, 69, .12);
+    }
+}
+
+.planner-commitments {
+    display: flex;
+    flex-direction: column;
+    gap: .45rem;
+}
+
+.planner-commitment {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .75rem;
+    padding: .6rem .7rem;
+    border: 1px solid var(--cauce-border);
+    border-radius: .7rem;
+    background: var(--cauce-surface);
+}
+
+.planner-commitment-main {
+    min-width: 0;
+}
+
+.planner-commitment-name {
+    font-weight: 600;
+    display: block;
+    overflow-wrap: anywhere;
+}
+
+.planner-commitment-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+    margin-top: .25rem;
+}
+
+.planner-commitment-amount {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.planner-warnings {
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+    margin-bottom: 1rem;
+}
+
+.planner-history {
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+}
+
+.planner-history-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    padding: .8rem .9rem;
+    border: 1px solid var(--cauce-border);
+    border-radius: .8rem;
+    background: var(--cauce-surface);
+    text-decoration: none;
+    color: inherit;
+}
+
+.planner-history-row:hover {
+    border-color: rgba(var(--cauce-primary-rgb), .45);
+}
+
+.planner-history-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+    font-size: .78rem;
+    color: var(--bs-secondary-color);
+}
+
+.planner-history-amount {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.planner-status {
+    font-size: .72rem;
+    letter-spacing: .02em;
+}
+
+.planner-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    align-items: flex-end;
+}
+
+.planner-filters .form-select {
+    min-width: 9rem;
+}
+
+// Si la tarjeta es angosta (móvil o panel reducido), el monto baja a su
+// propia línea pero permanece dentro de la fila. Se usa container query para
+// depender del ancho real de la sección y no del viewport.
+@container (max-width: 27rem) {
+    .planner-section-head {
+        flex-wrap: wrap;
+    }
+
+    .planner-section-available {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: space-between;
+        width: 100%;
+        gap: .35rem .75rem;
+        text-align: left;
+        white-space: normal;
+    }
+
+    .planner-editor-row .form-control,
+    .planner-amount-field .input-group-text {
+        min-height: 2.25rem;
+    }
+
+    .planner-editor-row {
+        grid-template-columns: minmax(0, 1fr) 2.25rem;
+        row-gap: .4rem;
+    }
+
+    .planner-editor-row > .form-control {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .planner-amount-field {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+
+    .planner-editor-row .planner-item-remove {
+        grid-column: 2;
+        grid-row: 1;
+        justify-self: end;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .planner-section {
+        padding: .85rem .9rem .95rem;
+    }
+
+    .planner-section-head {
+        flex-wrap: wrap;
+    }
+
+    .planner-section-available {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: space-between;
+        width: 100%;
+        gap: .5rem;
+        text-align: left;
+        white-space: normal;
+    }
+
+    .planner-section-metrics {
+        grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+    }
+
+    .planner-editor-row .form-control,
+    .planner-amount-field .input-group-text {
+        min-height: 2.25rem;
+    }
+
+    .planner-editor-row {
+        grid-template-columns: minmax(0, 1fr) 2.25rem;
+        gap: .4rem;
+        align-items: center;
+    }
+
+    .planner-editor-row > .form-control {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .planner-amount-field {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+
+    .planner-editor-row .planner-item-remove {
+        grid-column: 2;
+        grid-row: 1;
+        justify-self: end;
+    }
+
+    .planner-history-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

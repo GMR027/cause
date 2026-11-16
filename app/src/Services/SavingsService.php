@@ -161,6 +161,65 @@ final class SavingsService
     }
 
     /**
+     * Aportes mensuales sugeridos para metas activas, en moneda principal.
+     *
+     * Es de solo lectura: no crea cuenta predeterminada ni fondo de emergencia.
+     * Se usa en el planeador para precargar conceptos de la sección Ahorro.
+     *
+     * @param array<string, mixed> $user
+     * @return list<array{meta_id: int, nombre: string, tipo: string, sugerido_centavos: int}>
+     */
+    public function suggestedContributions(array $user): array
+    {
+        $principal = (string) ($user['moneda_activa'] ?? 'MXN');
+        $metas = $this->repo->metasForUser((int) $user['id']);
+        $totals = $this->repo->totalsByMeta((int) $user['id']);
+        $currency = new CurrencyService();
+        $today = gmdate('Y-m-d');
+        $rows = [];
+
+        foreach ($metas as $meta) {
+            if ((int) ($meta['activa'] ?? 1) !== 1) {
+                continue;
+            }
+
+            if ((string) ($meta['tipo'] ?? '') === 'deseo') {
+                continue;
+            }
+
+            $id = (int) $meta['id'];
+            $metaCurrency = (string) ($meta['moneda'] ?? $principal);
+            $objective = (int) $meta['objetivo_centavos'];
+            $accumulated = (int) ($totals[$id]['aportado'] ?? 0) - (int) ($totals[$id]['retirado'] ?? 0);
+
+            if ($metaCurrency !== $principal) {
+                try {
+                    $objective = $currency->toPrincipal($user, $objective, $metaCurrency, $today)['centavos'];
+                } catch (RuntimeException) {
+                    continue;
+                }
+            }
+
+            $forSuggestion = $meta;
+            $forSuggestion['objetivo_centavos'] = $objective;
+            $suggestion = $this->monthlySuggestion($forSuggestion, $accumulated);
+
+            if ($suggestion === null || $suggestion <= 0) {
+                continue;
+            }
+
+            $rows[] = [
+                'meta_id' => $id,
+                'nombre' => (string) $meta['nombre'],
+                'tipo' => (string) $meta['tipo'],
+                'sugerido_centavos' => (int) $suggestion,
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
      * @param array<string, mixed> $user
      * @param array<string, mixed> $data
      */

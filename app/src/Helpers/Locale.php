@@ -41,8 +41,8 @@ final class Locale
         $amount = number_format(
             $cents / 100,
             2,
-            $lang === 'en' ? '.' : ',',
-            $lang === 'en' ? ',' : '.'
+            '.',
+            ','
         );
 
         return '$' . $amount . ' ' . $currency;

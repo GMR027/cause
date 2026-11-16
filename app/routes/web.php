@@ -31,6 +31,7 @@ use Cauce\Controllers\MoveController;
 use Cauce\Controllers\MovementController;
 use Cauce\Controllers\NotificationController;
 use Cauce\Controllers\OnboardingController;
+use Cauce\Controllers\PlannerController;
 use Cauce\Controllers\PlaceholderController;
 use Cauce\Controllers\PrivacyController;
 use Cauce\Controllers\RecoveryController;
@@ -160,6 +161,18 @@ $router->group('', static function (Router $routes): void {
     $routes->get('/ingresos/ver', [IncomeController::class, 'show']);
     $routes->post('/ingresos/editar', [IncomeController::class, 'update']);
     $routes->post('/ingresos/eliminar', [IncomeController::class, 'destroy']);
+
+    // Planeador de gastos
+    $routes->get('/planeador', [PlannerController::class, 'index']);
+    $routes->get('/planeador/nuevo', [PlannerController::class, 'create']);
+    $routes->post('/planeador/calcular', [PlannerController::class, 'preview']);
+    $routes->post('/planeador/guardar', [PlannerController::class, 'store']);
+    $routes->get('/planeador/ver', [PlannerController::class, 'show']);
+    $routes->get('/planeador/editar', [PlannerController::class, 'edit']);
+    $routes->post('/planeador/actualizar', [PlannerController::class, 'update']);
+    $routes->post('/planeador/recalcular', [PlannerController::class, 'recalculate']);
+    $routes->post('/planeador/completar', [PlannerController::class, 'complete']);
+    $routes->post('/planeador/eliminar', [PlannerController::class, 'destroy']);
 
     $routes->get('/gastos/nuevo', [ExpenseController::class, 'create']);
     $routes->post('/gastos/nuevo', [ExpenseController::class, 'store']);

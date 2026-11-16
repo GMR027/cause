@@ -15,6 +15,7 @@ return [
             'label' => 'nav.groups.quick',
             'items' => [
                 ['label' => 'nav.inicio', 'icon' => 'bi-house-door', 'route' => '/inicio'],
+                ['label' => 'nav.planeador', 'icon' => 'bi-clipboard-check', 'route' => '/planeador'],
                 ['label' => 'nav.movimientos', 'icon' => 'bi-cash-stack', 'route' => '/movimientos'],
                 ['label' => 'nav.reportes', 'icon' => 'bi-bar-chart', 'route' => '/reportes'],
             ],

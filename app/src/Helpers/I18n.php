@@ -113,7 +113,7 @@ final class I18n
     {
         $dictionary = [];
 
-        foreach (['common', 'auth', 'nav', 'settings', 'themes', 'onboarding', 'app', 'income', 'expenses', 'finance', 'savings', 'investment', 'donation', 'moves', 'notifications', 'search', 'summary', 'calendar', 'gamification', 'wishlist', 'admin', 'legal', 'privacy', 'statements', 'debts', 'reports', 'projection', 'lessons', 'score', 'currency', 'landing', 'support', 'about', 'subcategories'] as $file) {
+        foreach (['common', 'auth', 'nav', 'settings', 'themes', 'onboarding', 'app', 'income', 'expenses', 'finance', 'savings', 'investment', 'donation', 'moves', 'notifications', 'search', 'summary', 'calendar', 'gamification', 'wishlist', 'admin', 'legal', 'privacy', 'statements', 'debts', 'reports', 'projection', 'lessons', 'score', 'currency', 'landing', 'support', 'about', 'subcategories', 'planner'] as $file) {
             $dictionary[$file] = self::load($lang, $file);
         }
 
