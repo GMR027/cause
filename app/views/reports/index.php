@@ -306,7 +306,7 @@ $lastPoint = $linePoints !== [] ? explode(',', $linePoints[count($linePoints) - 
                         <div class="frequent-bar" role="img" aria-label="<?= e(__('reports.frequent.aria')) ?>: <?= $width ?>%">
                             <span style="width: <?= $width ?>%"></span>
                         </div>
-                        <div class="small text-secondary d-flex flex-wrap gap-3">
+                        <div class="small text-secondary d-flex flex-wrap row-gap-1 column-gap-3">
                             <span><?= e(__('reports.frequent.total')) ?>: <?= money_html($item['total'], $currency) ?></span>
                             <span><?= e(__('reports.frequent.average')) ?>: <?= money_html($item['promedio'], $currency) ?></span>
                         </div>

@@ -324,6 +324,11 @@
     gap: .35rem;
 }
 
+// En la leyenda el ícono de ingreso va junto a su texto, no en la esquina de la celda.
+.calendar-legend .calendar-income-mark {
+    position: static;
+}
+
 .calendar-day-sample {
     display: inline-block;
     width: 1rem;

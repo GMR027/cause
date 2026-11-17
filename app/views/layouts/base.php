@@ -31,7 +31,7 @@ $flashes = Flash::pull();
                 <span class="fw-semibold"><?= e($appName) ?></span>
             </a>
 
-            <div class="d-flex align-items-center gap-3">
+            <div class="d-flex flex-wrap align-items-center gap-2 gap-sm-3">
                 <nav class="lang-switch" aria-label="<?= e(__('common.language')) ?>">
                     <a href="/idioma?lang=es&next=<?= e(rawurlencode($currentUri)) ?>"
                        class="<?= $lang === 'es' ? 'active' : '' ?>">ES</a>

@@ -260,6 +260,9 @@
 
 .frequent-list {
     display: grid;
+    // Sin minmax(0, …) la columna crece al ancho del nombre más largo y la fila
+    // (con su barra de avance) se sale de la tarjeta en móvil.
+    grid-template-columns: minmax(0, 1fr);
     gap: .75rem;
 }
 
@@ -267,6 +270,7 @@
     display: flex;
     gap: .75rem;
     align-items: flex-start;
+    min-width: 0;
 }
 
 .frequent-rank {
@@ -285,6 +289,12 @@
 .frequent-body {
     flex: 1 1 auto;
     min-width: 0;
+
+    .text-truncate {
+        flex: 1 1 0;
+        min-width: 0;
+        max-width: 100%;
+    }
 }
 
 .frequent-bar {
