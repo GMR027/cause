@@ -56,6 +56,14 @@ $isAdmin = $currentUser !== null && ($currentUser['rol'] ?? 'user') === 'admin';
                 </div>
             <?php endforeach; ?>
 
+            <?php if (!empty($androidUpdate) && $currentPath !== '/ajustes/android'): ?>
+                <div class="alert alert-info d-flex flex-wrap align-items-center gap-2" role="status">
+                    <i class="bi bi-android2" aria-hidden="true"></i>
+                    <span class="me-auto"><?= e(__('settings.android.outdated_banner', [':version' => $androidUpdate['nueva']])) ?></span>
+                    <a class="btn btn-sm btn-primary" href="/ajustes/android"><?= e(__('settings.android.outdated_action')) ?></a>
+                </div>
+            <?php endif; ?>
+
             <?= $content ?>
         </main>
     </div>

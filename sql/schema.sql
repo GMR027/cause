@@ -1406,3 +1406,32 @@ CREATE TABLE `export_tokens` (
     CONSTRAINT `fk_export_tokens_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
     CONSTRAINT `fk_export_tokens_requested_by` FOREIGN KEY (`requested_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `app_android_versiones` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `version` VARCHAR(20) NOT NULL,
+    `version_code` INT UNSIGNED NOT NULL,
+    `archivo` VARCHAR(160) NOT NULL COMMENT 'Nombre dentro de storage/android/',
+    `tamano` BIGINT UNSIGNED NOT NULL,
+    `sha256` CHAR(64) NOT NULL,
+    `notas` VARCHAR(500) NULL,
+    `publicado_en` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uq_app_android_version` (`version`),
+    KEY `idx_app_android_code` (`version_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `dispositivos_android` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `instalacion_id` CHAR(36) NOT NULL COMMENT 'UUID que genera la app al instalarse',
+    `version` VARCHAR(20) NOT NULL,
+    `user_id` BIGINT UNSIGNED NULL,
+    `modelo` VARCHAR(80) NULL,
+    `version_android` VARCHAR(20) NULL,
+    `primera_vez` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `ultima_vez` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uq_dispositivos_android_instalacion` (`instalacion_id`),
+    KEY `idx_dispositivos_android_user` (`user_id`),
+    CONSTRAINT `fk_dispositivos_android_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

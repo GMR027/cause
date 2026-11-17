@@ -14,10 +14,8 @@ final class ApiController
 {
     public function appVersion(): void
     {
-        json_response([
-            'disponible' => false,
-            'version' => (string) config('app.version', '0.0.0'),
-        ]);
+        $scheme = \Cauce\Helpers\Client::isHttps() ? 'https' : 'http';
+        json_response((new \Cauce\Services\AndroidAppService())->publicInfo($scheme . '://' . (string) ($_SERVER['HTTP_HOST'] ?? 'localhost')));
     }
 
     public function onboardingState(): void

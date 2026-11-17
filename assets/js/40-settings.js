@@ -74,60 +74,30 @@
         });
     });
 
-    const qrBox = document.getElementById('shareQr');
-    const qrError = document.querySelector('[data-qr-error]');
-
-    const showQrError = () => {
-        if (qrBox) {
+    // Códigos QR: Ajustes → Compartir y Ajustes → Android.
+    document.querySelectorAll('[data-qr-url]').forEach((qrBox) => {
+        const qrError = qrBox.parentElement ? qrBox.parentElement.querySelector('[data-qr-error]') : null;
+        const showQrError = () => {
             qrBox.innerHTML = '<i class="bi bi-qr-code text-secondary" aria-hidden="true"></i>';
-        }
 
-        if (qrError) {
-            qrError.hidden = false;
-        }
-    };
+            if (qrError) {
+                qrError.hidden = false;
+            }
+        };
 
-    if (qrBox) {
         if (typeof window.qrcode !== 'function') {
             showQrError();
-        } else {
-            try {
-                const qr = window.qrcode(0, 'M');
-                qr.addData(qrBox.getAttribute('data-qr-url') || window.location.origin);
-                qr.make();
-
-                qrBox.innerHTML = qr.createSvgTag(8, 2);
-            } catch (error) {
-                showQrError();
-            }
+            return;
         }
-    }
 
-    document.querySelectorAll('[data-action="check-updates"]').forEach((button) => {
-        button.addEventListener('click', async () => {
-            const status = document.querySelector('[data-update-status]');
+        try {
+            const qr = window.qrcode(0, 'M');
+            qr.addData(qrBox.getAttribute('data-qr-url') || window.location.origin);
+            qr.make();
 
-            if (status) {
-                status.textContent = t('settings.android.checking');
-            }
-
-            try {
-                const response = await fetch(button.getAttribute('data-endpoint') || '/api/app/version', {
-                    headers: { Accept: 'application/json' },
-                    credentials: 'same-origin',
-                });
-                const data = await response.json();
-
-                if (status) {
-                    status.textContent = data.disponible
-                        ? t('settings.android.up_to_date')
-                        : t('settings.android.soon');
-                }
-            } catch (error) {
-                if (status) {
-                    status.textContent = t('settings.android.error');
-                }
-            }
-        });
+            qrBox.innerHTML = qr.createSvgTag(8, 2);
+        } catch (error) {
+            showQrError();
+        }
     });
 })();

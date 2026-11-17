@@ -18,3 +18,6 @@ Dockerfile
 helm
 .deploy-tag
 DEPLOY.md
+
+# Código fuente de la app Android (y nunca la llave de firma)
+android

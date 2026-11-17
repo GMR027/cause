@@ -10,6 +10,7 @@ use Cauce\Controllers\AdminController;
 use Cauce\Controllers\AdminLegalController;
 use Cauce\Controllers\AdminReportController;
 use Cauce\Controllers\AdminUserController;
+use Cauce\Controllers\AndroidAppController;
 use Cauce\Controllers\ApiController;
 use Cauce\Controllers\AppController;
 use Cauce\Controllers\AuthController;
@@ -52,6 +53,7 @@ use Cauce\Controllers\TemplateController;
 use Cauce\Controllers\WishlistController;
 use Cauce\Helpers\Router;
 use Cauce\Http\Middleware\AdminMiddleware;
+use Cauce\Http\Middleware\AndroidAppMiddleware;
 use Cauce\Http\Middleware\AnalyticsMiddleware;
 use Cauce\Http\Middleware\AuthMiddleware;
 use Cauce\Http\Middleware\DesktopOnlyMiddleware;
@@ -88,6 +90,9 @@ $router->get('/recuperar/restablecer', [RecoveryController::class, 'showReset'])
 $router->post('/recuperar/restablecer', [RecoveryController::class, 'reset']);
 $router->get('/idioma', [LanguageController::class, 'switch']);
 $router->get('/api/app/version', [ApiController::class, 'appVersion']);
+$router->get('/app/android/version.json', [AndroidAppController::class, 'version']);
+$router->get('/app/android/descargar', [AndroidAppController::class, 'download']);
+$router->get('/app/android/entrar', [AndroidAppController::class, 'enter']);
 $router->get('/privacidad', [LegalController::class, 'privacy']);
 $router->get('/terminos', [LegalController::class, 'terms']);
 $router->get('/aviso-legal', [LegalController::class, 'notice']);
@@ -243,7 +248,7 @@ $router->group('', static function (Router $routes): void {
             $routes->get((string) $path, [PlaceholderController::class, 'show']);
         }
     }
-}, [AuthMiddleware::class, LockMiddleware::class, LegalMiddleware::class, RecurringExpenseMiddleware::class, NotificationMiddleware::class, GamificationMiddleware::class, AnalyticsMiddleware::class]);
+}, [AuthMiddleware::class, LockMiddleware::class, LegalMiddleware::class, RecurringExpenseMiddleware::class, NotificationMiddleware::class, GamificationMiddleware::class, AnalyticsMiddleware::class, AndroidAppMiddleware::class]);
 
 // App autenticada (exige onboarding completado)
 $router->group('', static function (Router $routes): void {
@@ -348,7 +353,7 @@ $router->group('', static function (Router $routes): void {
     // Portadas de tarjetas (deseos, ahorro, deudas e inversión)
     $routes->post('/portadas', [CoverController::class, 'update']);
     $routes->get('/portadas/ver', [CoverController::class, 'show']);
-}, [AuthMiddleware::class, LockMiddleware::class, LegalMiddleware::class, OnboardingMiddleware::class, RecurringExpenseMiddleware::class, NotificationMiddleware::class, GamificationMiddleware::class, AnalyticsMiddleware::class]);
+}, [AuthMiddleware::class, LockMiddleware::class, LegalMiddleware::class, OnboardingMiddleware::class, RecurringExpenseMiddleware::class, NotificationMiddleware::class, GamificationMiddleware::class, AnalyticsMiddleware::class, AndroidAppMiddleware::class]);
 
 // Administración
 $router->group('/admin', static function (Router $routes): void {

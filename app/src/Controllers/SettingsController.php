@@ -14,6 +14,7 @@ use Cauce\Repositories\RecoveryRepository;
 use Cauce\Repositories\SessionRepository;
 use Cauce\Repositories\UserRepository;
 use Cauce\Services\AnalyticsService;
+use Cauce\Services\AndroidAppService;
 use Cauce\Services\AuthService;
 use Cauce\Services\GamificationService;
 use Cauce\Services\IngresoService;
@@ -315,11 +316,28 @@ final class SettingsController
 
     public function android(): void
     {
-        $this->user();
+        $user = $this->user();
+        $service = new AndroidAppService();
+        $isAdmin = ($user['rol'] ?? 'user') === 'admin';
+        $latest = null;
+        $devices = [];
+
+        try {
+            $latest = $service->latest();
+            $devices = $isAdmin ? $service->devices() : [];
+        } catch (Throwable $exception) {
+            Logger::warning('No se pudo leer la app Android', ['error' => $exception->getMessage()]);
+        }
+
+        $scheme = \Cauce\Helpers\Client::isHttps() ? 'https' : 'http';
 
         echo View::render('ajustes/android', [
             'title' => __('settings.android.title'),
-            'version' => (string) config('app.version', '0.0.0'),
+            'latest' => $latest,
+            'downloadUrl' => $scheme . '://' . (string) ($_SERVER['HTTP_HOST'] ?? 'localhost') . '/app/android/descargar',
+            'fromApp' => AndroidAppService::fromApp(),
+            'isAdmin' => $isAdmin,
+            'devices' => $devices,
         ], 'layouts/app');
     }
 

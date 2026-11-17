@@ -29,6 +29,7 @@ Thumbs.db
 /storage/uploads/
 /storage/estados_cuenta/
 /storage/cache/
+/storage/android/
 
 # Despliegue
 .deploy-tag

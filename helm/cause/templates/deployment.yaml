@@ -37,6 +37,7 @@ spec:
                 /var/www/html/storage/cache \
                 /var/www/html/storage/uploads/gastos \
                 /var/www/html/storage/estados_cuenta \
+                /var/www/html/storage/android \
                 /var/www/html/storage/sessions
               chown -R www-data:www-data /var/www/html/storage
               chmod -R ug+rwX /var/www/html/storage
