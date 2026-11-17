@@ -1,0 +1,9 @@
+/dist/
+/src-tauri/target/
+/src-tauri/gen/schemas/
+# Llaves de firma: nunca en el repositorio
+*.jks
+*.keystore
+keystore.properties
+/src-tauri/pruebas/target/
+/ui/.index.html.original

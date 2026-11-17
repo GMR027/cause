@@ -1,0 +1,15 @@
+# Pruebas de src/politica.rs sin compilar Tauri (no requiere WebKit ni el SDK de Android).
+#   cargo test --manifest-path pruebas/Cargo.toml
+[package]
+name = "cauce-politica-pruebas"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[lib]
+path = "../src/politica.rs"
+
+[dependencies]
+url = "2"
+
+[workspace]
