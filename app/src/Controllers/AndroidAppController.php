@@ -25,7 +25,11 @@ final class AndroidAppController
 
         header('Cache-Control: public, max-age=3600');
         json_response([[
-            'relation' => ['delegate_permission/common.get_login_creds'],
+            // Las dos relaciones del ejemplo oficial de Credential Manager para llaves de acceso.
+            'relation' => [
+                'delegate_permission/common.handle_all_urls',
+                'delegate_permission/common.get_login_creds',
+            ],
             'target' => [
                 'namespace' => 'android_app',
                 'package_name' => (string) config('security.android.package', ''),

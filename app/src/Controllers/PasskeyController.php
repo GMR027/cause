@@ -147,6 +147,30 @@ final class PasskeyController
     }
 
     /**
+     * POST /huella/error — el navegador o la app reportan por qué falló la
+     * huella en el dispositivo (antes de llegar al servidor), para poder
+     * diagnosticarlo en el log.
+     */
+    public function clientError(): void
+    {
+        $clip = static fn (string $key, int $max): string => mb_substr(
+            preg_replace('/[\x00-\x1F\x7F]/u', ' ', (string) input($key, '')) ?? '',
+            0,
+            $max
+        );
+
+        Logger::warning('Huella: error en el dispositivo', [
+            'user_id' => AuthService::id(),
+            'mode' => $clip('mode', 10),
+            'name' => $clip('name', 60),
+            'message' => $clip('message', 300),
+            'agent' => mb_substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 200),
+        ]);
+
+        json_response(['ok' => true]);
+    }
+
+    /**
      * @return array<string, string>
      */
     private function assertionFromPost(): array

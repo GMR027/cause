@@ -133,6 +133,20 @@
             return data.publicKey;
         };
 
+        // Manda al servidor el error exacto del dispositivo (no bloquea).
+        const report = (exception) => {
+            try {
+                const body = new FormData();
+                body.append('_token', form.querySelector('[name="_token"]').value);
+                body.append('mode', mode);
+                body.append('name', String((exception && exception.name) || 'Error'));
+                body.append('message', String((exception && exception.message) || ''));
+                fetch('/huella/error', { method: 'POST', body, credentials: 'same-origin', keepalive: true }).catch(() => {});
+            } catch (error) {
+                // Sin reporte no pasa nada.
+            }
+        };
+
         const run = async () => {
             showError('');
 
@@ -189,6 +203,7 @@
                 busy(false);
 
                 const name = exception && exception.name;
+                report(exception);
 
                 if (name === 'NotAllowedError' || name === 'AbortError') {
                     showError(t('auth.passkeys.cancelled'));
@@ -197,7 +212,8 @@
                 } else if (name === 'Unsupported' || name === 'NotSupportedError' || name === 'SecurityError') {
                     showError(t('auth.passkeys.unsupported'));
                 } else {
-                    showError(t('auth.passkeys.errors.generic'));
+                    // El nombre del error ayuda a soporte a saber qué pasó.
+                    showError(t('auth.passkeys.errors.generic') + (name ? ` (${name})` : ''));
                 }
             }
         };

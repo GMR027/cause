@@ -80,6 +80,7 @@ $router->get('/login', [AuthController::class, 'showLogin']);
 $router->post('/login', [AuthController::class, 'login']);
 $router->post('/login/huella/opciones', [PasskeyController::class, 'loginOptions']);
 $router->post('/login/huella', [PasskeyController::class, 'login']);
+$router->post('/huella/error', [PasskeyController::class, 'clientError']);
 $router->get('/registro', [RegistrationController::class, 'showRegister']);
 $router->post('/registro', [RegistrationController::class, 'register']);
 $router->get('/recuperar', [RecoveryController::class, 'index']);

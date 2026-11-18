@@ -14,6 +14,11 @@
         android:theme="@style/Theme.cauce"
         android:usesCleartextTraffic="${usesCleartextTraffic}"
         android:networkSecurityConfig="@xml/network_security_config">
+        <!-- Asociación con el sitio (Digital Asset Links): Credential Manager la exige para usar
+             las llaves de acceso (huella o rostro) de cause.iguzman.com.mx dentro de la app. -->
+        <meta-data
+            android:name="asset_statements"
+            android:resource="@string/asset_statements" />
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode"
             android:launchMode="singleTask"
