@@ -64,6 +64,11 @@ $progress = (int) round(($stepIndex / $stepTotal) * 100);
         <?= $content ?>
     </main>
 
+    <?php if (!empty($_SESSION['_login_fx'])): ?>
+        <?php unset($_SESSION['_login_fx']); ?>
+        <?= partial('partials/login-fx', ['alias' => (string) ($currentUser['alias'] ?? '')]) ?>
+    <?php endif; ?>
+
     <script>
         window.CauceI18n = <?= json_encode(
             $jsI18n ?? [],

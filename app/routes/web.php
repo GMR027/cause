@@ -7,6 +7,8 @@ use Cauce\Controllers\AdminContentController;
 use Cauce\Controllers\AdminSupportController;
 use Cauce\Controllers\AdminCurrencyController;
 use Cauce\Controllers\AdminController;
+use Cauce\Controllers\ContributeController;
+use Cauce\Controllers\PasskeyController;
 use Cauce\Controllers\AdminLegalController;
 use Cauce\Controllers\AdminReportController;
 use Cauce\Controllers\AdminUserController;
@@ -76,6 +78,8 @@ $router = new Router();
 $router->get('/', [HomeController::class, 'index']);
 $router->get('/login', [AuthController::class, 'showLogin']);
 $router->post('/login', [AuthController::class, 'login']);
+$router->post('/login/huella/opciones', [PasskeyController::class, 'loginOptions']);
+$router->post('/login/huella', [PasskeyController::class, 'login']);
 $router->get('/registro', [RegistrationController::class, 'showRegister']);
 $router->post('/registro', [RegistrationController::class, 'register']);
 $router->get('/recuperar', [RecoveryController::class, 'index']);
@@ -91,6 +95,7 @@ $router->post('/recuperar/restablecer', [RecoveryController::class, 'reset']);
 $router->get('/idioma', [LanguageController::class, 'switch']);
 $router->get('/api/app/version', [ApiController::class, 'appVersion']);
 $router->get('/app/android/version.json', [AndroidAppController::class, 'version']);
+$router->get('/.well-known/assetlinks.json', [AndroidAppController::class, 'assetLinks']);
 $router->get('/app/android/descargar', [AndroidAppController::class, 'download']);
 $router->get('/app/android/entrar', [AndroidAppController::class, 'enter']);
 $router->get('/privacidad', [LegalController::class, 'privacy']);
@@ -102,6 +107,8 @@ $router->group('', static function (Router $routes): void {
     $routes->post('/logout', [AuthController::class, 'logout']);
     $routes->get('/desbloquear', [LockController::class, 'show']);
     $routes->post('/desbloquear', [LockController::class, 'unlock']);
+    $routes->post('/desbloquear/huella/opciones', [PasskeyController::class, 'unlockOptions']);
+    $routes->post('/desbloquear/huella', [PasskeyController::class, 'unlock']);
     $routes->get('/ajustes/seguridad/cambiar-password', [LockController::class, 'changePasswordForm']);
     $routes->post('/ajustes/seguridad/cambiar-password', [LockController::class, 'changePassword']);
     $routes->get('/legal/aceptar', [LegalController::class, 'acceptForm']);
@@ -163,6 +170,10 @@ $router->group('', static function (Router $routes): void {
     $routes->post('/ajustes/seguridad/cerrar-sesiones', [SettingsController::class, 'closeSessions']);
     $routes->post('/ajustes/seguridad/pin', [SettingsController::class, 'setPin']);
     $routes->post('/ajustes/seguridad/pin/eliminar', [SettingsController::class, 'removePin']);
+    $routes->post('/ajustes/seguridad/pin/entrar', [SettingsController::class, 'pinLogin']);
+    $routes->post('/ajustes/seguridad/huella/opciones', [PasskeyController::class, 'registerOptions']);
+    $routes->post('/ajustes/seguridad/huella', [PasskeyController::class, 'register']);
+    $routes->post('/ajustes/seguridad/huella/eliminar', [PasskeyController::class, 'delete']);
 
     $routes->get('/ingresos/nuevo', [IncomeController::class, 'create']);
     $routes->post('/ingresos/nuevo', [IncomeController::class, 'store']);
@@ -253,6 +264,7 @@ $router->group('', static function (Router $routes): void {
 // App autenticada (exige onboarding completado)
 $router->group('', static function (Router $routes): void {
     $routes->get('/inicio', [AppController::class, 'inicio']);
+    $routes->get('/aportar', [ContributeController::class, 'index']);
     $routes->get('/movimientos', [MovementController::class, 'index']);
     $routes->get('/reportes', [ReportController::class, 'index']);
     $routes->get('/reportes/suscripciones', [ReportController::class, 'subscriptions']);

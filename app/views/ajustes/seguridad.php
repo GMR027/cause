@@ -6,6 +6,8 @@ $sessions = $sessions ?? [];
 $hasPin = $hasPin ?? false;
 $pinLockedUntil = $pinLockedUntil ?? null;
 $pinLength = (int) ($pinLength ?? 6);
+$passkeys = $passkeys ?? [];
+$pinLogin = $pinLogin ?? false;
 ?>
 <div class="row g-4">
     <div class="col-lg-8">
@@ -63,7 +65,43 @@ $pinLength = (int) ($pinLength ?? 6);
                             </button>
                         </div>
                     </form>
+
+                    <div class="pin-login-box mt-3">
+                        <div class="d-flex align-items-start gap-2">
+                            <i class="bi bi-box-arrow-in-right fs-5 text-secondary" aria-hidden="true"></i>
+                            <div class="flex-grow-1">
+                                <p class="fw-semibold small mb-1">
+                                    <?= e(__('auth.security.pin_login_title')) ?>
+                                    <span class="badge <?= $pinLogin ? 'text-bg-success' : 'text-bg-secondary' ?> ms-1">
+                                        <?= e(__($pinLogin ? 'auth.security.pin_login_on' : 'auth.security.pin_login_off')) ?>
+                                    </span>
+                                </p>
+                                <p class="small text-secondary mb-2"><?= e(__('auth.security.pin_login_hint')) ?></p>
+                            </div>
+                        </div>
+                        <?php if ($pinLogin): ?>
+                            <form method="post" action="/ajustes/seguridad/pin/entrar" class="m-0">
+                                <?= csrf_field() ?>
+                                <input type="hidden" name="activar" value="0">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary"><?= e(__('auth.security.pin_login_disable')) ?></button>
+                            </form>
+                        <?php else: ?>
+                            <form method="post" action="/ajustes/seguridad/pin/entrar" class="row g-2 align-items-end">
+                                <?= csrf_field() ?>
+                                <input type="hidden" name="activar" value="1">
+                                <div class="col-12 col-md-7">
+                                    <label class="form-label small" for="pin-login-password"><?= e(__('common.fields.current_password')) ?></label>
+                                    <input type="password" class="form-control" id="pin-login-password" name="current_password"
+                                           autocomplete="current-password" required>
+                                </div>
+                                <div class="col-12 col-md-5">
+                                    <button type="submit" class="btn btn-outline-primary w-100"><?= e(__('auth.security.pin_login_enable')) ?></button>
+                                </div>
+                            </form>
+                        <?php endif; ?>
+                    </div>
                 <?php else: ?>
+                    <p class="small text-secondary mb-3"><?= e(__('auth.security.pin_login_after')) ?></p>
                     <form method="post" action="/ajustes/seguridad/pin" class="row g-2 align-items-end">
                         <?= csrf_field() ?>
                         <div class="col-12 col-md-6">
@@ -94,6 +132,66 @@ $pinLength = (int) ($pinLength ?? 6);
                         </div>
                     </form>
                 <?php endif; ?>
+
+                <hr class="my-4">
+
+                <h2 class="h5 mb-1">
+                    <i class="bi bi-fingerprint me-1" aria-hidden="true"></i><?= e(__('auth.passkeys.title')) ?>
+                </h2>
+                <p class="text-secondary small mb-3"><?= e(__('auth.passkeys.hint')) ?></p>
+
+                <?php if ($passkeys === []): ?>
+                    <p class="small text-secondary mb-3"><?= e(__('auth.passkeys.empty')) ?></p>
+                <?php else: ?>
+                    <ul class="list-unstyled mb-3">
+                        <?php foreach ($passkeys as $passkey): ?>
+                            <li class="d-flex align-items-center gap-2 py-2 border-bottom">
+                                <i class="bi bi-phone fs-5 text-secondary" aria-hidden="true"></i>
+                                <div class="flex-grow-1 small">
+                                    <span class="fw-semibold d-block"><?= e((string) $passkey['nombre']) ?></span>
+                                    <span class="text-secondary">
+                                        <?= e(__('auth.passkeys.added_at', [':date' => format_datetime($passkey['created_at'] ?? null)])) ?>
+                                        ·
+                                        <?= e(!empty($passkey['ultimo_uso_at'])
+                                            ? __('auth.passkeys.used_at', [':date' => format_datetime($passkey['ultimo_uso_at'])])
+                                            : __('auth.passkeys.never_used')) ?>
+                                    </span>
+                                </div>
+                                <form method="post" action="/ajustes/seguridad/huella/eliminar" class="m-0"
+                                      data-confirm="<?= e(__('auth.passkeys.confirm_remove')) ?>" data-confirm-danger>
+                                    <?= csrf_field() ?>
+                                    <input type="hidden" name="id" value="<?= (int) $passkey['id'] ?>">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"><?= e(__('auth.passkeys.remove')) ?></button>
+                                </form>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php endif; ?>
+
+                <form method="post" action="/ajustes/seguridad/huella" class="row g-2 align-items-end"
+                      data-passkey="create" data-passkey-options="/ajustes/seguridad/huella/opciones">
+                    <?= csrf_field() ?>
+                    <?php foreach (['credential_id', 'client_data', 'authenticator_data', 'public_key', 'algorithm'] as $field): ?>
+                        <input type="hidden" name="<?= e($field) ?>" value="">
+                    <?php endforeach; ?>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label small" for="passkey-name"><?= e(__('auth.passkeys.name')) ?></label>
+                        <input type="text" class="form-control" id="passkey-name" name="nombre" maxlength="80"
+                               placeholder="<?= e(__('auth.passkeys.name_placeholder')) ?>">
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label small" for="passkey-password"><?= e(__('common.fields.current_password')) ?></label>
+                        <input type="password" class="form-control" id="passkey-password" name="current_password"
+                               autocomplete="current-password" required>
+                    </div>
+                    <div class="col-12">
+                        <p class="small text-secondary mb-2"><?= e(__('auth.passkeys.password_hint')) ?></p>
+                        <button type="button" class="btn btn-outline-primary" data-passkey-start>
+                            <i class="bi bi-fingerprint me-1" aria-hidden="true"></i><?= e(__('auth.passkeys.add')) ?>
+                        </button>
+                        <p class="small text-danger mt-2 mb-0" data-passkey-error role="alert" hidden></p>
+                    </div>
+                </form>
 
                 <hr class="my-4">
 

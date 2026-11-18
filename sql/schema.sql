@@ -87,6 +87,7 @@ DROP TABLE IF EXISTS `admin_audit_log`;
 DROP TABLE IF EXISTS `codigos_recuperacion`;
 DROP TABLE IF EXISTS `intentos_recuperacion`;
 DROP TABLE IF EXISTS `preguntas_recuperacion`;
+DROP TABLE IF EXISTS `llaves_acceso`;
 DROP TABLE IF EXISTS `sesiones`;
 DROP TABLE IF EXISTS `password_resets`;
 DROP TABLE IF EXISTS `users`;
@@ -122,6 +123,7 @@ CREATE TABLE `users` (
     `pin_hash` VARCHAR(255) NULL,
     `pin_attempts` TINYINT UNSIGNED NOT NULL DEFAULT 0,
     `pin_locked_until` DATETIME NULL,
+    `pin_login` TINYINT(1) NOT NULL DEFAULT 0,
     `must_change_password` TINYINT(1) NOT NULL DEFAULT 0,
     `analytics_opt_out` TINYINT(1) NOT NULL DEFAULT 0,
     `last_login_at` DATETIME NULL,
@@ -222,6 +224,23 @@ CREATE TABLE `sesiones` (
     KEY `idx_sesiones_user_id` (`user_id`),
     KEY `idx_sesiones_last_activity` (`last_activity`),
     CONSTRAINT `fk_sesiones_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `llaves_acceso` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `user_id` BIGINT UNSIGNED NOT NULL,
+    `credencial_id` VARCHAR(255) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    `llave_publica` TEXT NOT NULL,
+    `algoritmo` SMALLINT NOT NULL,
+    `usuario_handle` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    `contador` INT UNSIGNED NOT NULL DEFAULT 0,
+    `nombre` VARCHAR(80) NOT NULL,
+    `ultimo_uso_at` DATETIME NULL,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uniq_llaves_acceso_credencial` (`credencial_id`),
+    KEY `idx_llaves_acceso_user` (`user_id`),
+    CONSTRAINT `fk_llaves_acceso_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `preguntas_recuperacion` (
@@ -1109,16 +1128,22 @@ CREATE TABLE `pagos_deuda` (
     `monto_principal_centavos` BIGINT NULL,
     `fecha` DATETIME NOT NULL,
     `gasto_id` BIGINT UNSIGNED NULL,
+    `origen` ENUM('ingreso', 'ahorro', 'tarjeta', 'otro') NOT NULL DEFAULT 'otro',
+    `retiro_ahorro_id` BIGINT UNSIGNED NULL,
+    `deuda_tarjeta_id` BIGINT UNSIGNED NULL,
     `nota` VARCHAR(255) NULL,
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
+    KEY `idx_pagos_deuda_retiro` (`retiro_ahorro_id`),
     KEY `idx_pagos_deuda_deuda_id` (`deuda_id`),
     KEY `idx_pagos_deuda_user_fecha` (`user_id`, `fecha`),
     KEY `idx_pagos_deuda_gasto_id` (`gasto_id`),
     CONSTRAINT `fk_pagos_deuda_deuda` FOREIGN KEY (`deuda_id`) REFERENCES `deudas` (`id`) ON DELETE CASCADE,
     CONSTRAINT `fk_pagos_deuda_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `fk_pagos_deuda_gasto` FOREIGN KEY (`gasto_id`) REFERENCES `gastos` (`id`) ON DELETE SET NULL
+    CONSTRAINT `fk_pagos_deuda_gasto` FOREIGN KEY (`gasto_id`) REFERENCES `gastos` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_pagos_deuda_retiro` FOREIGN KEY (`retiro_ahorro_id`) REFERENCES `retiros_ahorro` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_pagos_deuda_tarjeta` FOREIGN KEY (`deuda_tarjeta_id`) REFERENCES `deudas` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `patrimonio_snapshots` (

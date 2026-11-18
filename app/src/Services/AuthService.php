@@ -191,6 +191,8 @@ final class AuthService
         $_SESSION['user_lang'] = (string) $user['idioma'];
         $_SESSION['_last_seen_at'] = time();
         $_SESSION['_unlocked_at'] = time();
+        // Bienvenida animada (caja fuerte) en la primera página tras entrar.
+        $_SESSION['_login_fx'] = 1;
         unset($_SESSION['_statement_reauth_at'], $_SESSION['_lock_redirect']);
 
         self::$user = $user;

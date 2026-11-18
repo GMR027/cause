@@ -31,6 +31,7 @@ return [
     'seguridad' => 'Seguridad',
     'privacidad' => 'Privacidad',
     'acerca_de' => 'Acerca de',
+    'contribute_hint' => 'Elige dónde quieres aportar, retirar o donar.',
     'soon_phase' => 'Próximamente Fase :phase',
     'groups' => [
         'quick' => 'Accesos rápidos',

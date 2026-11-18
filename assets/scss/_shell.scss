@@ -456,8 +456,6 @@ html.sidebar-collapsed {
 
 .app-sheet {
     height: auto;
-    max-height: 82dvh;
-    border-radius: 1.25rem 1.25rem 0 0;
 }
 
 .app-sheet-action {
@@ -1351,6 +1349,23 @@ $doodle-sizes: (finanzas: 280px, simbolos: 240px, monedas: 260px, cerdito: 260px
 
 .field-help i {
     pointer-events: none;
+}
+
+.field-help {
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+}
+
+// Campos lado a lado: si una etiqueta (con su «?») ocupa dos líneas, los
+// campos siguen alineados abajo en lugar de quedar escalonados.
+.row > [class*="col"]:has(> .form-label + .form-control, > .form-label + .form-select, > .form-label + .input-group, > .form-label + .password-field) {
+    display: flex;
+    flex-direction: column;
+
+    > .form-label {
+        margin-top: auto;
+    }
 }
 
 .field-help-tooltip .tooltip-inner {

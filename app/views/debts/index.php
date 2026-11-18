@@ -11,6 +11,21 @@ $totalSaldo = (int) ($total_saldo_centavos ?? 0);
 $totalPagado = (int) ($total_pagado_centavos ?? 0);
 $totalProgreso = (int) ($total_progreso ?? 0);
 $activeCount = (int) ($active_count ?? 0);
+$savingsBags = $savings_bags ?? [];
+$origins = ['ingreso' => 'bi-wallet2', 'ahorro' => 'bi-piggy-bank', 'tarjeta' => 'bi-credit-card', 'otro' => 'bi-three-dots'];
+$sourceLabel = static function (array $payment): string {
+    $origin = (string) ($payment['origen'] ?? 'otro');
+    $label = __('debts.payment.origins.' . $origin);
+
+    if ($origin === 'ahorro' && !empty($payment['bolsa_nombre'])) {
+        $label .= ' · ' . (string) $payment['bolsa_nombre']
+            . (!empty($payment['meta_nombre']) ? ' → ' . (string) $payment['meta_nombre'] : '');
+    } elseif ($origin === 'tarjeta' && !empty($payment['tarjeta_nombre'])) {
+        $label .= ' · ' . (string) $payment['tarjeta_nombre'];
+    }
+
+    return $label;
+};
 $dateLabel = static function (?string $value): string {
     if ($value === null || trim($value) === '') {
         return '—';
@@ -180,6 +195,7 @@ $dateLabel = static function (?string $value): string {
                                 data-id="<?= (int) $debt['id'] ?>"
                                 data-name="<?= e((string) $debt['nombre']) ?>"
                                 data-balance="<?= e($balanceRaw) ?>"
+                                data-currency="<?= e((string) $debt['moneda']) ?>"
                                 data-bs-toggle="offcanvas" data-bs-target="#debtPayment">
                             <?= e(__('debts.pay')) ?>
                         </button>
@@ -220,6 +236,7 @@ $dateLabel = static function (?string $value): string {
                         <th><?= e(__('debts.payments.date')) ?></th>
                         <th><?= e(__('debts.payments.debt')) ?></th>
                         <th class="text-end"><?= e(__('debts.payments.amount')) ?></th>
+                        <th><?= e(__('debts.payments.source')) ?></th>
                         <th><?= e(__('debts.payments.note')) ?></th>
                     </tr>
                 </thead>
@@ -229,6 +246,10 @@ $dateLabel = static function (?string $value): string {
                             <td class="small text-secondary"><?= e(format_datetime($payment['fecha'] ?? null)) ?></td>
                             <td><?= e((string) $payment['deuda_nombre']) ?></td>
                             <td class="text-end"><?= money_html((int) $payment['monto_centavos'], (string) $payment['moneda']) ?></td>
+                            <td class="small">
+                                <i class="bi <?= e($origins[(string) ($payment['origen'] ?? 'otro')] ?? 'bi-three-dots') ?> me-1" aria-hidden="true"></i>
+                                <?= e($sourceLabel($payment)) ?>
+                            </td>
                             <td class="small text-secondary"><?= e((string) ($payment['nota'] ?? '—')) ?></td>
                         </tr>
                     <?php endforeach; ?>
@@ -318,14 +339,25 @@ $dateLabel = static function (?string $value): string {
                 <label class="form-label" for="debt-pay-note"><?= e(__('debts.payment.note')) ?></label>
                 <input type="text" class="form-control" id="debt-pay-note" name="nota" maxlength="255">
             </div>
-            <div class="col-12">
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="debt-register-expense" name="registrar_gasto" value="1">
-                    <label class="form-check-label" for="debt-register-expense"><?= e(__('debts.payment.register')) ?></label>
+            <fieldset class="col-12">
+                <legend class="form-label fs-6 mb-2"><?= e(__('debts.payment.origin')) ?></legend>
+                <div class="debt-origin-options" role="radiogroup">
+                    <?php foreach ($origins as $origin => $icon): ?>
+                        <input type="radio" class="btn-check" name="origen" id="debt-origin-<?= e($origin) ?>"
+                               value="<?= e($origin) ?>" data-debt-origin <?= $origin === 'ingreso' ? 'checked' : '' ?>>
+                        <label class="btn btn-outline-secondary debt-origin-option" for="debt-origin-<?= e($origin) ?>">
+                            <i class="bi <?= e($icon) ?>" aria-hidden="true"></i>
+                            <span><?= e(__('debts.payment.origins.' . $origin)) ?></span>
+                        </label>
+                    <?php endforeach; ?>
                 </div>
-                <p class="small text-secondary mt-1 mb-0"><?= e(__('debts.payment.register_hint')) ?></p>
-            </div>
-            <div class="col-12" data-debt-category-wrap hidden>
+                <?php foreach (array_keys($origins) as $origin): ?>
+                    <p class="small text-secondary mt-2 mb-0" data-debt-origin-panel="<?= e($origin) ?>" <?= $origin === 'ingreso' ? '' : 'hidden' ?>>
+                        <?= e(__('debts.payment.origin_hints.' . $origin)) ?>
+                    </p>
+                <?php endforeach; ?>
+            </fieldset>
+            <div class="col-12" data-debt-origin-panel="ingreso">
                 <label class="form-label" for="debt-pay-category"><?= e(__('debts.payment.category')) ?></label>
                 <select class="form-select" id="debt-pay-category" name="parte_metodo">
                     <?php foreach ($categories as $category): ?>
@@ -335,6 +367,42 @@ $dateLabel = static function (?string $value): string {
                         </option>
                     <?php endforeach; ?>
                 </select>
+            </div>
+            <div class="col-12" data-debt-origin-panel="ahorro" hidden>
+                <?php if ($savingsBags === []): ?>
+                    <p class="small text-warning-emphasis mb-0">
+                        <i class="bi bi-exclamation-circle me-1" aria-hidden="true"></i><?= e(__('debts.payment.no_bags')) ?>
+                    </p>
+                <?php else: ?>
+                    <label class="form-label" for="debt-pay-bag"><?= e(__('debts.payment.bag')) ?></label>
+                    <select class="form-select" id="debt-pay-bag" name="bolsa" data-debt-bag>
+                        <?php foreach ($savingsBags as $bag): ?>
+                            <option value="c:<?= (int) $bag['id'] ?>" data-currency="<?= e((string) $bag['moneda']) ?>">
+                                <?= e(__('debts.payment.bag_free', [
+                                    ':name' => (string) $bag['nombre'],
+                                    ':amount' => format_money((int) $bag['sin_asignar_centavos'], (string) $bag['moneda']),
+                                ])) ?>
+                            </option>
+                            <?php foreach ($bag['metas'] as $meta): ?>
+                                <option value="m:<?= (int) $meta['id'] ?>" data-currency="<?= e((string) $bag['moneda']) ?>">
+                                    <?= e(__('debts.payment.bag_meta', [':bag' => (string) $bag['nombre'], ':meta' => (string) $meta['nombre']])) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        <?php endforeach; ?>
+                    </select>
+                <?php endif; ?>
+            </div>
+            <div class="col-12" data-debt-origin-panel="tarjeta" hidden>
+                <label class="form-label" for="debt-pay-card"><?= e(__('debts.payment.card')) ?></label>
+                <select class="form-select" id="debt-pay-card" name="tarjeta_id" data-debt-card>
+                    <option value="0"><?= e(__('debts.payment.card_none')) ?></option>
+                    <?php foreach ($debts as $cardDebt): ?>
+                        <option value="<?= (int) $cardDebt['id'] ?>" data-currency="<?= e((string) $cardDebt['moneda']) ?>">
+                            <?= e((string) $cardDebt['nombre']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <p class="small text-secondary mt-1 mb-0"><?= e(__('debts.payment.card_hint')) ?></p>
             </div>
             <div class="col-12 d-flex gap-2">
                 <button type="submit" class="btn btn-primary flex-grow-1"><?= e(__('debts.payment.submit')) ?></button>

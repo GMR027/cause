@@ -15,6 +15,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.webkit.WebSettingsCompat
+import androidx.webkit.WebViewFeature
 
 /**
  * Actividad principal de Cauce.
@@ -22,6 +24,9 @@ import androidx.core.view.WindowInsetsCompat
  *    estado ni la de navegación, así que el contenedor del WebView recibe esos márgenes.
  *  • Las descargas (PDF, Excel, CSV, ZIP) del sitio pasan al gestor de descargas de Android con
  *    la cookie de sesión, porque el WebView por sí solo las ignora.
+ *  • Llaves de acceso (huella o rostro): el WebView no expone WebAuthn por defecto. Se activa en
+ *    modo «app»; el dominio declara esta app en /.well-known/assetlinks.json y el servidor acepta
+ *    el origen android:apk-key-hash de su certificado de firma.
  */
 class MainActivity : TauriActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,6 +51,12 @@ class MainActivity : TauriActivity() {
   }
 
   override fun onWebViewCreate(webView: WebView) {
+    if (WebViewFeature.isFeatureSupported(WebViewFeature.WEB_AUTHENTICATION)) {
+      WebSettingsCompat.setWebAuthenticationSupport(
+        webView.settings,
+        WebSettingsCompat.WEB_AUTHENTICATION_SUPPORT_FOR_APP
+      )
+    }
 
     webView.setDownloadListener { url, agente, disposicion, tipo, _ ->
       try {

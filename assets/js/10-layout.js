@@ -45,3 +45,27 @@
 
     Cauce.setDiscreto(Cauce.isDiscreto());
 })();
+
+/**
+ * Abre la hoja indicada en el hash (p. ej. /ahorro#savingsContribute) usando
+ * su propio botón, para que corra el precargado de cada panel. Si el botón no
+ * existe (p. ej. sin portafolios), el panel muestra su estado vacío.
+ */
+(() => {
+    const id = window.location.hash.slice(1);
+
+    if (!/^[A-Za-z][\w-]*$/.test(id) || !document.getElementById(id)?.classList.contains('offcanvas')) {
+        return;
+    }
+
+    // Tras cargar todo app.js, para que los listeners de cada panel ya existan.
+    window.setTimeout(() => {
+        const trigger = document.querySelector(`[data-bs-toggle="offcanvas"][data-bs-target="#${id}"]`);
+
+        if (trigger) {
+            trigger.click();
+        }
+
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+    }, 0);
+})();

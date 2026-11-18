@@ -24,7 +24,7 @@ final class LockMiddleware implements MiddlewareInterface
         }
 
         $path = current_path();
-        $allowed = ['/desbloquear', '/logout', '/ajustes/seguridad/cambiar-password'];
+        $allowed = ['/desbloquear', '/desbloquear/huella', '/desbloquear/huella/opciones', '/logout', '/ajustes/seguridad/cambiar-password'];
 
         if (in_array($path, $allowed, true)) {
             return true;

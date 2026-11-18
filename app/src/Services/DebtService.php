@@ -22,6 +22,8 @@ final class DebtService
 {
     public const STRATEGIES = ['bola_nieve', 'avalancha', 'manual'];
 
+    public const ORIGINS = ['ingreso', 'ahorro', 'tarjeta', 'otro'];
+
     private DebtRepository $repo;
 
     private PDO $db;
@@ -94,6 +96,7 @@ final class DebtService
                 : 0,
             'categories' => $categories,
             'default_category' => $defaultCategory,
+            'savings_bags' => (new SavingsService())->debtSources($user),
             'currency' => (string) ($user['moneda_activa'] ?? 'MXN'),
             'active_count' => $this->repo->countActive($userId),
         ];
@@ -165,7 +168,14 @@ final class DebtService
     }
 
     /**
+     * Registra un pago y descuenta el dinero de donde salió:
+     * · ingreso: gasto en una categoría del método (período actual).
+     * · ahorro: retiro de una bolsa (o de una de sus metas).
+     * · tarjeta: el monto se suma a otra deuda (la tarjeta de crédito).
+     * · otro: solo baja el saldo de la deuda.
+     *
      * @param array<string, mixed> $user
+     * @param array{cuenta_id?: int|null, meta_id?: int|null, tarjeta_id?: int|null} $source
      * @return array<string, mixed>
      */
     public function pay(
@@ -174,11 +184,16 @@ final class DebtService
         int $amount,
         string $date,
         ?string $note,
-        bool $registerExpense,
-        ?string $category
+        string $origin,
+        ?string $category,
+        array $source = []
     ): array {
         $debt = $this->requireDebt($user, $debtId);
         $currency = (string) $debt['moneda'];
+
+        if (!in_array($origin, self::ORIGINS, true)) {
+            throw new InvalidArgumentException('origen_invalido');
+        }
 
         if ((int) $debt['activa'] !== 1) {
             throw new RuntimeException('La deuda ya está liquidada.');
@@ -196,8 +211,10 @@ final class DebtService
 
         $timezone = (new PeriodoService())->userTimezone($user);
         $utc = $this->toUtc($date, $timezone);
+        $cleanNote = $note !== null && trim($note) !== '' ? trim($note) : null;
+        $card = null;
 
-        if ($registerExpense) {
+        if ($origin === 'ingreso') {
             $period = (new FinanceSupportService())->period($user);
 
             if ($utc < $period['inicio_dt'] || $utc > $period['fin_dt']) {
@@ -215,24 +232,74 @@ final class DebtService
             }
         }
 
+        if ($origin === 'ahorro' && (int) ($source['cuenta_id'] ?? 0) <= 0 && (int) ($source['meta_id'] ?? 0) <= 0) {
+            throw new InvalidArgumentException('sin_bolsa');
+        }
+
+        if ($origin === 'tarjeta') {
+            $cardId = (int) ($source['tarjeta_id'] ?? 0);
+
+            if ($cardId > 0) {
+                $card = $this->requireDebt($user, $cardId);
+
+                if ($cardId === $debtId) {
+                    throw new InvalidArgumentException('misma_tarjeta');
+                }
+
+                if ((string) $card['moneda'] !== $currency) {
+                    throw new InvalidArgumentException('moneda_tarjeta');
+                }
+            }
+        }
+
         $gastoId = null;
+        $withdrawalId = null;
         $expense = null;
+        $defaultNote = __('debts.payment.expense_note', [':name' => (string) $debt['nombre']]);
         $this->db->beginTransaction();
 
         try {
-            if ($registerExpense) {
+            if ($origin === 'ingreso') {
                 $expense = (new GastoService())->crearManual($user, [
                     'monto_centavos' => $amount,
                     'parte_metodo' => (string) $category,
                     'fecha' => $date,
                     'moneda' => $currency,
-                    'nota' => $note !== null && trim($note) !== ''
-                        ? mb_substr(trim($note), 0, 2000)
-                        : __('debts.payment.expense_note', [':name' => (string) $debt['nombre']]),
+                    'nota' => $cleanNote !== null ? mb_substr($cleanNote, 0, 2000) : $defaultNote,
                     'fuente_exceso' => 'no_aplica',
                     'tags' => [],
                 ]);
                 $gastoId = (int) ($expense['gasto_id'] ?? 0) ?: null;
+            }
+
+            if ($origin === 'ahorro') {
+                $savings = new SavingsService();
+                $metaId = (int) ($source['meta_id'] ?? 0) ?: null;
+                $accountId = (int) ($source['cuenta_id'] ?? 0) ?: null;
+                $bag = $this->savingsBag($savings->debtSources($user), $accountId, $metaId);
+
+                if ($bag === null) {
+                    throw new RuntimeException('savings.errors.account_not_found');
+                }
+
+                if ((string) $bag['moneda'] !== $currency) {
+                    throw new InvalidArgumentException('moneda_bolsa');
+                }
+
+                $withdrawalId = $savings->withdrawEntry(
+                    $user,
+                    (int) $bag['id'],
+                    $metaId,
+                    $amount,
+                    'otro',
+                    $defaultNote,
+                    $date
+                )['id'];
+            }
+
+            if ($card !== null) {
+                $principalCharge = (new CurrencyService())->toPrincipal($user, $amount, $currency, $utc->format('Y-m-d'))['centavos'];
+                $this->repo->increaseBalance((int) $card['id'], (int) $user['id'], $amount, $principalCharge);
             }
 
             $paymentId = $this->repo->createPayment([
@@ -242,7 +309,10 @@ final class DebtService
                 'moneda' => $currency,
                 'fecha' => $utc->format('Y-m-d H:i:s'),
                 'gasto_id' => $gastoId,
-                'nota' => $note !== null && trim($note) !== '' ? mb_substr(trim($note), 0, 255) : null,
+                'origen' => $origin,
+                'retiro_ahorro_id' => $withdrawalId,
+                'deuda_tarjeta_id' => $card !== null ? (int) $card['id'] : null,
+                'nota' => $cleanNote !== null ? mb_substr($cleanNote, 0, 255) : null,
             ]);
 
             $principalPayment = (new CurrencyService())->toPrincipal($user, $amount, (string) $debt['moneda'], $utc->format('Y-m-d'))['centavos'];
@@ -257,6 +327,7 @@ final class DebtService
             return [
                 'payment_id' => $paymentId,
                 'gasto_id' => $gastoId,
+                'retiro_id' => $withdrawalId,
                 'expense' => $expense,
                 'amount_centavos' => $amount,
                 'debt' => $debt,
@@ -269,6 +340,31 @@ final class DebtService
 
             throw $exception;
         }
+    }
+
+    /**
+     * @param list<array<string, mixed>> $bags
+     * @return array<string, mixed>|null
+     */
+    private function savingsBag(array $bags, ?int $accountId, ?int $metaId): ?array
+    {
+        foreach ($bags as $bag) {
+            if ($metaId !== null) {
+                foreach ($bag['metas'] as $meta) {
+                    if ((int) $meta['id'] === $metaId) {
+                        return $bag;
+                    }
+                }
+
+                continue;
+            }
+
+            if ((int) $bag['id'] === $accountId) {
+                return $bag;
+            }
+        }
+
+        return null;
     }
 
     /**

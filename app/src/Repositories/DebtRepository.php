@@ -161,6 +161,36 @@ final class DebtRepository
         $stmt->execute([$original, $original, $excess, $excess, $id, $userId]);
     }
 
+    /**
+     * Suma un cargo a una deuda (pagar otra deuda con la tarjeta): sube el
+     * monto total y el saldo por igual, como el exceso de un gasto.
+     */
+    public function increaseBalance(int $id, int $userId, int $amount, int $principalAmount): void
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE deudas SET
+                monto_total_centavos = monto_total_centavos + ?,
+                saldo_actual_centavos = saldo_actual_centavos + ?,
+                monto_total_principal_centavos = COALESCE(monto_total_principal_centavos, 0) + ?,
+                saldo_actual_principal_centavos = COALESCE(saldo_actual_principal_centavos, 0) + ?,
+                activa = 1, updated_at = NOW()
+             WHERE id = ? AND user_id = ?'
+        );
+        $stmt->execute([$amount, $amount, $principalAmount, $principalAmount, $id, $userId]);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function paymentForWithdrawal(int $withdrawalId, int $userId): ?array
+    {
+        $stmt = $this->db->prepare('SELECT * FROM pagos_deuda WHERE retiro_ahorro_id = ? AND user_id = ? LIMIT 1');
+        $stmt->execute([$withdrawalId, $userId]);
+        $row = $stmt->fetch();
+
+        return $row === false ? null : $row;
+    }
+
     public function reduceBalance(int $id, int $userId, int $amount, ?int $principalAmount = null): void
     {
         $principalAmount ??= $amount;
@@ -193,6 +223,21 @@ final class DebtRepository
              WHERE id = ? AND user_id = ?'
         );
         $stmt->execute([$amount, $principal, (int) $payment['deuda_id'], (int) $payment['user_id']]);
+
+        // Si se pagó con la tarjeta, el cargo sale también de esa deuda.
+        if (!empty($payment['deuda_tarjeta_id'])) {
+            $stmt = $this->db->prepare(
+                'UPDATE deudas SET
+                    monto_total_centavos = GREATEST(0, monto_total_centavos - ?),
+                    saldo_actual_centavos = GREATEST(0, saldo_actual_centavos - ?),
+                    monto_total_principal_centavos = GREATEST(0, COALESCE(monto_total_principal_centavos, 0) - ?),
+                    saldo_actual_principal_centavos = GREATEST(0, COALESCE(saldo_actual_principal_centavos, 0) - ?),
+                    activa = CASE WHEN saldo_actual_centavos > 0 THEN 1 ELSE 0 END,
+                    updated_at = NOW()
+                 WHERE id = ? AND user_id = ?'
+            );
+            $stmt->execute([$amount, $amount, $principal, $principal, (int) $payment['deuda_tarjeta_id'], (int) $payment['user_id']]);
+        }
 
         $stmt = $this->db->prepare('DELETE FROM pagos_deuda WHERE id = ? AND user_id = ?');
         $stmt->execute([(int) $payment['id'], (int) $payment['user_id']]);
@@ -302,8 +347,8 @@ final class DebtRepository
         $stmt = $this->db->prepare(
             'INSERT INTO pagos_deuda
                 (deuda_id, user_id, monto_centavos, monto_principal_centavos, moneda,
-                 fecha, gasto_id, nota, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())'
+                 fecha, gasto_id, origen, retiro_ahorro_id, deuda_tarjeta_id, nota, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())'
         );
         $stmt->execute([
             $data['deuda_id'],
@@ -318,6 +363,9 @@ final class DebtRepository
             $data['moneda'],
             $data['fecha'],
             $data['gasto_id'],
+            $data['origen'] ?? ($data['gasto_id'] !== null ? 'ingreso' : 'otro'),
+            $data['retiro_ahorro_id'] ?? null,
+            $data['deuda_tarjeta_id'] ?? null,
             $data['nota'],
         ]);
 
@@ -331,9 +379,14 @@ final class DebtRepository
     {
         $limit = max(1, min(200, $limit));
         $stmt = $this->db->prepare(
-            "SELECT p.*, d.nombre AS deuda_nombre, d.moneda AS deuda_moneda
+            "SELECT p.*, d.nombre AS deuda_nombre, d.moneda AS deuda_moneda,
+                    c.nombre AS bolsa_nombre, m.nombre AS meta_nombre, t.nombre AS tarjeta_nombre
              FROM pagos_deuda p
              JOIN deudas d ON d.id = p.deuda_id
+             LEFT JOIN retiros_ahorro r ON r.id = p.retiro_ahorro_id
+             LEFT JOIN cuentas_ahorro c ON c.id = r.cuenta_id
+             LEFT JOIN metas_ahorro m ON m.id = r.meta_id
+             LEFT JOIN deudas t ON t.id = p.deuda_tarjeta_id
              WHERE p.user_id = ?
              ORDER BY p.fecha DESC, p.id DESC
              LIMIT {$limit}"

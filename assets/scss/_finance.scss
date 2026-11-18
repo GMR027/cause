@@ -44,7 +44,19 @@
     color: #880e4f;
 }
 
+.finance-tile-debt {
+    background: rgba(230, 81, 0, .13);
+    color: #a8430a;
+
+    &.is-free {
+        background: rgba(21, 127, 107, .14);
+        color: #0e5a4c;
+    }
+}
+
 [data-bs-theme="dark"] {
+    .finance-tile-debt { color: #ffb38a; }
+    .finance-tile-debt.is-free { color: #7fd4c3; }
     .finance-tile-savings { color: #7fd4c3; }
     .finance-tile-investment { color: #90caf9; }
     .finance-tile-donation { color: #f48fb1; }
@@ -145,6 +157,63 @@
     }
 }
 
+// Deudas: sale una moneda de la tarjeta (un abono), la tarjeta se
+// sacude y el eslabón de la cadena se abre. Sin deudas, la cadena se va.
+.finance-tile-debt {
+    .finance-tile-glyph {
+        animation: tile-card-pay calc(3.8s * var(--tile-speed)) ease-in-out .9s infinite;
+    }
+
+    .finance-tile-chain {
+        position: absolute;
+        right: .05rem;
+        bottom: .05rem;
+        z-index: 2;
+        font-size: .8rem;
+        transform-origin: 50% 50%;
+        animation: tile-chain-break calc(3.8s * var(--tile-speed)) ease-in-out .9s infinite;
+    }
+
+    .finance-tile-payout {
+        position: absolute;
+        top: .55rem;
+        left: 50%;
+        margin-left: -.3rem;
+        font-size: .6rem;
+        color: #e3a512;
+        opacity: 0;
+        animation: tile-coin-out calc(3.8s * var(--tile-speed)) ease-out .9s infinite;
+    }
+
+    &.is-free .finance-tile-chain {
+        display: none;
+    }
+}
+
+@keyframes tile-card-pay {
+    0%, 18%, 60%, 100% { transform: none; }
+    24% { transform: translateY(.08rem) scale(.95); }
+    32% { transform: translateY(-.12rem) rotate(-7deg); }
+    40% { transform: rotate(5deg); }
+    48% { transform: rotate(-2deg); }
+}
+
+@keyframes tile-coin-out {
+    0%, 20% { opacity: 0; transform: translateY(0) scale(.6); }
+    28% { opacity: 1; }
+    52% { opacity: 1; transform: translate(.5rem, -1.2rem) rotate(180deg) scale(1); }
+    62%, 100% { opacity: 0; transform: translate(.7rem, -1.5rem) rotate(220deg) scale(.5); }
+}
+
+@keyframes tile-chain-break {
+    0%, 30% { opacity: 1; transform: none; }
+    36% { transform: rotate(-18deg) scale(1.15); }
+    42% { transform: rotate(14deg) scale(1.15); }
+    52% { opacity: 0; transform: translate(.25rem, .5rem) rotate(60deg) scale(.6); }
+    80% { opacity: 0; transform: none; }
+    92%, 100% { opacity: 1; transform: none; }
+}
+
 [data-bs-theme="dark"] .finance-tile-investment::after {
     background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, .18) 50%, transparent 70%);
 }
@@ -202,6 +271,7 @@
     }
 
     .finance-tile-coin,
+    .finance-tile-payout,
     .finance-tile-sparkle,
     .finance-tile-float,
     .finance-tile-investment::after {
@@ -354,47 +424,52 @@
 
 .finance-sheet {
     height: auto;
-    max-height: 88dvh;
-    border-radius: 1.25rem 1.25rem 0 0;
 
     .offcanvas-body {
-        padding-bottom: 2rem;
+        padding-bottom: 1.5rem;
     }
 }
 
-// En tablet/escritorio las hojas de aportar/retirar/editar dejan de salir
-// desde abajo y se muestran como un modal centrado. En móvil se conserva
-// el bottom sheet nativo.
-@media (min-width: 768px) {
-    .offcanvas-bottom.finance-sheet,
-    .offcanvas-bottom.app-sheet {
-        top: 50%;
-        right: auto;
-        bottom: auto;
-        left: 50%;
-        width: min(34rem, calc(100vw - 3rem));
-        height: auto;
-        max-height: 88dvh;
-        border: 0;
-        border-radius: 1.25rem;
-        box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, .28);
-        transform: translate(-50%, -50%) scale(.97);
-        opacity: 0;
-        transition: transform .2s ease-out, opacity .2s ease-out;
-    }
+// Todas las hojas (aportar, retirar, editar, confirmar, menú +) se muestran
+// como ventana centrada, también en móvil. Siguen siendo offcanvas de
+// Bootstrap: solo cambia dónde y cómo aparecen.
+.offcanvas-bottom.finance-sheet,
+.offcanvas-bottom.app-sheet {
+    top: 50%;
+    right: auto;
+    bottom: auto;
+    left: 50%;
+    width: min(34rem, calc(100vw - 2rem));
+    height: auto;
+    max-height: calc(100dvh - 2rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    border: 0;
+    border-radius: 1.25rem;
+    box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, .28);
+    transform: translate(-50%, -50%) scale(.96);
+    opacity: 0;
+    transition: transform .2s ease-out, opacity .2s ease-out;
 
-    .offcanvas-bottom.finance-sheet.show,
-    .offcanvas-bottom.finance-sheet.showing,
-    .offcanvas-bottom.app-sheet.show,
-    .offcanvas-bottom.app-sheet.showing {
+    &.show,
+    &.showing {
         transform: translate(-50%, -50%) scale(1);
         opacity: 1;
     }
 
-    .offcanvas-bottom.finance-sheet.hiding,
-    .offcanvas-bottom.app-sheet.hiding {
-        transform: translate(-50%, -50%) scale(.97);
+    &.hiding {
+        transform: translate(-50%, -50%) scale(.96);
         opacity: 0;
+    }
+
+    .offcanvas-body {
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .offcanvas-bottom.finance-sheet,
+    .offcanvas-bottom.app-sheet {
+        transition: opacity .01ms;
     }
 }
 
@@ -403,19 +478,11 @@
 // ---------------------------------------------------------------------------
 
 .app-dialog {
-    // En móvil sale como bottom sheet con asa; desde 768px, modal centrado.
-    .offcanvas-body {
-        padding: 1.5rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom));
-    }
+    // Ventana centrada y más angosta que las hojas de formulario.
+    width: min(26rem, calc(100vw - 2rem)) !important;
 
-    &::before {
-        content: "";
-        display: block;
-        width: 2.5rem;
-        height: .3rem;
-        margin: .6rem auto 0;
-        border-radius: 1rem;
-        background: var(--cauce-border);
+    .offcanvas-body {
+        padding: 1.5rem 1.25rem 1.25rem;
     }
 
     .btn {
@@ -430,13 +497,6 @@
         }
     }
 
-    @media (min-width: 768px) {
-        width: min(26rem, calc(100vw - 3rem)) !important;
-
-        &::before {
-            display: none;
-        }
-    }
 }
 
 .app-dialog-icon {
@@ -461,30 +521,7 @@
     }
 }
 
-// Asa visual en todas las hojas inferiores en móvil.
 @media (max-width: 767.98px) {
-    .offcanvas-bottom.finance-sheet,
-    .offcanvas-bottom.app-sheet {
-        box-shadow: 0 -.75rem 2.5rem rgba(0, 0, 0, .18);
-
-        .offcanvas-header {
-            position: relative;
-            padding-top: 1.4rem;
-
-            &::before {
-                content: "";
-                position: absolute;
-                top: .55rem;
-                left: 50%;
-                width: 2.5rem;
-                height: .3rem;
-                border-radius: 1rem;
-                background: var(--cauce-border);
-                transform: translateX(-50%);
-            }
-        }
-    }
-
     .celebration-modal .modal-dialog {
         margin: auto 1rem;
     }

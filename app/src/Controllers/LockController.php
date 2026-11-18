@@ -28,6 +28,7 @@ final class LockController
         echo View::render('auth/unlock', [
             'title' => __('auth.unlock.title'),
             'hasPin' => $pin->hasPin($user),
+            'hasPasskey' => (new \Cauce\Services\PasskeyService())->hasAny((int) $user['id']),
             'errors' => [],
         ], 'layouts/auth');
     }
@@ -73,6 +74,7 @@ final class LockController
         echo View::render('auth/unlock', [
             'title' => __('auth.unlock.title'),
             'hasPin' => $pin->hasPin($user),
+            'hasPasskey' => (new \Cauce\Services\PasskeyService())->hasAny((int) $user['id']),
             'errors' => $errors,
         ], 'layouts/auth');
     }

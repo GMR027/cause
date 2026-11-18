@@ -31,6 +31,7 @@ return [
     'seguridad' => 'Security',
     'privacidad' => 'Privacy',
     'acerca_de' => 'About',
+    'contribute_hint' => 'Choose where to contribute, withdraw or donate.',
     'soon_phase' => 'Coming in Phase :phase',
     'groups' => [
         'quick' => 'Quick access',

@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Cauce\Services;
 
+use Cauce\Repositories\DebtRepository;
 use Cauce\Repositories\DonationRepository;
 use Cauce\Repositories\InvestmentRepository;
 use Cauce\Repositories\SavingsRepository;
 
 /**
- * Resumen de las tres bolsas para Inicio.
+ * Resumen de ahorro, inversión, donación y deudas para Inicio.
  */
 final class FinanceSummaryService
 {
@@ -41,6 +42,19 @@ final class FinanceSummaryService
         $period = $support->period($user);
         $donationPeriod = $donations->sumPeriod($userId, $period['inicio'], $period['fin']);
         $donationAssigned = $support->assignedForType($user, 'donacion');
+        $debtOriginal = 0;
+        $debtBalance = 0;
+        $debtActive = 0;
+
+        foreach ((new DebtRepository())->allForUser($userId) as $debt) {
+            $original = max(0, (int) ($debt['monto_total_principal_centavos'] ?? $debt['monto_total_centavos']));
+            $debtOriginal += $original;
+
+            if ((int) $debt['activa'] === 1) {
+                $debtBalance += max(0, (int) ($debt['saldo_actual_principal_centavos'] ?? $debt['saldo_actual_centavos']));
+                $debtActive++;
+            }
+        }
 
         return [
             'savings' => [
@@ -60,6 +74,13 @@ final class FinanceSummaryService
                 'assigned_centavos' => $donationAssigned,
                 'progress' => $donationAssigned > 0
                     ? min(100, (int) round(($donationPeriod / $donationAssigned) * 100))
+                    : 0,
+            ],
+            'debt' => [
+                'balance_centavos' => $debtBalance,
+                'active' => $debtActive,
+                'progress' => $debtOriginal > 0
+                    ? min(100, (int) round((max(0, $debtOriginal - $debtBalance) / $debtOriginal) * 100))
                     : 0,
             ],
         ];

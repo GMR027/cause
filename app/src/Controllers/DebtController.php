@@ -101,8 +101,9 @@ final class DebtController
                 parse_money_cents((string) input('monto', '')) ?? 0,
                 (string) input('fecha', gmdate('Y-m-d')),
                 input('nota'),
-                !empty($_POST['registrar_gasto']),
-                input('parte_metodo')
+                (string) input('origen', 'ingreso'),
+                input('parte_metodo'),
+                $this->paymentSource((string) input('bolsa', ''), (int) input('tarjeta_id', '0'))
             );
             Flash::success(!empty($result['settled']) ? 'debts.flash.paid_off' : 'debts.flash.payment_saved');
 
@@ -167,6 +168,27 @@ final class DebtController
         ];
     }
 
+    /**
+     * «bolsa» llega como "c:ID" (la bolsa, sin meta) o "m:ID" (una meta de la bolsa).
+     *
+     * @return array{cuenta_id: int|null, meta_id: int|null, tarjeta_id: int|null}
+     */
+    private function paymentSource(string $bag, int $cardId): array
+    {
+        $accountId = null;
+        $metaId = null;
+
+        if (preg_match('/^([cm]):(\d{1,18})$/', $bag, $matches) === 1) {
+            if ($matches[1] === 'c') {
+                $accountId = (int) $matches[2];
+            } else {
+                $metaId = (int) $matches[2];
+            }
+        }
+
+        return ['cuenta_id' => $accountId, 'meta_id' => $metaId, 'tarjeta_id' => $cardId > 0 ? $cardId : null];
+    }
+
     private function flashError(Throwable $exception): void
     {
         $message = $exception->getMessage();
@@ -175,6 +197,16 @@ final class DebtController
             $message === 'sin_tasa' => 'currency.errors.no_rate',
             $message === 'sin_ingreso' => 'debts.errors.no_income',
             $message === 'fuera_periodo' => 'debts.errors.out_of_period',
+            $message === 'origen_invalido' => 'debts.errors.origin',
+            $message === 'sin_bolsa' => 'debts.errors.no_bag',
+            $message === 'moneda_bolsa' => 'debts.errors.bag_currency',
+            $message === 'misma_tarjeta' => 'debts.errors.same_card',
+            $message === 'moneda_tarjeta' => 'debts.errors.card_currency',
+            $message === 'savings.errors.assigned_withdraw' => 'savings.errors.assigned_withdraw',
+            $message === 'savings.errors.account_archived' => 'savings.errors.account_archived',
+            $message === 'savings.errors.account_not_found' => 'savings.errors.account_not_found',
+            str_contains($message, 'retirar más') => 'debts.errors.bag_funds',
+            str_contains($message, 'período') || str_contains($message, 'periodo') => 'debts.errors.out_of_period',
             str_contains($message, 'fecha no es válida') => 'debts.errors.date',
             str_contains($message, 'no existe') => 'debts.errors.not_found',
             str_contains($message, 'liquidada') => 'debts.errors.closed',

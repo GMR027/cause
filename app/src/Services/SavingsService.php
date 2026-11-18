@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Cauce\Services;
 
 use Cauce\Config\Database;
+use Cauce\Repositories\DebtRepository;
 use Cauce\Repositories\SavingsRepository;
 use DateTimeImmutable;
 use DateTimeZone;
@@ -383,6 +384,24 @@ final class SavingsService
         ?string $text,
         string $date
     ): string {
+        return $this->withdrawEntry($user, $accountId, $metaId, $amount, $reason, $text, $date)['currency'];
+    }
+
+    /**
+     * Igual que withdraw(), pero devuelve también el id del retiro.
+     *
+     * @param array<string, mixed> $user
+     * @return array{id: int, currency: string}
+     */
+    public function withdrawEntry(
+        array $user,
+        ?int $accountId,
+        ?int $metaId,
+        int $amount,
+        string $reason,
+        ?string $text,
+        string $date
+    ): array {
         if ($amount <= 0) {
             throw new InvalidArgumentException('El monto debe ser mayor que cero.');
         }
@@ -428,7 +447,7 @@ final class SavingsService
             }
         }
 
-        $this->repo->createWithdrawal(
+        $id = $this->repo->createWithdrawal(
             (int) $user['id'],
             (int) $account['id'],
             $metaId,
@@ -439,7 +458,56 @@ final class SavingsService
             $utc->format('Y-m-d H:i:s')
         );
 
-        return $currency;
+        return ['id' => $id, 'currency' => $currency];
+    }
+
+    /**
+     * Bolsas activas y sus metas, con saldo, para pagar una deuda con ahorro.
+     *
+     * @param array<string, mixed> $user
+     * @return list<array<string, mixed>>
+     */
+    public function debtSources(array $user): array
+    {
+        $userId = (int) $user['id'];
+        $totals = $this->repo->totalsByMeta($userId);
+        $metas = $this->repo->metasForUser($userId);
+        $sources = [];
+
+        foreach ($this->repo->accountsForUser($userId) as $account) {
+            if ((int) $account['activa'] !== 1) {
+                continue;
+            }
+
+            $accountId = (int) $account['id'];
+            $assigned = 0;
+            $accountMetas = [];
+
+            foreach ($metas as $meta) {
+                if ((int) ($meta['cuenta_id'] ?? 0) !== $accountId) {
+                    continue;
+                }
+
+                $metaId = (int) $meta['id'];
+                $balance = (int) ($totals[$metaId]['aportado'] ?? 0) - (int) ($totals[$metaId]['retirado'] ?? 0);
+                $assigned += $balance;
+
+                if ((int) ($meta['activa'] ?? 1) === 1 && $balance > 0) {
+                    $accountMetas[] = ['id' => $metaId, 'nombre' => (string) $meta['nombre'], 'saldo_centavos' => $balance];
+                }
+            }
+
+            $sources[] = [
+                'id' => $accountId,
+                'nombre' => (string) $account['nombre'],
+                'moneda' => (string) $account['moneda'],
+                'saldo_centavos' => (int) $account['saldo_centavos'],
+                'sin_asignar_centavos' => max(0, (int) $account['saldo_principal_centavos'] - $assigned),
+                'metas' => $accountMetas,
+            ];
+        }
+
+        return $sources;
     }
 
     /**
@@ -629,7 +697,25 @@ final class SavingsService
 
         $this->assertMetaRowInCurrentAccount($user, $row);
 
-        $this->repo->deleteWithdrawal($id, (int) $user['id']);
+        // Si ese retiro pagó una deuda, el pago se deshace con él.
+        $payment = (new DebtRepository())->paymentForWithdrawal($id, (int) $user['id']);
+        $db = Database::connection();
+        $db->beginTransaction();
+
+        try {
+            if ($payment !== null) {
+                (new DebtRepository())->revertPayment($payment);
+            }
+
+            $this->repo->deleteWithdrawal($id, (int) $user['id']);
+            $db->commit();
+        } catch (Throwable $exception) {
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
+
+            throw $exception;
+        }
     }
 
     /**

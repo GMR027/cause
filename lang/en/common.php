@@ -36,6 +36,8 @@ return [
     ],
     'actions' => [
         'save' => 'Save',
+        'show_password' => 'Show password',
+        'hide_password' => 'Hide password',
         'cancel' => 'Cancel',
         'continue' => 'Continue',
         'back' => 'Back',

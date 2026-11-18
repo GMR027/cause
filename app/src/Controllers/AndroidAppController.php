@@ -14,6 +14,26 @@ use Cauce\Services\AuthService;
  */
 final class AndroidAppController
 {
+    /**
+     * GET /.well-known/assetlinks.json — asocia el dominio con la app para que
+     * Android permita usar las llaves de acceso (huella) del sitio dentro de ella.
+     */
+    public function assetLinks(): void
+    {
+        $hex = strtolower(preg_replace('/[^0-9a-f]/i', '', (string) config('security.android.cert_sha256', '')) ?? '');
+        $fingerprint = strtoupper(implode(':', str_split($hex, 2)));
+
+        header('Cache-Control: public, max-age=3600');
+        json_response([[
+            'relation' => ['delegate_permission/common.get_login_creds'],
+            'target' => [
+                'namespace' => 'android_app',
+                'package_name' => (string) config('security.android.package', ''),
+                'sha256_cert_fingerprints' => $hex !== '' ? [$fingerprint] : [],
+            ],
+        ]]);
+    }
+
     /** GET /app/android/version.json — la pantalla local de la app (otro origen) lo consulta al abrir. */
     public function version(): void
     {

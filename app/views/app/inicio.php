@@ -227,7 +227,7 @@ $format = static fn (int $cents): string => money_html($cents, $currency);
 ]) ?>
 
 <div class="row g-3 mb-4">
-    <div class="col-12 col-md-4">
+    <div class="col-12 col-md-6 col-xl-3">
         <a class="finance-tile" href="/ahorro">
             <span class="finance-tile-icon finance-tile-savings" aria-hidden="true">
                 <i class="bi bi-coin finance-tile-coin"></i>
@@ -255,7 +255,7 @@ $format = static fn (int $cents): string => money_html($cents, $currency);
         </a>
     </div>
 
-    <div class="col-12 col-md-4">
+    <div class="col-12 col-md-6 col-xl-3">
         <a class="finance-tile" href="/inversion">
             <span class="finance-tile-icon finance-tile-investment" aria-hidden="true">
                 <i class="bi bi-graph-up-arrow finance-tile-glyph"></i>
@@ -272,7 +272,7 @@ $format = static fn (int $cents): string => money_html($cents, $currency);
         </a>
     </div>
 
-    <div class="col-12 col-md-4">
+    <div class="col-12 col-md-6 col-xl-3">
         <a class="finance-tile" href="/donacion">
             <span class="finance-tile-icon finance-tile-donation" aria-hidden="true">
                 <i class="bi bi-heart-fill finance-tile-glyph"></i>
@@ -295,6 +295,34 @@ $format = static fn (int $cents): string => money_html($cents, $currency);
                     </span>
                 <?php else: ?>
                     <span class="small text-secondary"><?= e(__('donation.card.hint')) ?></span>
+                <?php endif; ?>
+            </span>
+            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+        </a>
+    </div>
+
+    <div class="col-12 col-md-6 col-xl-3">
+        <?php $debtSummary = $finance['debt'] ?? []; ?>
+        <a class="finance-tile" href="/deudas">
+            <span class="finance-tile-icon finance-tile-debt<?= (int) ($debtSummary['active'] ?? 0) === 0 ? ' is-free' : '' ?>" aria-hidden="true">
+                <i class="bi bi-credit-card-2-front finance-tile-glyph"></i>
+                <i class="bi bi-link-45deg finance-tile-chain"></i>
+                <i class="bi bi-coin finance-tile-payout"></i>
+            </span>
+            <span class="finance-tile-body">
+                <span class="finance-tile-label"><?= e(__('debts.card.title')) ?></span>
+                <span class="finance-tile-amount">
+                    <?= money_html((int) ($debtSummary['balance_centavos'] ?? 0), $currency) ?>
+                </span>
+                <?php if ((int) ($debtSummary['active'] ?? 0) > 0): ?>
+                    <span class="finance-progress" aria-hidden="true">
+                        <span style="width: <?= (int) ($debtSummary['progress'] ?? 0) ?>%"></span>
+                    </span>
+                    <span class="small text-secondary">
+                        <?= e(__('debts.card.progress', [':percent' => (string) (int) ($debtSummary['progress'] ?? 0)])) ?>
+                    </span>
+                <?php else: ?>
+                    <span class="small text-secondary"><?= e(__('debts.card.free')) ?></span>
                 <?php endif; ?>
             </span>
             <i class="bi bi-chevron-right" aria-hidden="true"></i>

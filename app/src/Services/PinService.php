@@ -34,6 +34,28 @@ final class PinService
     }
 
     /**
+     * Entrar con correo y PIN: solo si la persona lo activó y tiene PIN.
+     *
+     * @param array<string, mixed> $user
+     */
+    public function loginEnabled(array $user): bool
+    {
+        return (int) ($user['pin_login'] ?? 0) === 1 && $this->hasPin($user);
+    }
+
+    /**
+     * @param array<string, mixed> $user
+     */
+    public function setLoginEnabled(array $user, bool $enabled): void
+    {
+        if ($enabled && !$this->hasPin($user)) {
+            throw new InvalidArgumentException('Primero crea un PIN.');
+        }
+
+        $this->users->setPinLogin((int) $user['id'], $enabled);
+    }
+
+    /**
      * @param array<string, mixed> $user
      */
     public function set(array $user, string $pin): void

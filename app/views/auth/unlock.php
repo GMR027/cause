@@ -1,5 +1,6 @@
 <?php
 $hasPin = $hasPin ?? false;
+$hasPasskey = $hasPasskey ?? false;
 $errors = $errors ?? [];
 ?>
 <div class="card border-0 shadow-sm auth-card">
@@ -48,6 +49,14 @@ $errors = $errors ?? [];
 
             <button type="submit" class="btn btn-primary w-100"><?= e(__('auth.unlock.submit')) ?></button>
         </form>
+
+        <?php if ($hasPasskey): ?>
+            <?= partial('partials/passkey-button', [
+                'action' => '/desbloquear/huella',
+                'options' => '/desbloquear/huella/opciones',
+                'label' => __('auth.passkeys.unlock'),
+            ]) ?>
+        <?php endif; ?>
 
         <form method="post" action="/logout" class="mt-3 text-center">
             <?= csrf_field() ?>

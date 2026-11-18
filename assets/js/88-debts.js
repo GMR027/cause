@@ -59,12 +59,54 @@
     const payBalance = document.querySelector('[data-debt-pay-balance]');
     const payAmount = document.getElementById('debt-pay-amount');
     const payDebtId = document.querySelector('#debtPayment [name="deuda_id"]');
-    const registerExpense = document.getElementById('debt-register-expense');
-    const categoryWrap = document.querySelector('[data-debt-category-wrap]');
+    const origins = document.querySelectorAll('[data-debt-origin]');
+    const bagSelect = document.querySelector('[data-debt-bag]');
+    const cardSelect = document.querySelector('[data-debt-card]');
+
+    // Muestra lo que pide cada origen y desactiva el resto para no enviarlo.
+    const syncOrigin = () => {
+        const current = Array.from(origins).find((radio) => radio.checked);
+        const value = current ? current.value : 'ingreso';
+
+        document.querySelectorAll('[data-debt-origin-panel]').forEach((panel) => {
+            const visible = panel.getAttribute('data-debt-origin-panel') === value;
+            panel.hidden = !visible;
+            panel.querySelectorAll('select, input').forEach((field) => {
+                field.disabled = !visible;
+            });
+        });
+    };
+
+    // Solo bolsas y tarjetas en la moneda de la deuda; una deuda no se paga a sí misma.
+    const filterOptions = (select, currency, skipId) => {
+        if (!select) {
+            return;
+        }
+
+        let first = null;
+
+        Array.from(select.options).forEach((option) => {
+            const optionCurrency = option.getAttribute('data-currency');
+            const usable = (optionCurrency === null || optionCurrency === currency) && option.value !== skipId;
+            option.hidden = !usable;
+            option.disabled = !usable;
+
+            if (usable && first === null) {
+                first = option;
+            }
+        });
+
+        if (first) {
+            select.value = first.value;
+        }
+    };
+
+    origins.forEach((radio) => radio.addEventListener('change', syncOrigin));
 
     document.querySelectorAll('[data-debt-pay]').forEach((button) => {
         button.addEventListener('click', () => {
             const balance = Number(button.getAttribute('data-balance') || 0);
+            const currency = button.getAttribute('data-currency') || '';
 
             setValue(payDebtId, button.getAttribute('data-id'));
             setValue(payAmount, '');
@@ -77,22 +119,14 @@
                 payBalance.textContent = t('debts.fields.balance') + ': ' + Cauce.formatMoney(Math.round(balance * 100));
             }
 
-            if (registerExpense) {
-                registerExpense.checked = false;
-            }
-
-            if (categoryWrap) {
-                categoryWrap.hidden = true;
-            }
+            origins.forEach((radio) => {
+                radio.checked = radio.value === 'ingreso';
+            });
+            filterOptions(bagSelect, currency, null);
+            filterOptions(cardSelect, currency, button.getAttribute('data-id'));
+            syncOrigin();
         });
     });
 
-    if (registerExpense && categoryWrap) {
-        const syncCategory = () => {
-            categoryWrap.hidden = !registerExpense.checked;
-        };
-
-        registerExpense.addEventListener('change', syncCategory);
-        syncCategory();
-    }
+    syncOrigin();
 })();

@@ -86,11 +86,10 @@ return [
         ['label' => 'nav.fab.ingreso', 'icon' => 'bi-arrow-down-circle', 'route' => '/ingresos/nuevo'],
         ['label' => 'nav.fab.gasto', 'icon' => 'bi-arrow-up-circle', 'route' => '/gastos/nuevo'],
         ['label' => 'nav.fab.mover', 'icon' => 'bi-arrow-left-right', 'route' => '/mover'],
-        ['label' => 'nav.fab.aportar', 'icon' => 'bi-piggy-bank', 'route' => '/aportar', 'phase' => 4],
+        ['label' => 'nav.fab.aportar', 'icon' => 'bi-piggy-bank', 'route' => '/aportar'],
     ],
 
     'placeholders' => [
-        '/aportar' => ['title' => 'nav.fab.aportar', 'phase' => 4],
         '/admin/notificaciones' => ['title' => 'nav.admin_notificaciones', 'phase' => 4, 'admin' => true],
         '/admin/app' => ['title' => 'nav.admin_app', 'phase' => 4, 'admin' => true],
         '/admin/seguridad' => ['title' => 'nav.admin_seguridad', 'phase' => 4, 'admin' => true],

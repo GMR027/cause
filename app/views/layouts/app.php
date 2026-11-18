@@ -94,6 +94,11 @@ $isAdmin = $currentUser !== null && ($currentUser['rol'] ?? 'user') === 'admin';
 
     <?= partial('partials/debt-paid', ['debtPaid' => \Cauce\Services\DebtPaidFxService::pull()]) ?>
 
+    <?php if (!empty($_SESSION['_login_fx'])): ?>
+        <?php unset($_SESSION['_login_fx']); ?>
+        <?= partial('partials/login-fx', ['alias' => (string) ($currentUser['alias'] ?? '')]) ?>
+    <?php endif; ?>
+
     <script>
         window.CauceI18n = <?= json_encode(
             $jsI18n ?? [],

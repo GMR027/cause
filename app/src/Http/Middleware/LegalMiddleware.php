@@ -27,7 +27,7 @@ final class LegalMiddleware implements MiddlewareInterface
         }
 
         $path = current_path();
-        $allowed = ['/legal/aceptar', '/logout', '/desbloquear', '/ajustes/seguridad/cambiar-password'];
+        $allowed = ['/legal/aceptar', '/logout', '/desbloquear', '/desbloquear/huella', '/desbloquear/huella/opciones', '/ajustes/seguridad/cambiar-password'];
 
         if (in_array($path, $allowed, true)) {
             return true;

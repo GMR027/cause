@@ -136,10 +136,16 @@ final class UserRepository
     {
         $stmt = $this->db->prepare(
             'UPDATE users
-             SET pin_hash = NULL, pin_attempts = 0, pin_locked_until = NULL, updated_at = NOW()
+             SET pin_hash = NULL, pin_attempts = 0, pin_locked_until = NULL, pin_login = 0, updated_at = NOW()
              WHERE id = ?'
         );
         $stmt->execute([$id]);
+    }
+
+    public function setPinLogin(int $id, bool $enabled): void
+    {
+        $stmt = $this->db->prepare('UPDATE users SET pin_login = ?, updated_at = NOW() WHERE id = ?');
+        $stmt->execute([$enabled ? 1 : 0, $id]);
     }
 
     public function registerPinFailure(int $id, int $attempts, ?string $lockedUntil): void

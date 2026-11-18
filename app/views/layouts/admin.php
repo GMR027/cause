@@ -21,6 +21,7 @@ $flashes = Flash::pull();
     <link rel="icon" type="image/png" sizes="32x32" href="<?= asset_versioned('img/favicon-32.png') ?>">
     <link rel="icon" type="image/png" sizes="64x64" href="<?= asset_versioned('img/favicon-64.png') ?>">
     <link rel="apple-touch-icon" sizes="180x180" href="<?= asset_versioned('img/apple-touch-icon.png') ?>">
+    <link rel="stylesheet" href="<?= asset_versioned('icons/bootstrap-icons.min.css') ?>">
     <link rel="stylesheet" href="<?= asset_versioned('css/app.min.css') ?>">
 </head>
 <body class="d-flex flex-column min-vh-100">

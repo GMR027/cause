@@ -192,6 +192,31 @@ final class SettingsController
         redirect('/ajustes/seguridad');
     }
 
+    /**
+     * Activa o apaga entrar con correo + PIN. Activarlo pide la contraseña.
+     */
+    public function pinLogin(): void
+    {
+        $user = $this->user();
+        $enable = (string) input('activar', '0') === '1';
+
+        if ($enable && !AuthService::verifyPassword($user, (string) input('current_password', ''))) {
+            $this->renderSecurity((int) $user['id'], [__('auth.errors.current_password')], null);
+
+            return;
+        }
+
+        try {
+            (new PinService())->setLoginEnabled($user, $enable);
+            AuthService::refresh();
+            Flash::success($enable ? 'auth.flash.pin_login_on' : 'auth.flash.pin_login_off');
+        } catch (Throwable $exception) {
+            Flash::error('auth.errors.pin_login_needs_pin');
+        }
+
+        redirect('/ajustes/seguridad');
+    }
+
     public function removePin(): void
     {
         $user = $this->user();
@@ -709,8 +734,10 @@ final class SettingsController
             'sessionCount' => count($sessions),
             'sessions' => $sessions,
             'hasPin' => $current !== null && $pin->hasPin($current),
+            'pinLogin' => $current !== null && $pin->loginEnabled($current),
             'pinLockedUntil' => $current !== null ? $pin->lockedUntil($current) : null,
             'pinLength' => (int) config('security.pin.length', 6),
+            'passkeys' => (new \Cauce\Services\PasskeyService())->forUser($userId),
         ], 'layouts/app');
     }
 

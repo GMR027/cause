@@ -709,7 +709,7 @@ final class IngresoService
                     min($amount, (int) ($debt['saldo_actual_centavos'] ?? $amount)),
                     'now',
                     null,
-                    $part !== '',
+                    $part !== '' ? 'ingreso' : 'otro',
                     $part !== '' ? $part : null
                 );
             });
