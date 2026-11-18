@@ -10,8 +10,9 @@ DirectoryIndex index.php
     RewriteRule ^ index.php [QSA,L]
 </IfModule>
 
-# Bloquea archivos ocultos (por ejemplo .env si alguna vez cae en public/).
-<FilesMatch "^\.">
+# Bloquea archivos ocultos (por ejemplo .env si alguna vez cae en public/),
+# salvo /.well-known/ (assetlinks.json para la app Android), que lo sirve PHP.
+<FilesMatch "^\.(?!well-known$)">
     Require all denied
 </FilesMatch>
 
