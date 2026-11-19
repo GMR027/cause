@@ -67,6 +67,25 @@ return [
         'note' => 'Nota',
         'source' => 'Origen',
     ],
+    'origin' => [
+        'label' => '¿De dónde vino el dinero?',
+        'types' => [
+            'tarjeta' => 'Tarjeta de crédito',
+            'ahorro' => 'Préstamo de mi ahorro',
+            'prestamo' => 'Préstamo (banco o persona)',
+            'otro' => 'Otro',
+        ],
+        'hints' => [
+            'tarjeta' => 'Compras o cargos de una tarjeta de crédito. Podrás elegirla al pagar otra deuda «con tarjeta».',
+            'ahorro' => 'Tomaste dinero de una de tus bolsas: el saldo actual se descuenta de esa bolsa ahora, y cada pago que hagas regresa a ella.',
+            'prestamo' => 'Dinero que te prestó un banco, una financiera o una persona.',
+            'otro' => 'Solo se registra la deuda; no mueve dinero de ningún lado.',
+        ],
+        'bag' => 'Bolsa de la que tomaste el dinero',
+        'loan_note' => 'Préstamo para la deuda «:name»',
+        'from_bag' => 'Préstamo de :bag',
+        'locked' => 'El origen no se puede cambiar después de crear la deuda.',
+    ],
     'payment' => [
         'title' => 'Registrar pago',
         'amount' => 'Monto del pago',

@@ -8,7 +8,8 @@ return [
     'summary' => 'Tu salud financiera: :score/100',
     'score_value' => ':score/100',
     'no_data' => 'Aún no hay datos suficientes para calcular tu score.',
-    'no_data_hint' => 'El score aparece cuando hay ingreso en el período y al menos un período anterior con datos de tu método.',
+    'no_data_hint' => 'Registra tu ingreso y verás tu score desde el primer día.',
+    'preliminary' => 'Preliminar: se basa en lo que llevas de este período y se afina al cerrarlo.',
     'disclaimer' => 'El score es una guía, no un diagnóstico financiero.',
     'private' => 'Privado. No se comparte.',
     'detail_title' => 'Detalle del score',
@@ -33,6 +34,6 @@ return [
     ],
     'reasons' => [
         'sin_ingreso' => 'No hay ingreso registrado en el período actual.',
-        'sin_metodo' => 'Todavía no hay períodos anteriores con datos de tu método.',
+        'sin_metodo' => 'Acredita tu ingreso para ver tu score.',
     ],
 ];

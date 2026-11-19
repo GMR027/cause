@@ -25,6 +25,15 @@ final class LockController
         $user = $this->user();
         $pin = new PinService();
 
+        // Abrir esta pantalla bloquea la sesión (la usa el bloqueo por
+        // inactividad de la página abierta). «volver» es a dónde regresar.
+        $_SESSION['_locked'] = 1;
+        $back = (string) input('volver', '');
+
+        if (!isset($_SESSION['_lock_redirect']) && $this->safePath($back)) {
+            $_SESSION['_lock_redirect'] = $back;
+        }
+
         echo View::render('auth/unlock', [
             'title' => __('auth.unlock.title'),
             'hasPin' => $pin->hasPin($user),
@@ -137,8 +146,15 @@ final class LockController
         ], 'layouts/auth');
     }
 
+    private function safePath(string $path): bool
+    {
+        return $path !== '' && str_starts_with($path, '/') && !str_starts_with($path, '//')
+            && !str_contains($path, '\\') && !str_starts_with($path, '/desbloquear') && strlen($path) <= 500;
+    }
+
     private function markUnlocked(): never
     {
+        unset($_SESSION['_locked']);
         $_SESSION['_last_seen_at'] = time();
         $_SESSION['_unlocked_at'] = time();
         $next = $_SESSION['_lock_redirect'] ?? '/inicio';

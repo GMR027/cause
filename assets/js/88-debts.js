@@ -26,8 +26,35 @@
         }
     };
 
+    const sources = form.querySelectorAll('[data-debt-source]');
+
+    // Origen de la deuda: solo al crearla. Lo oculto se desactiva para no enviarlo.
+    const syncSource = () => {
+        const editing = form.getAttribute('action') === '/deudas/actualizar';
+        const current = Array.from(sources).find((radio) => radio.checked);
+        const value = current ? current.value : 'otro';
+
+        form.querySelectorAll('[data-debt-create-only]').forEach((block) => {
+            block.hidden = editing || (block.hasAttribute('data-debt-source-panel') && block.getAttribute('data-debt-source-panel') !== value);
+            block.querySelectorAll('select, input').forEach((field) => {
+                field.disabled = block.hidden;
+            });
+        });
+
+        form.querySelectorAll('p[data-debt-source-panel]').forEach((hint) => {
+            hint.hidden = hint.getAttribute('data-debt-source-panel') !== value;
+        });
+
+        form.querySelectorAll('[data-debt-edit-only]').forEach((block) => {
+            block.hidden = !editing;
+        });
+    };
+
+    sources.forEach((radio) => radio.addEventListener('change', syncSource));
+
     const setEditMode = (editing) => {
         form.setAttribute('action', editing ? '/deudas/actualizar' : '/deudas');
+        syncSource();
         if (title) {
             title.textContent = editing ? t('common.actions.edit') : t('debts.create');
         }
@@ -129,4 +156,5 @@
     });
 
     syncOrigin();
+    syncSource();
 })();

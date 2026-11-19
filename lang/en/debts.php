@@ -67,6 +67,25 @@ return [
         'note' => 'Note',
         'source' => 'Source',
     ],
+    'origin' => [
+        'label' => 'Where did the money come from?',
+        'types' => [
+            'tarjeta' => 'Credit card',
+            'ahorro' => 'Loan from my savings',
+            'prestamo' => 'Loan (bank or person)',
+            'otro' => 'Other',
+        ],
+        'hints' => [
+            'tarjeta' => 'Purchases or charges on a credit card. You can pick it when paying another debt "with card".',
+            'ahorro' => 'You took money from one of your bags: the current balance is withdrawn from that bag now, and every payment goes back to it.',
+            'prestamo' => 'Money lent by a bank, a lender or a person.',
+            'otro' => 'Only the debt is recorded; no money moves.',
+        ],
+        'bag' => 'Bag you took the money from',
+        'loan_note' => 'Loan for the debt ":name"',
+        'from_bag' => 'Loan from :bag',
+        'locked' => 'The origin cannot be changed after the debt is created.',
+    ],
     'payment' => [
         'title' => 'Record payment',
         'amount' => 'Payment amount',

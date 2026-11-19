@@ -8,7 +8,8 @@ return [
     'summary' => 'Your financial health: :score/100',
     'score_value' => ':score/100',
     'no_data' => 'There is not enough data to calculate your score yet.',
-    'no_data_hint' => 'The score appears when there is income in the period and at least one previous period with data from your method.',
+    'no_data_hint' => 'Add your income and you will see your score from day one.',
+    'preliminary' => 'Preliminary: based on this period so far; it gets sharper once the period closes.',
     'disclaimer' => 'The score is a guide, not a financial diagnosis.',
     'private' => 'Private. Not shared.',
     'detail_title' => 'Score detail',
@@ -33,6 +34,6 @@ return [
     ],
     'reasons' => [
         'sin_ingreso' => 'There is no income recorded in the current period.',
-        'sin_metodo' => 'There are no previous periods with data from your method yet.',
+        'sin_metodo' => 'Credit your income to see your score.',
     ],
 ];

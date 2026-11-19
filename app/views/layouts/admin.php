@@ -24,7 +24,7 @@ $flashes = Flash::pull();
     <link rel="stylesheet" href="<?= asset_versioned('icons/bootstrap-icons.min.css') ?>">
     <link rel="stylesheet" href="<?= asset_versioned('css/app.min.css') ?>">
 </head>
-<body class="d-flex flex-column min-vh-100">
+<body class="d-flex flex-column min-vh-100"<?= \Cauce\Services\AuthService::check() ? ' data-idle-lock="' . max(1, (int) config('security.pin.unlock_minutes', 15)) . '"' : '' ?>>
     <header class="border-bottom app-chrome">
         <div class="container py-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
             <div class="d-flex align-items-center gap-3">

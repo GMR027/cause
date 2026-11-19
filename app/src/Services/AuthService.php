@@ -193,7 +193,7 @@ final class AuthService
         $_SESSION['_unlocked_at'] = time();
         // Bienvenida animada (caja fuerte) en la primera página tras entrar.
         $_SESSION['_login_fx'] = 1;
-        unset($_SESSION['_statement_reauth_at'], $_SESSION['_lock_redirect']);
+        unset($_SESSION['_statement_reauth_at'], $_SESSION['_lock_redirect'], $_SESSION['_locked']);
 
         self::$user = $user;
         self::$loaded = true;

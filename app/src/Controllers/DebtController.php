@@ -39,7 +39,12 @@ final class DebtController
         $user = $this->user();
 
         try {
-            $this->service->create($user, $this->dataFromPost());
+            $source = $this->paymentSource((string) input('origen_bolsa', ''), 0);
+            $this->service->create($user, $this->dataFromPost() + [
+                'origen' => (string) input('origen_deuda', 'otro'),
+                'origen_cuenta_id' => $source['cuenta_id'],
+                'origen_meta_id' => $source['meta_id'],
+            ]);
             Flash::success('debts.flash.created');
         } catch (Throwable $exception) {
             $this->flashError($exception);

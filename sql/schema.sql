@@ -1100,6 +1100,10 @@ CREATE TABLE `deudas` (
     `monto_total_centavos` BIGINT NOT NULL,
     `saldo_actual_centavos` BIGINT NOT NULL,
     `moneda` CHAR(3) NOT NULL DEFAULT 'MXN',
+    `origen` ENUM('tarjeta', 'ahorro', 'prestamo', 'otro') NOT NULL DEFAULT 'otro',
+    `origen_cuenta_id` BIGINT UNSIGNED NULL,
+    `origen_meta_id` BIGINT UNSIGNED NULL,
+    `retiro_ahorro_id` BIGINT UNSIGNED NULL,
     `monto_total_principal_centavos` BIGINT NULL,
     `saldo_actual_principal_centavos` BIGINT NULL,
     `pago_minimo_principal_centavos` BIGINT NULL,
@@ -1112,7 +1116,11 @@ CREATE TABLE `deudas` (
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     KEY `idx_deudas_user_activa` (`user_id`, `activa`),
-    CONSTRAINT `fk_deudas_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+    KEY `idx_deudas_retiro` (`retiro_ahorro_id`),
+    CONSTRAINT `fk_deudas_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_deudas_origen_cuenta` FOREIGN KEY (`origen_cuenta_id`) REFERENCES `cuentas_ahorro` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_deudas_origen_meta` FOREIGN KEY (`origen_meta_id`) REFERENCES `metas_ahorro` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_deudas_retiro` FOREIGN KEY (`retiro_ahorro_id`) REFERENCES `retiros_ahorro` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 ALTER TABLE `gastos_recurrentes`
@@ -1131,11 +1139,13 @@ CREATE TABLE `pagos_deuda` (
     `origen` ENUM('ingreso', 'ahorro', 'tarjeta', 'otro') NOT NULL DEFAULT 'otro',
     `retiro_ahorro_id` BIGINT UNSIGNED NULL,
     `deuda_tarjeta_id` BIGINT UNSIGNED NULL,
+    `aporte_ahorro_id` BIGINT UNSIGNED NULL,
     `nota` VARCHAR(255) NULL,
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     KEY `idx_pagos_deuda_retiro` (`retiro_ahorro_id`),
+    KEY `idx_pagos_deuda_aporte` (`aporte_ahorro_id`),
     KEY `idx_pagos_deuda_deuda_id` (`deuda_id`),
     KEY `idx_pagos_deuda_user_fecha` (`user_id`, `fecha`),
     KEY `idx_pagos_deuda_gasto_id` (`gasto_id`),
@@ -1143,7 +1153,8 @@ CREATE TABLE `pagos_deuda` (
     CONSTRAINT `fk_pagos_deuda_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
     CONSTRAINT `fk_pagos_deuda_gasto` FOREIGN KEY (`gasto_id`) REFERENCES `gastos` (`id`) ON DELETE SET NULL,
     CONSTRAINT `fk_pagos_deuda_retiro` FOREIGN KEY (`retiro_ahorro_id`) REFERENCES `retiros_ahorro` (`id`) ON DELETE SET NULL,
-    CONSTRAINT `fk_pagos_deuda_tarjeta` FOREIGN KEY (`deuda_tarjeta_id`) REFERENCES `deudas` (`id`) ON DELETE SET NULL
+    CONSTRAINT `fk_pagos_deuda_tarjeta` FOREIGN KEY (`deuda_tarjeta_id`) REFERENCES `deudas` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_pagos_deuda_aporte` FOREIGN KEY (`aporte_ahorro_id`) REFERENCES `aportaciones_ahorro` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `patrimonio_snapshots` (

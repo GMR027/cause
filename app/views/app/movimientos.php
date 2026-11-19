@@ -15,6 +15,8 @@ $totals = $totals ?? ['entradas' => 0, 'salidas' => 0];
 $kindIcons = [
     'ingreso' => 'bi-arrow-down-circle',
     'ahorro' => 'bi-piggy-bank',
+    'deuda' => 'bi-credit-card',
+    'deseo' => 'bi-gift',
     'inversion' => 'bi-graph-up-arrow',
     'donacion' => 'bi-heart',
     'compartir' => 'bi-people',

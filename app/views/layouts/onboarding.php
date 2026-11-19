@@ -26,7 +26,7 @@ $progress = (int) round(($stepIndex / $stepTotal) * 100);
     <link rel="stylesheet" href="<?= asset_versioned('icons/bootstrap-icons.min.css') ?>">
     <link rel="stylesheet" href="<?= asset_versioned('css/app.min.css') ?>">
 </head>
-<body class="onboarding-shell">
+<body class="onboarding-shell"<?= \Cauce\Services\AuthService::check() ? ' data-idle-lock="' . max(1, (int) config('security.pin.unlock_minutes', 15)) . '"' : '' ?>>
     <header class="onboarding-header">
         <a href="/" class="app-brand">
             <img class="brand-icon" src="<?= asset_versioned('img/logo-animated.svg') ?>" alt="" width="48" height="48" aria-hidden="true">

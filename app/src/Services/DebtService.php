@@ -24,6 +24,9 @@ final class DebtService
 
     public const ORIGINS = ['ingreso', 'ahorro', 'tarjeta', 'otro'];
 
+    /** De dónde vino el dinero de la deuda al crearla. */
+    public const DEBT_ORIGINS = ['tarjeta', 'ahorro', 'prestamo', 'otro'];
+
     private DebtRepository $repo;
 
     private PDO $db;
@@ -108,7 +111,59 @@ final class DebtService
      */
     public function create(array $user, array $data): int
     {
-        return $this->repo->create($this->normalize($user, $data));
+        $normalized = $this->normalize($user, $data);
+        $origin = in_array($data['origen'] ?? 'otro', self::DEBT_ORIGINS, true) ? (string) $data['origen'] : 'otro';
+        $accountId = (int) ($data['origen_cuenta_id'] ?? 0) ?: null;
+        $metaId = (int) ($data['origen_meta_id'] ?? 0) ?: null;
+
+        if ($origin !== 'ahorro') {
+            return $this->repo->create($normalized + ['origen' => $origin]);
+        }
+
+        // Préstamo de una bolsa propia: el saldo que se debe sale de esa bolsa.
+        $savings = new SavingsService();
+        $bag = $this->savingsBag($savings->debtSources($user), $accountId, $metaId);
+
+        if ($bag === null) {
+            throw new InvalidArgumentException('sin_bolsa');
+        }
+
+        if ((string) $bag['moneda'] !== (string) $normalized['moneda']) {
+            throw new InvalidArgumentException('moneda_bolsa');
+        }
+
+        $this->db->beginTransaction();
+
+        try {
+            $id = $this->repo->create($normalized + [
+                'origen' => 'ahorro',
+                'origen_cuenta_id' => (int) $bag['id'],
+                'origen_meta_id' => $metaId,
+            ]);
+
+            if ((int) $normalized['saldo_actual_centavos'] > 0) {
+                $withdrawal = $savings->withdrawEntry(
+                    $user,
+                    (int) $bag['id'],
+                    $metaId,
+                    (int) $normalized['saldo_actual_centavos'],
+                    'otro',
+                    __('debts.origin.loan_note', [':name' => (string) $normalized['nombre']]),
+                    'now'
+                );
+                $this->repo->setOriginWithdrawal($id, (int) $user['id'], (int) $withdrawal['id']);
+            }
+
+            $this->db->commit();
+
+            return $id;
+        } catch (Throwable $exception) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+
+            throw $exception;
+        }
     }
 
     /**
@@ -136,15 +191,29 @@ final class DebtService
      */
     public function delete(array $user, int $id): void
     {
-        $this->requireDebt($user, $id);
-        (new CoverService())->forget((int) $user['id'], 'deuda', $id);
+        $debt = $this->requireDebt($user, $id);
+        $userId = (int) $user['id'];
+        (new CoverService())->forget($userId, 'deuda', $id);
         $this->db->beginTransaction();
 
         try {
             $this->db->prepare(
                 'DELETE FROM gastos_recurrentes WHERE deuda_id = ? AND user_id = ?'
-            )->execute([$id, (int) $user['id']]);
-            $this->repo->delete($id, (int) $user['id']);
+            )->execute([$id, $userId]);
+
+            // Préstamo de una bolsa: la bolsa vuelve a como estaba antes de la deuda
+            // (se borran el retiro original y lo que los pagos le devolvieron).
+            if (!empty($debt['retiro_ahorro_id'])) {
+                foreach ($this->repo->returnContributionIds($id, $userId) as $contributionId) {
+                    $this->db->prepare('DELETE FROM aportaciones_ahorro WHERE id = ? AND user_id = ?')
+                        ->execute([$contributionId, $userId]);
+                }
+
+                $this->db->prepare('DELETE FROM retiros_ahorro WHERE id = ? AND user_id = ?')
+                    ->execute([(int) $debt['retiro_ahorro_id'], $userId]);
+            }
+
+            $this->repo->delete($id, $userId);
             $this->db->commit();
         } catch (Throwable $exception) {
             if ($this->db->inTransaction()) {
@@ -302,6 +371,8 @@ final class DebtService
                 $this->repo->increaseBalance((int) $card['id'], (int) $user['id'], $amount, $principalCharge);
             }
 
+            $contributionId = $this->returnToBag($user, $debt, $amount, $utc);
+
             $paymentId = $this->repo->createPayment([
                 'deuda_id' => $debtId,
                 'user_id' => (int) $user['id'],
@@ -312,6 +383,7 @@ final class DebtService
                 'origen' => $origin,
                 'retiro_ahorro_id' => $withdrawalId,
                 'deuda_tarjeta_id' => $card !== null ? (int) $card['id'] : null,
+                'aporte_ahorro_id' => $contributionId,
                 'nota' => $cleanNote !== null ? mb_substr($cleanNote, 0, 255) : null,
             ]);
 
@@ -340,6 +412,49 @@ final class DebtService
 
             throw $exception;
         }
+    }
+
+    /**
+     * Si la deuda fue un préstamo de una bolsa propia, el pago regresa a esa
+     * bolsa (o meta). Cuenta como saldo ya ahorrado: no usa el ahorro del
+     * período, porque el dinero ya salió del ingreso o de donde se pagó.
+     *
+     * @param array<string, mixed> $user
+     * @param array<string, mixed> $debt
+     */
+    private function returnToBag(array $user, array $debt, int $amount, DateTimeImmutable $utc): ?int
+    {
+        if ((string) ($debt['origen'] ?? '') !== 'ahorro' || empty($debt['origen_cuenta_id'])) {
+            return null;
+        }
+
+        $userId = (int) $user['id'];
+        $savingsRepo = new \Cauce\Repositories\SavingsRepository();
+        $account = $savingsRepo->findAccount((int) $debt['origen_cuenta_id'], $userId);
+
+        if ($account === null || (int) $account['activa'] !== 1 || (string) $account['moneda'] !== (string) $debt['moneda']) {
+            return null;
+        }
+
+        $metaId = null;
+
+        if (!empty($debt['origen_meta_id'])) {
+            $meta = $savingsRepo->findMeta((int) $debt['origen_meta_id'], $userId);
+
+            if ($meta !== null && (int) ($meta['activa'] ?? 1) === 1) {
+                $metaId = (int) $meta['id'];
+            }
+        }
+
+        return $savingsRepo->createContribution(
+            $userId,
+            (int) $account['id'],
+            $metaId,
+            $amount,
+            (string) $account['moneda'],
+            $utc->format('Y-m-d H:i:s'),
+            true
+        );
     }
 
     /**

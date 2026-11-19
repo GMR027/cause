@@ -83,6 +83,7 @@ final class PasskeyController
                 throw new \RuntimeException('unknown');
             }
 
+            unset($_SESSION['_locked']);
             $_SESSION['_last_seen_at'] = time();
             $_SESSION['_unlocked_at'] = time();
             $next = $_SESSION['_lock_redirect'] ?? '/inicio';

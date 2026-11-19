@@ -25,13 +25,17 @@ final class DebtRepository
      */
     public function allForUser(int $userId, bool $onlyActive = false): array
     {
-        $sql = 'SELECT * FROM deudas WHERE user_id = ?';
+        $sql = 'SELECT d.*, c.nombre AS origen_bolsa_nombre, m.nombre AS origen_meta_nombre
+                FROM deudas d
+                LEFT JOIN cuentas_ahorro c ON c.id = d.origen_cuenta_id
+                LEFT JOIN metas_ahorro m ON m.id = d.origen_meta_id
+                WHERE d.user_id = ?';
 
         if ($onlyActive) {
-            $sql .= ' AND activa = 1';
+            $sql .= ' AND d.activa = 1';
         }
 
-        $sql .= ' ORDER BY activa DESC, fecha_limite ASC, created_at ASC, id ASC';
+        $sql .= ' ORDER BY d.activa DESC, d.fecha_limite ASC, d.created_at ASC, d.id ASC';
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$userId]);
 
@@ -59,10 +63,12 @@ final class DebtRepository
             'INSERT INTO deudas
                 (user_id, nombre, monto_total_centavos, saldo_actual_centavos,
                  monto_total_principal_centavos, saldo_actual_principal_centavos, moneda,
+                 origen, origen_cuenta_id, origen_meta_id,
                  tasa_interes, pago_minimo_centavos, pago_minimo_principal_centavos,
                  fecha_limite, activa, created_at, updated_at)
              VALUES
                 (:user_id, :nombre, :total, :saldo, :total_principal, :saldo_principal, :moneda,
+                 :origen, :origen_cuenta, :origen_meta,
                  :tasa, :minimo, :minimo_principal, :limite, :activa, NOW(), NOW())'
         );
         $currency = (string) $data['moneda'];
@@ -77,6 +83,9 @@ final class DebtRepository
             ':total_principal' => $converter->toPrincipalForUserId((int) $data['user_id'], (int) $data['monto_total_centavos'], $currency, $today),
             ':saldo_principal' => $converter->toPrincipalForUserId((int) $data['user_id'], (int) $data['saldo_actual_centavos'], $currency, $today),
             ':moneda' => $data['moneda'],
+            ':origen' => $data['origen'] ?? 'otro',
+            ':origen_cuenta' => $data['origen_cuenta_id'] ?? null,
+            ':origen_meta' => $data['origen_meta_id'] ?? null,
             ':tasa' => $data['tasa_interes'],
             ':minimo' => $minimum,
             ':minimo_principal' => $minimum !== null
@@ -121,6 +130,29 @@ final class DebtRepository
             $id,
             $userId,
         ]);
+    }
+
+    public function setOriginWithdrawal(int $id, int $userId, int $withdrawalId): void
+    {
+        $this->db->prepare('UPDATE deudas SET retiro_ahorro_id = ? WHERE id = ? AND user_id = ?')
+            ->execute([$withdrawalId, $id, $userId]);
+    }
+
+    /**
+     * Ids de los aportes a ahorro con que los pagos de una deuda devolvieron
+     * el préstamo a su bolsa.
+     *
+     * @return list<int>
+     */
+    public function returnContributionIds(int $debtId, int $userId): array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT aporte_ahorro_id FROM pagos_deuda
+             WHERE deuda_id = ? AND user_id = ? AND aporte_ahorro_id IS NOT NULL'
+        );
+        $stmt->execute([$debtId, $userId]);
+
+        return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
     }
 
     public function delete(int $id, int $userId): void
@@ -241,6 +273,12 @@ final class DebtRepository
 
         $stmt = $this->db->prepare('DELETE FROM pagos_deuda WHERE id = ? AND user_id = ?');
         $stmt->execute([(int) $payment['id'], (int) $payment['user_id']]);
+
+        // Lo que el pago devolvió a la bolsa que prestó el dinero, se quita.
+        if (!empty($payment['aporte_ahorro_id'])) {
+            $this->db->prepare('DELETE FROM aportaciones_ahorro WHERE id = ? AND user_id = ?')
+                ->execute([(int) $payment['aporte_ahorro_id'], (int) $payment['user_id']]);
+        }
     }
 
     /**
@@ -347,8 +385,8 @@ final class DebtRepository
         $stmt = $this->db->prepare(
             'INSERT INTO pagos_deuda
                 (deuda_id, user_id, monto_centavos, monto_principal_centavos, moneda,
-                 fecha, gasto_id, origen, retiro_ahorro_id, deuda_tarjeta_id, nota, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())'
+                 fecha, gasto_id, origen, retiro_ahorro_id, deuda_tarjeta_id, aporte_ahorro_id, nota, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())'
         );
         $stmt->execute([
             $data['deuda_id'],
@@ -366,6 +404,7 @@ final class DebtRepository
             $data['origen'] ?? ($data['gasto_id'] !== null ? 'ingreso' : 'otro'),
             $data['retiro_ahorro_id'] ?? null,
             $data['deuda_tarjeta_id'] ?? null,
+            $data['aporte_ahorro_id'] ?? null,
             $data['nota'],
         ]);
 

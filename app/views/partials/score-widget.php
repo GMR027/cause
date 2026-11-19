@@ -23,10 +23,15 @@ $trend = $score['trend'] ?? null;
         </a>
     </div>
 
+    <?php if ($hasData && !empty($score['preliminary'])): ?>
+        <p class="small mb-0 mt-2">
+            <i class="bi bi-hourglass-split me-1" aria-hidden="true"></i><?= e(__('score.preliminary')) ?>
+        </p>
+    <?php endif; ?>
     <?php if ($hasData): ?>
         <p class="small text-secondary mb-0 mt-2"><?= e(__('score.disclaimer')) ?> · <?= e(__('score.private')) ?></p>
     <?php else: ?>
         <p class="mb-1 mt-2"><?= e(__('score.no_data')) ?></p>
-        <p class="small text-secondary mb-0"><?= e(__('score.no_data_hint')) ?></p>
+        <p class="small text-secondary mb-0"><?= e(($score['reason'] ?? null) === 'sin_metodo' ? __('score.reasons.sin_metodo') : __('score.no_data_hint')) ?></p>
     <?php endif; ?>
 </div>

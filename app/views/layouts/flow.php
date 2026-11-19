@@ -26,7 +26,7 @@ $flashes = Flash::pull();
     <link rel="stylesheet" href="<?= asset_versioned('icons/bootstrap-icons.min.css') ?>">
     <link rel="stylesheet" href="<?= asset_versioned('css/app.min.css') ?>">
 </head>
-<body class="flow-shell">
+<body class="flow-shell"<?= \Cauce\Services\AuthService::check() ? ' data-idle-lock="' . max(1, (int) config('security.pin.unlock_minutes', 15)) . '"' : '' ?>>
     <header class="flow-header">
         <div class="d-flex align-items-center gap-2">
             <a class="icon-btn" href="<?= e($backUrl) ?>" aria-label="<?= e(__('common.actions.back')) ?>">

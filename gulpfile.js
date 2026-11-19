@@ -24,6 +24,7 @@ const paths = {
         'assets/js/08-passkeys.js',
         'assets/js/09-login-fx.js',
         'assets/js/10-layout.js',
+        'assets/js/11-idle-lock.js',
         'assets/js/15-help.js',
         'assets/js/20-theme.js',
         'assets/js/30-onboarding.js',

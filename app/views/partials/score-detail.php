@@ -46,8 +46,13 @@ $number = static function (float $value): string {
 
     <?php if (!$hasData): ?>
         <p class="mb-1"><?= e(__('score.no_data')) ?></p>
-        <p class="small text-secondary mb-0"><?= e(__('score.no_data_hint')) ?></p>
+        <p class="small text-secondary mb-0"><?= e(($score['reason'] ?? null) === 'sin_metodo' ? __('score.reasons.sin_metodo') : __('score.no_data_hint')) ?></p>
     <?php else: ?>
+        <?php if (!empty($score['preliminary'])): ?>
+            <p class="small mb-3">
+                <i class="bi bi-hourglass-split me-1" aria-hidden="true"></i><?= e(__('score.preliminary')) ?>
+            </p>
+        <?php endif; ?>
         <div class="row g-3 mb-4">
             <?php foreach ($components as $component): ?>
                 <div class="col-12 col-md-6">

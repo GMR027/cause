@@ -32,7 +32,7 @@ $isAdmin = $currentUser !== null && ($currentUser['rol'] ?? 'user') === 'admin';
     <link rel="stylesheet" href="<?= asset_versioned('icons/bootstrap-icons.min.css') ?>">
     <link rel="stylesheet" href="<?= asset_versioned('css/app.min.css') ?>">
 </head>
-<body class="app-shell">
+<body class="app-shell"<?= \Cauce\Services\AuthService::check() ? ' data-idle-lock="' . max(1, (int) config('security.pin.unlock_minutes', 15)) . '"' : '' ?>>
     <a class="skip-link" href="#app-main"><?= e(__('nav.skip')) ?></a>
 
     <?= partial('partials/header', [

@@ -38,8 +38,14 @@ final class LockMiddleware implements MiddlewareInterface
         $minutes = max(1, (int) config('security.pin.unlock_minutes', 15));
         $lastSeen = isset($_SESSION['_last_seen_at']) ? (int) $_SESSION['_last_seen_at'] : 0;
 
-        if ($lastSeen > 0 && time() - $lastSeen > $minutes * 60) {
-            Session::set('_lock_redirect', (string) ($_SERVER['REQUEST_URI'] ?? '/inicio'));
+        // Bloqueada (por tiempo o porque la pantalla abierta se bloqueó sola):
+        // nada más se abre hasta desbloquear.
+        if (!empty($_SESSION['_locked']) || ($lastSeen > 0 && time() - $lastSeen > $minutes * 60)) {
+            $_SESSION['_locked'] = 1;
+            if (strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET')) === 'GET') {
+                Session::set('_lock_redirect', (string) ($_SERVER['REQUEST_URI'] ?? '/inicio'));
+            }
+
             redirect('/desbloquear');
         }
 

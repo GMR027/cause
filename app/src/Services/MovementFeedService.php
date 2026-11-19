@@ -10,7 +10,8 @@ use PDO;
 /**
  * Lista unificada de todo lo que mueve dinero en un período: ingresos,
  * gastos, aportes y retiros de ahorro e inversión, traspasos entre bolsas,
- * donaciones, Compartir y movimientos entre categorías del método.
+ * deudas (altas, préstamos de ahorro y pagos), lista de deseos (abonos y
+ * compras), donaciones, Compartir y movimientos entre categorías del método.
  *
  * Cada fila tiene la misma forma para pintarla en /movimientos:
  * tipo, id, fecha, titulo, detalle, monto_centavos, moneda,
@@ -19,7 +20,7 @@ use PDO;
 final class MovementFeedService
 {
     /** Tipos que el filtro de /movimientos puede pedir (además de «gasto»). */
-    public const KINDS = ['ingreso', 'gasto', 'ahorro', 'inversion', 'donacion', 'compartir', 'movimiento'];
+    public const KINDS = ['ingreso', 'gasto', 'ahorro', 'deuda', 'deseo', 'inversion', 'donacion', 'compartir', 'movimiento'];
 
     private PDO $db;
 
@@ -46,8 +47,28 @@ final class MovementFeedService
             $rows = array_merge($rows, $this->incomes($userId, $inicio, $fin, $q));
         }
 
-        if ($all || $kind === 'ahorro') {
-            $rows = array_merge($rows, $this->savings($userId, $inicio, $fin, $q));
+        if ($all || $kind === 'ahorro' || $kind === 'deseo') {
+            foreach ($this->savings($userId, $inicio, $fin, $q) as $row) {
+                $linkedToDebt = !empty($row['deuda']);
+                $isWish = $row['tipo'] === 'deseo';
+
+                // En «Todos» el préstamo o pago de deuda ya sale como fila de deuda.
+                if (($all && $linkedToDebt) || ($kind === 'deseo' && !$isWish)) {
+                    continue;
+                }
+
+                unset($row['deuda']);
+                $rows[] = $row;
+            }
+        }
+
+        if ($all || $kind === 'deuda') {
+            $rows = array_merge($rows, $this->debts($userId, $inicio, $fin, $q));
+        }
+
+        if ($kind === 'deseo') {
+            // En «Todos» la compra ya aparece como gasto.
+            $rows = array_merge($rows, $this->wishPurchases($userId, $inicio, $fin, $q));
         }
 
         if ($all || $kind === 'inversion') {
@@ -144,18 +165,38 @@ final class MovementFeedService
             $params[] = $this->like($q);
         }
 
-        $sql = 'SELECT a.*, c.nombre AS cuenta_nombre, m.nombre AS meta_nombre
+        $sql = 'SELECT a.*, c.nombre AS cuenta_nombre, m.nombre AS meta_nombre, m.tipo AS meta_tipo,
+                       d.nombre AS deuda_nombre
                 FROM aportaciones_ahorro a
                 LEFT JOIN cuentas_ahorro c ON c.id = a.cuenta_id
-                LEFT JOIN metas_ahorro m ON m.id = a.meta_id';
+                LEFT JOIN metas_ahorro m ON m.id = a.meta_id
+                LEFT JOIN pagos_deuda p ON p.aporte_ahorro_id = a.id
+                LEFT JOIN deudas d ON d.id = p.deuda_id';
 
         foreach ($this->select($sql, $where, $params, 'a.') as $row) {
+            $bag = $this->joinText($row['meta_nombre'] ?? null, $row['cuenta_nombre'] ?? null);
+
+            if (!empty($row['deuda_nombre'])) {
+                // Un pago de deuda que regresa a la bolsa que prestó el dinero.
+                $item = $this->row('ahorro', $row, __('expenses.feed.debt_return'), $this->joinText((string) $row['deuda_nombre'], $bag), 'neutral', '/ahorro');
+                $rows[] = $item + ['deuda' => true];
+                continue;
+            }
+
             $title = (int) $row['es_saldo_inicial'] === 1
                 ? __('expenses.feed.savings_initial')
                 : __('expenses.feed.savings_in');
             // El dinero que ya tenía ahorrado no sale del ingreso del período.
             $direction = (int) $row['es_saldo_inicial'] === 1 ? 'neutral' : 'salida';
-            $rows[] = $this->row('ahorro', $row, $title, $this->joinText($row['meta_nombre'] ?? null, $row['cuenta_nombre'] ?? null), $direction, '/ahorro');
+            $isWish = (string) ($row['meta_tipo'] ?? '') === 'deseo';
+            $rows[] = $this->row(
+                $isWish ? 'deseo' : 'ahorro',
+                $row,
+                $isWish ? __('expenses.feed.wish_in') : $title,
+                $bag,
+                $direction,
+                $isWish ? '/deseos' : '/ahorro'
+            );
         }
 
         [$where, $params] = $this->base($userId, $inicio, $fin, 'r.fecha');
@@ -168,17 +209,42 @@ final class MovementFeedService
             $params[] = $this->like($q);
         }
 
-        $sql = 'SELECT r.*, c.nombre AS cuenta_nombre, m.nombre AS meta_nombre
+        $sql = 'SELECT r.*, c.nombre AS cuenta_nombre, m.nombre AS meta_nombre, m.tipo AS meta_tipo,
+                       dp.nombre AS deuda_pago_nombre, dl.nombre AS deuda_prestamo_nombre
                 FROM retiros_ahorro r
                 LEFT JOIN cuentas_ahorro c ON c.id = r.cuenta_id
-                LEFT JOIN metas_ahorro m ON m.id = r.meta_id';
+                LEFT JOIN metas_ahorro m ON m.id = r.meta_id
+                LEFT JOIN pagos_deuda p ON p.retiro_ahorro_id = r.id
+                LEFT JOIN deudas dp ON dp.id = p.deuda_id
+                LEFT JOIN deudas dl ON dl.retiro_ahorro_id = r.id';
 
         foreach ($this->select($sql, $where, $params, 'r.') as $row) {
+            $bag = $this->joinText($row['meta_nombre'] ?? null, $row['cuenta_nombre'] ?? null);
+
+            // El dinero va a una deuda, no de regreso al ingreso: no es entrada.
+            if (!empty($row['deuda_pago_nombre']) || !empty($row['deuda_prestamo_nombre'])) {
+                $title = !empty($row['deuda_pago_nombre'])
+                    ? __('expenses.feed.debt_payment_savings')
+                    : __('expenses.feed.debt_loan');
+                $debtName = (string) ($row['deuda_pago_nombre'] ?? $row['deuda_prestamo_nombre']);
+                $item = $this->row('ahorro', $row, $title, $this->joinText($bag, $debtName), 'neutral', '/ahorro');
+                $rows[] = $item + ['deuda' => true];
+                continue;
+            }
+
+            $isWish = (string) ($row['meta_tipo'] ?? '') === 'deseo';
             $detail = $this->joinText(
                 __('savings.reasons.' . (string) $row['motivo_catalogo']),
                 $row['meta_nombre'] ?? $row['cuenta_nombre'] ?? null
             );
-            $rows[] = $this->row('ahorro', $row, __('expenses.feed.savings_out'), $detail, 'entrada', '/ahorro');
+            $rows[] = $this->row(
+                $isWish ? 'deseo' : 'ahorro',
+                $row,
+                $isWish ? __('expenses.feed.wish_out') : __('expenses.feed.savings_out'),
+                $detail,
+                'entrada',
+                $isWish ? '/deseos' : '/ahorro'
+            );
         }
 
         [$where, $params] = $this->base($userId, $inicio, $fin, 't.fecha');
@@ -198,6 +264,117 @@ final class MovementFeedService
         foreach ($this->select($sql, $where, $params, 't.') as $row) {
             $detail = (string) ($row['origen_nombre'] ?? '') . ' → ' . (string) ($row['destino_nombre'] ?? '');
             $rows[] = $this->row('ahorro', $row, __('expenses.feed.savings_transfer'), $detail, 'neutral', '/ahorro');
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Deudas: altas (con su origen) y pagos (con de dónde salió el dinero).
+     * Son neutrales en los totales: el gasto del ingreso o el retiro de la
+     * bolsa ya mueven el dinero.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function debts(int $userId, string $inicio, string $fin, string $q): array
+    {
+        $rows = [];
+        [$where, $params] = $this->base($userId, $inicio, $fin, 'd.created_at');
+
+        if ($q !== '') {
+            $where[] = 'd.nombre LIKE ?';
+            $params[] = $this->like($q);
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT d.id, d.nombre, d.origen, d.moneda, d.created_at AS fecha,
+                    COALESCE(r.monto_centavos, d.monto_total_centavos) AS monto_centavos,
+                    COALESCE(r.monto_principal_centavos, d.monto_total_principal_centavos) AS monto_principal_centavos,
+                    c.nombre AS cuenta_nombre, m.nombre AS meta_nombre
+             FROM deudas d
+             LEFT JOIN retiros_ahorro r ON r.id = d.retiro_ahorro_id
+             LEFT JOIN cuentas_ahorro c ON c.id = d.origen_cuenta_id
+             LEFT JOIN metas_ahorro m ON m.id = d.origen_meta_id
+             WHERE ' . implode(' AND ', $where) . '
+             ORDER BY d.created_at DESC, d.id DESC LIMIT 200'
+        );
+        $stmt->execute($params);
+
+        foreach ($stmt->fetchAll() as $row) {
+            $origin = (string) $row['origen'];
+            $source = $origin === 'ahorro'
+                ? __('debts.origin.from_bag', [':bag' => $this->joinText($row['cuenta_nombre'] ?? null, $row['meta_nombre'] ?? null)])
+                : __('debts.origin.types.' . $origin);
+            $title = $origin === 'ahorro' ? __('expenses.feed.debt_loan') : __('expenses.feed.debt_new');
+            $rows[] = $this->row('deuda', $row, $title, $this->joinText((string) $row['nombre'], $source), 'neutral', '/deudas');
+        }
+
+        [$where, $params] = $this->base($userId, $inicio, $fin, 'p.fecha');
+
+        if ($q !== '') {
+            $where[] = '(d.nombre LIKE ? OR p.nota LIKE ?)';
+            $params[] = $this->like($q);
+            $params[] = $this->like($q);
+        }
+
+        $sql = 'SELECT p.*, d.nombre AS deuda_nombre, g.parte_metodo AS categoria,
+                       c.nombre AS cuenta_nombre, m.nombre AS meta_nombre, t.nombre AS tarjeta_nombre,
+                       cr.nombre AS regreso_nombre
+                FROM pagos_deuda p
+                JOIN deudas d ON d.id = p.deuda_id
+                LEFT JOIN gastos g ON g.id = p.gasto_id
+                LEFT JOIN retiros_ahorro r ON r.id = p.retiro_ahorro_id
+                LEFT JOIN cuentas_ahorro c ON c.id = r.cuenta_id
+                LEFT JOIN metas_ahorro m ON m.id = r.meta_id
+                LEFT JOIN deudas t ON t.id = p.deuda_tarjeta_id
+                LEFT JOIN aportaciones_ahorro a ON a.id = p.aporte_ahorro_id
+                LEFT JOIN cuentas_ahorro cr ON cr.id = a.cuenta_id';
+
+        foreach ($this->select($sql, $where, $params, 'p.') as $row) {
+            $origin = (string) $row['origen'];
+            $source = __('debts.payment.origins.' . $origin);
+            $source = match ($origin) {
+                'ingreso' => $this->joinText($source, $row['categoria'] ?? null),
+                'ahorro' => $this->joinText($source, $this->joinText($row['cuenta_nombre'] ?? null, $row['meta_nombre'] ?? null)),
+                'tarjeta' => $this->joinText($source, $row['tarjeta_nombre'] ?? null),
+                default => $source,
+            };
+            $detail = $this->joinText(
+                (string) $row['deuda_nombre'],
+                $source,
+                !empty($row['regreso_nombre'])
+                    ? __('expenses.feed.debt_back_to', [':bag' => (string) $row['regreso_nombre']])
+                    : null
+            );
+            $rows[] = $this->row('deuda', $row, __('expenses.feed.debt_payment'), $detail, 'neutral', '/deudas');
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Deseos comprados en el período (el gasto de la compra).
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function wishPurchases(int $userId, string $inicio, string $fin, string $q): array
+    {
+        [$where, $params] = $this->base($userId, $inicio, $fin, 'g.fecha');
+        $where[0] = 'w.user_id = ?';
+        $where[] = "w.estado = 'comprado'";
+
+        if ($q !== '') {
+            $where[] = 'w.nombre LIKE ?';
+            $params[] = $this->like($q);
+        }
+
+        $sql = 'SELECT g.id, g.fecha, g.monto_centavos, g.monto_principal_centavos, g.moneda, w.nombre AS deseo_nombre
+                FROM lista_deseos w
+                JOIN gastos g ON g.id = w.gasto_id';
+        $rows = [];
+
+        foreach ($this->select($sql, $where, $params, 'g.') as $row) {
+            $rows[] = $this->row('deseo', $row, __('expenses.feed.wish_bought'), (string) $row['deseo_nombre'], 'salida', '/gastos/ver?id=' . (int) $row['id']);
         }
 
         return $rows;

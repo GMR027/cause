@@ -12,6 +12,7 @@ $totalPagado = (int) ($total_pagado_centavos ?? 0);
 $totalProgreso = (int) ($total_progreso ?? 0);
 $activeCount = (int) ($active_count ?? 0);
 $savingsBags = $savings_bags ?? [];
+$debtOrigins = ['tarjeta' => 'bi-credit-card', 'ahorro' => 'bi-piggy-bank', 'prestamo' => 'bi-bank', 'otro' => 'bi-three-dots'];
 $origins = ['ingreso' => 'bi-wallet2', 'ahorro' => 'bi-piggy-bank', 'tarjeta' => 'bi-credit-card', 'otro' => 'bi-three-dots'];
 $sourceLabel = static function (array $payment): string {
     $origin = (string) ($payment['origen'] ?? 'otro');
@@ -152,6 +153,16 @@ $dateLabel = static function (?string $value): string {
                             <?php endif; ?>
                             <?php if ($debt['tasa_interes'] !== null): ?>
                                 <span class="badge text-bg-light border"><?= e($debt['tasa_interes']) ?>%</span>
+                            <?php endif; ?>
+                            <?php $debtOrigin = (string) ($debt['origen'] ?? 'otro'); ?>
+                            <?php if ($debtOrigin !== 'otro'): ?>
+                                <span class="badge text-bg-light border">
+                                    <i class="bi <?= e($debtOrigins[$debtOrigin] ?? 'bi-three-dots') ?> me-1" aria-hidden="true"></i>
+                                    <?= e($debtOrigin === 'ahorro' && !empty($debt['origen_bolsa_nombre'])
+                                        ? __('debts.origin.from_bag', [':bag' => (string) $debt['origen_bolsa_nombre']
+                                            . (!empty($debt['origen_meta_nombre']) ? ' → ' . (string) $debt['origen_meta_nombre'] : '')])
+                                        : __('debts.origin.types.' . $debtOrigin)) ?>
+                                </span>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -300,6 +311,52 @@ $dateLabel = static function (?string $value): string {
                 <label class="form-label" for="debt-limit"><?= e(__('debts.fields.limit')) ?></label>
                 <input type="date" class="form-control" id="debt-limit" name="fecha_limite">
             </div>
+            <fieldset class="col-12" data-debt-create-only>
+                <legend class="form-label fs-6 mb-2"><?= e(__('debts.origin.label')) ?></legend>
+                <div class="debt-origin-options" role="radiogroup">
+                    <?php foreach ($debtOrigins as $origin => $icon): ?>
+                        <input type="radio" class="btn-check" name="origen_deuda" id="debt-source-<?= e($origin) ?>"
+                               value="<?= e($origin) ?>" data-debt-source <?= $origin === 'otro' ? 'checked' : '' ?>>
+                        <label class="btn btn-outline-secondary debt-origin-option" for="debt-source-<?= e($origin) ?>">
+                            <i class="bi <?= e($icon) ?>" aria-hidden="true"></i>
+                            <span><?= e(__('debts.origin.types.' . $origin)) ?></span>
+                        </label>
+                    <?php endforeach; ?>
+                </div>
+                <?php foreach (array_keys($debtOrigins) as $origin): ?>
+                    <p class="small text-secondary mt-2 mb-0" data-debt-source-panel="<?= e($origin) ?>" <?= $origin === 'otro' ? '' : 'hidden' ?>>
+                        <?= e(__('debts.origin.hints.' . $origin)) ?>
+                    </p>
+                <?php endforeach; ?>
+            </fieldset>
+            <div class="col-12" data-debt-source-panel="ahorro" data-debt-create-only hidden>
+                <?php if ($savingsBags === []): ?>
+                    <p class="small text-warning-emphasis mb-0">
+                        <i class="bi bi-exclamation-circle me-1" aria-hidden="true"></i><?= e(__('debts.payment.no_bags')) ?>
+                    </p>
+                <?php else: ?>
+                    <label class="form-label" for="debt-source-bag"><?= e(__('debts.origin.bag')) ?></label>
+                    <select class="form-select" id="debt-source-bag" name="origen_bolsa">
+                        <?php foreach ($savingsBags as $bag): ?>
+                            <option value="c:<?= (int) $bag['id'] ?>">
+                                <?= e(__('debts.payment.bag_free', [
+                                    ':name' => (string) $bag['nombre'],
+                                    ':amount' => format_money((int) $bag['sin_asignar_centavos'], (string) $bag['moneda']),
+                                ])) ?>
+                            </option>
+                            <?php foreach ($bag['metas'] as $meta): ?>
+                                <option value="m:<?= (int) $meta['id'] ?>">
+                                    <?= e(__('debts.payment.bag_meta', [':bag' => (string) $bag['nombre'], ':meta' => (string) $meta['nombre']])) ?>
+                                    · <?= e(format_money((int) $meta['saldo_centavos'], (string) $bag['moneda'])) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        <?php endforeach; ?>
+                    </select>
+                <?php endif; ?>
+            </div>
+            <p class="col-12 small text-secondary mb-0" data-debt-edit-only hidden>
+                <i class="bi bi-info-circle me-1" aria-hidden="true"></i><?= e(__('debts.origin.locked')) ?>
+            </p>
             <div class="col-12 d-flex gap-2">
                 <button type="submit" class="btn btn-primary flex-grow-1"><?= e(__('common.actions.save')) ?></button>
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="offcanvas">
@@ -398,7 +455,7 @@ $dateLabel = static function (?string $value): string {
                     <option value="0"><?= e(__('debts.payment.card_none')) ?></option>
                     <?php foreach ($debts as $cardDebt): ?>
                         <option value="<?= (int) $cardDebt['id'] ?>" data-currency="<?= e((string) $cardDebt['moneda']) ?>">
-                            <?= e((string) $cardDebt['nombre']) ?>
+                            <?= e((string) $cardDebt['nombre'] . ((string) ($cardDebt['origen'] ?? '') === 'tarjeta' ? ' · ' . __('debts.origin.types.tarjeta') : '')) ?>
                         </option>
                     <?php endforeach; ?>
                 </select>

@@ -91,7 +91,16 @@ final class ScoreService
             return $base;
         }
 
-        $compliance = (new MethodComplianceService())->recentAverage($user, 3);
+        $complianceService = new MethodComplianceService();
+        $compliance = $complianceService->recentAverage($user, 3);
+        // Sin períodos cerrados todavía: score preliminar con lo que lleva el
+        // período actual, para que el usuario vea desde el inicio cómo está.
+        $preliminary = false;
+
+        if ($compliance['percent'] === null) {
+            $compliance = $complianceService->currentPartial($user);
+            $preliminary = true;
+        }
 
         if ($compliance['percent'] === null) {
             return array_merge($base, ['reason' => 'sin_metodo']);
@@ -126,6 +135,13 @@ final class ScoreService
 
         $emergencySaved = $this->emergencySaved((int) $user['id']);
         $average = (new EmergencyFundService())->averageExpenses($user)['average'];
+
+        // Sin gastos registrados aún: se estima con lo asignado a gastos en el método.
+        if ($average <= 0) {
+            $assignedExpenses = $support->assignedForPeriod($user, ['controlada', 'no_controlado'], $period['inicio'], $period['fin']);
+            $average = (int) round($assignedExpenses * 30.44 / $periodDays);
+        }
+
         $months = $average > 0 ? $emergencySaved / $average : 0.0;
         $emergencyScore = self::emergencyScore($emergencySaved, $average);
         $components[] = $this->component('emergencia', $emergencyScore, [
@@ -148,6 +164,7 @@ final class ScoreService
 
         return [
             'has_data' => true,
+            'preliminary' => $preliminary,
             'score' => max(0, min(100, $score)),
             'components' => $components,
             'income_centavos' => $income,
