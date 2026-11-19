@@ -11,6 +11,12 @@
  * share  → corazón entre manos que late: lo que compartes con los demás.
  * income → banco que abre la puerta y escupe billetes hacia tu cartera.
  * plan   → hoja de plan que se escribe y recibe un sello de check al guardar.
+ * debt   → tarjeta que entra y un candado que la cierra: deuda registrada.
+ * loan   → cerdito que presta monedas a una tarjeta: préstamo de tu ahorro.
+ * transfer → monedas que saltan de un frasco a otro: traspasos y movimientos.
+ * new    → frasco nuevo con bandera: bolsa, meta, portafolio o inversión.
+ * remind → calendario con campana que suena: recordatorios y recurrentes.
+ * yield  → planta que crece y da monedas: rendimientos de inversión.
  *
  * El nivel (1-5) llega del servidor según el monto: más partículas, más
  * tamaño, más duración y, en los niveles altos, anillos, destellos y lluvia.
@@ -30,7 +36,9 @@
     const closeLabel = source.getAttribute('data-close') || 'Close';
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    if (!['save', 'invest', 'out', 'wish', 'share', 'income', 'plan'].includes(kind)) {
+    const EXTRA = ['debt', 'loan', 'transfer', 'new', 'remind', 'yield'];
+
+    if (!['save', 'invest', 'out', 'wish', 'share', 'income', 'plan', ...EXTRA].includes(kind)) {
         return;
     }
 
@@ -42,6 +50,12 @@
         share: { body: '#ec4899', light: '#f9a8d4', dark: '#831843', cheek: '#ffe4ef' },
         income: { body: '#2563eb', light: '#93c5fd', dark: '#1e3a8a', cheek: '#fbbf24' },
         plan: { body: '#157f6b', light: '#8ee7d4', dark: '#0b4f43', cheek: '#f4b81f' },
+        debt: { body: '#f97316', light: '#fdba74', dark: '#9a3412', cheek: '#fde68a' },
+        loan: { body: '#d97706', light: '#fcd34d', dark: '#78350f', cheek: '#ffb0c4' },
+        transfer: { body: '#0ea5e9', light: '#7dd3fc', dark: '#075985', cheek: '#f4b81f' },
+        new: { body: '#10b981', light: '#6ee7b7', dark: '#065f46', cheek: '#f4b81f' },
+        remind: { body: '#6366f1', light: '#a5b4fc', dark: '#3730a3', cheek: '#fbbf24' },
+        yield: { body: '#65a30d', light: '#bef264', dark: '#3f6212', cheek: '#f4b81f' },
     };
     const palette = PALETTES[kind];
     const broken = kind === 'out';
@@ -50,11 +64,12 @@
     const isGift = isWish || isShare;
     const isIncome = kind === 'income';
     const isPlan = kind === 'plan';
+    const isExtra = EXTRA.includes(kind);
     const rand = (min, max) => min + Math.random() * (max - min);
     const pick = (list) => list[Math.floor(Math.random() * list.length)];
 
     // Duración total (ms) antes de desvanecerse.
-    const duration = reduced ? 1800 : (broken ? 2600 : isGift || isIncome || isPlan ? 2600 : 2300) + level * 450;
+    const duration = reduced ? 1800 : (broken ? 2600 : isGift || isIncome || isPlan || isExtra ? 2600 : 2300) + level * 450;
 
     // Grieta irregular que parte al cerdito en dos.
     const CRACK = '128,20 120,48 134,70 118,94 136,118 122,142 132,166 126,200';
@@ -318,7 +333,197 @@
         </svg>`;
     };
 
+
+    // Tarjeta de crédito que entra y un candado que cae y la cierra.
+    const debtSvg = () => `<svg viewBox="0 0 240 200" class="money-fx-svg money-fx-debt" aria-hidden="true">
+        <defs>
+            <linearGradient id="moneyFxDebtCard" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="${palette.light}"/>
+                <stop offset="55%" stop-color="${palette.body}"/>
+                <stop offset="100%" stop-color="${palette.dark}"/>
+            </linearGradient>
+        </defs>
+        <g class="money-fx-debt-card">
+            <rect x="26" y="62" width="168" height="106" rx="14" fill="url(#moneyFxDebtCard)"
+                  stroke="${palette.dark}" stroke-width="3"/>
+            <rect x="26" y="84" width="168" height="18" fill="${palette.dark}" opacity=".55"/>
+            <rect x="42" y="114" width="30" height="22" rx="5" fill="${palette.cheek}"
+                  stroke="${palette.dark}" stroke-width="2"/>
+            <path d="M42 125 h30 M57 114 v22" stroke="${palette.dark}" stroke-width="1.5" opacity=".5"/>
+            <g fill="#fff" opacity=".8">
+                <circle cx="88" cy="150" r="3"/><circle cx="97" cy="150" r="3"/><circle cx="106" cy="150" r="3"/>
+                <circle cx="124" cy="150" r="3"/><circle cx="133" cy="150" r="3"/><circle cx="142" cy="150" r="3"/>
+            </g>
+            <path d="M40 74 c 30 -8 70 -8 100 0" fill="none" stroke="#fff" stroke-width="4"
+                  stroke-linecap="round" opacity=".35"/>
+        </g>
+        <g class="money-fx-debt-lock">
+            <path class="money-fx-debt-shackle" d="M172 98 v-18 a18 18 0 0 1 36 0 v18" fill="none"
+                  stroke="${palette.dark}" stroke-width="7" stroke-linecap="round"/>
+            <rect x="160" y="96" width="60" height="50" rx="10" fill="${palette.cheek}"
+                  stroke="${palette.dark}" stroke-width="3"/>
+            <circle cx="190" cy="116" r="6" fill="${palette.dark}"/>
+            <rect x="187" y="118" width="6" height="14" rx="3" fill="${palette.dark}"/>
+        </g>
+    </svg>`;
+
+    // Cerdito que presta monedas a una tarjeta: préstamo de tu propio ahorro.
+    const loanSvg = () => {
+        const count = [4, 6, 9, 13, 18][level - 1];
+        let coins = '';
+
+        for (let i = 0; i < count; i += 1) {
+            const delay = (0.55 + (i * 1.4) / count + rand(0, 0.15)).toFixed(2);
+
+            coins += `<g transform="translate(${(84 + rand(-4, 4)).toFixed(1)} ${(66 + rand(-3, 3)).toFixed(1)})">
+                <g class="money-fx-loan-coin" style="--delay:${delay}s; --arc:${(-rand(30, 56)).toFixed(0)}px">
+                    <circle r="8" fill="#f4b81f" stroke="#b8860b" stroke-width="2"/>
+                    <path d="M0 -4 v8" stroke="#b8860b" stroke-width="2" stroke-linecap="round"/>
+                </g>
+            </g>`;
+        }
+
+        return `<svg viewBox="0 0 240 200" class="money-fx-svg money-fx-loan" aria-hidden="true">
+            <g class="money-fx-loan-pig"><g transform="translate(-6 46) scale(.62)">${pigShape()}</g></g>
+            <g class="money-fx-loan-card">
+                <rect x="156" y="104" width="74" height="48" rx="9" fill="${palette.body}"
+                      stroke="${palette.dark}" stroke-width="3"/>
+                <rect x="156" y="114" width="74" height="9" fill="${palette.dark}" opacity=".5"/>
+                <rect x="166" y="131" width="16" height="12" rx="3" fill="${palette.cheek}"/>
+            </g>
+            ${coins}
+        </svg>`;
+    };
+
+    // Dos frascos: el de la izquierda baja y el de la derecha sube con las monedas.
+    const transferSvg = () => {
+        const count = [4, 6, 9, 13, 18][level - 1];
+        let coins = '';
+
+        for (let i = 0; i < count; i += 1) {
+            const delay = (0.5 + (i * 1.4) / count + rand(0, 0.12)).toFixed(2);
+
+            coins += `<g transform="translate(66 58)">
+                <g class="money-fx-transfer-coin" style="--delay:${delay}s">
+                    <circle r="8" fill="#f4b81f" stroke="#b8860b" stroke-width="2"/>
+                    <path d="M0 -4 v8" stroke="#b8860b" stroke-width="2" stroke-linecap="round"/>
+                </g>
+            </g>`;
+        }
+
+        const jar = (x, cls) => `<g class="money-fx-jar ${cls}">
+            <rect x="${x + 6}" y="62" width="58" height="10" rx="4" fill="${palette.dark}"/>
+            <rect x="${x}" y="72" width="70" height="104" rx="18" fill="#ffffff" fill-opacity=".55"
+                  stroke="${palette.dark}" stroke-width="3"/>
+            <rect class="money-fx-jar-fill" x="${x + 5}" y="82" width="60" height="89" rx="13" fill="${palette.body}"/>
+            <path d="M${x + 14} 90 v60" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".45"/>
+        </g>`;
+
+        return `<svg viewBox="0 0 240 200" class="money-fx-svg money-fx-transfer" aria-hidden="true">
+            ${jar(30, 'is-from')}
+            ${jar(140, 'is-to')}
+            <path class="money-fx-transfer-arrow" d="M100 34 q 20 -16 40 0" fill="none"
+                  stroke="${palette.dark}" stroke-width="4" stroke-linecap="round"/>
+            <path class="money-fx-transfer-arrow" d="M134 26 l7 8 l-10 3" fill="none"
+                  stroke="${palette.dark}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            ${coins}
+        </svg>`;
+    };
+
+    // Frasco nuevo que aparece y una bandera que se iza en la tapa.
+    const newSvg = () => `<svg viewBox="0 0 240 200" class="money-fx-svg money-fx-new" aria-hidden="true">
+        <g class="money-fx-new-jar">
+            <rect x="72" y="70" width="96" height="14" rx="6" fill="${palette.dark}"/>
+            <rect x="62" y="84" width="116" height="100" rx="24" fill="#ffffff" fill-opacity=".6"
+                  stroke="${palette.dark}" stroke-width="3"/>
+            <rect class="money-fx-new-fill" x="68" y="124" width="104" height="54" rx="18" fill="${palette.body}"/>
+            <path d="M78 98 v58" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".5"/>
+            <circle cx="120" cy="150" r="14" fill="${palette.cheek}" stroke="${palette.dark}" stroke-width="2.5"/>
+            <path d="M120 143 v14 M113 150 h14" stroke="${palette.dark}" stroke-width="3" stroke-linecap="round"/>
+        </g>
+        <g class="money-fx-new-flag">
+            <rect x="117" y="10" width="5" height="62" rx="2.5" fill="${palette.dark}"/>
+            <path class="money-fx-new-cloth" d="M122 14 C 140 8 152 22 172 14 L172 44 C 152 52 140 38 122 44 Z"
+                  fill="${palette.cheek}" stroke="${palette.dark}" stroke-width="2.5" stroke-linejoin="round"/>
+        </g>
+    </svg>`;
+
+    // Calendario con un día marcado y una campana que suena.
+    const remindSvg = () => {
+        let cells = '';
+
+        for (let row = 0; row < 3; row += 1) {
+            for (let col = 0; col < 5; col += 1) {
+                const marked = row === 1 && col === 3;
+
+                cells += `<rect x="${58 + col * 22}" y="${96 + row * 22}" width="16" height="16" rx="4"
+                    fill="${marked ? palette.body : palette.dark}" opacity="${marked ? 1 : 0.18}"
+                    class="${marked ? 'money-fx-remind-day' : ''}"/>`;
+            }
+        }
+
+        return `<svg viewBox="0 0 240 200" class="money-fx-svg money-fx-remind" aria-hidden="true">
+            <g class="money-fx-remind-cal">
+                <rect x="44" y="50" width="136" height="134" rx="16" fill="#ffffff"
+                      stroke="${palette.dark}" stroke-width="3"/>
+                <rect x="44" y="50" width="136" height="34" rx="16" fill="${palette.body}"/>
+                <rect x="44" y="70" width="136" height="14" fill="${palette.body}"/>
+                <rect x="72" y="40" width="8" height="22" rx="4" fill="${palette.dark}"/>
+                <rect x="144" y="40" width="8" height="22" rx="4" fill="${palette.dark}"/>
+                ${cells}
+                <path class="money-fx-remind-check" d="M128 127 l5 5 l9 -10" fill="none" stroke="#fff"
+                      stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+            <g class="money-fx-remind-bell">
+                <path d="M170 74 c 0 -22 12 -34 28 -34 c 16 0 28 12 28 34 l 6 14 h -68 Z"
+                      fill="${palette.cheek}" stroke="${palette.dark}" stroke-width="3" stroke-linejoin="round"/>
+                <circle cx="198" cy="94" r="7" fill="${palette.dark}"/>
+                <rect x="194" y="30" width="8" height="10" rx="3" fill="${palette.dark}"/>
+            </g>
+            <g class="money-fx-remind-waves" fill="none" stroke="${palette.body}" stroke-width="3.5" stroke-linecap="round">
+                <path d="M160 46 q -8 10 0 22"/>
+                <path d="M236 46 q 8 10 0 22"/>
+            </g>
+        </svg>`;
+    };
+
+    // Maceta de la que crece una planta que da monedas: rendimientos.
+    const yieldSvg = () => {
+        const count = [2, 3, 4, 5, 6][level - 1];
+        const spots = [[120, 40], [88, 62], [152, 58], [100, 30], [142, 30], [120, 70]];
+        let fruits = '';
+
+        for (let i = 0; i < count; i += 1) {
+            fruits += `<g transform="translate(${spots[i][0]} ${spots[i][1]})">
+                <g class="money-fx-yield-fruit" style="--i:${i}">
+                    <circle r="10" fill="#f4b81f" stroke="#b8860b" stroke-width="2.4"/>
+                    <path d="M0 -5 v10" stroke="#b8860b" stroke-width="2.4" stroke-linecap="round"/>
+                </g>
+            </g>`;
+        }
+
+        return `<svg viewBox="0 0 240 200" class="money-fx-svg money-fx-yield" aria-hidden="true">
+            <path class="money-fx-yield-stem" d="M120 150 C 118 120 124 100 120 60" fill="none"
+                  stroke="${palette.dark}" stroke-width="6" stroke-linecap="round" pathLength="100"/>
+            <path class="money-fx-yield-leaf" style="--i:0" d="M120 112 C 98 106 86 90 90 80 C 106 82 118 94 120 112 Z"
+                  fill="${palette.body}" stroke="${palette.dark}" stroke-width="2.5"/>
+            <path class="money-fx-yield-leaf" style="--i:1" d="M121 96 C 142 90 154 74 150 64 C 134 66 122 78 121 96 Z"
+                  fill="${palette.light}" stroke="${palette.dark}" stroke-width="2.5"/>
+            ${fruits}
+            <g class="money-fx-yield-pot">
+                <path d="M78 150 h84 l-10 40 h-64 Z" fill="#c2703d" stroke="#7c3f1d" stroke-width="3" stroke-linejoin="round"/>
+                <rect x="72" y="142" width="96" height="14" rx="5" fill="#d98a52" stroke="#7c3f1d" stroke-width="3"/>
+            </g>
+        </svg>`;
+    };
+
     const pigSvg = () => {
+        const extra = { debt: debtSvg, loan: loanSvg, transfer: transferSvg, new: newSvg, remind: remindSvg, yield: yieldSvg };
+
+        if (extra[kind]) {
+            return extra[kind]();
+        }
+
         if (isWish) {
             return wishSvg();
         }
@@ -474,6 +679,27 @@
             }
         }
 
+        // Iconos que flotan, propios de cada animación nueva.
+        if (isExtra) {
+            const icons = {
+                debt: ['<i class="bi bi-receipt"></i>', '<i class="bi bi-credit-card-fill"></i>', '<i class="bi bi-lock-fill"></i>'],
+                loan: [COIN, '<i class="bi bi-arrow-right"></i>', '<i class="bi bi-piggy-bank-fill"></i>'],
+                transfer: [COIN, '<i class="bi bi-arrow-left-right"></i>', '<i class="bi bi-arrow-right"></i>'],
+                new: ['<i class="bi bi-stars"></i>', '<i class="bi bi-plus-circle-fill"></i>', '<i class="bi bi-flag-fill"></i>'],
+                remind: ['<i class="bi bi-bell-fill"></i>', '<i class="bi bi-alarm"></i>', '<i class="bi bi-calendar-check"></i>'],
+                yield: [COIN, '<i class="bi bi-flower1"></i>', '<i class="bi bi-arrow-up"></i>', '<i class="bi bi-stars"></i>'],
+            }[kind];
+            const count = [4, 6, 9, 13, 18][level - 1];
+
+            for (let i = 0; i < count; i += 1) {
+                particle('money-fx-rise', pick(icons), {
+                    '--x': rand(-130, 130).toFixed(0) + 'px',
+                    '--delay': (0.6 + rand(0, 1.5)).toFixed(2) + 's',
+                    '--size': rand(1.1, 1.8 + level * 0.12).toFixed(2) + 'rem',
+                });
+            }
+        }
+
         if (level >= 3) {
             const sparks = [0, 0, 8, 14, 22][level - 1];
 
@@ -497,7 +723,9 @@
                     ? '<i class="bi bi-heart-fill"></i>'
                     : isPlan
                         ? '<i class="bi bi-check2-circle"></i>'
-                        : '<i class="bi bi-cash-stack"></i>';
+                        : kind === 'yield' || kind === 'transfer' || kind === 'loan'
+                            ? COIN
+                            : '<i class="bi bi-cash-stack"></i>';
 
             for (let i = 0; i < 16; i += 1) {
                 particle('money-fx-bill', rain, {

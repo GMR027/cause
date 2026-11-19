@@ -197,6 +197,15 @@ final class IncomeController
             Flash::success('income.flash.saved');
         }
 
+        $credited = (new \Cauce\Repositories\IngresoRepository())->findForUser($id, (int) $user['id']);
+        \Cauce\Services\MoneyFxService::queue(
+            $user,
+            'plan',
+            (int) ($credited['monto_centavos'] ?? 0),
+            (string) ($credited['moneda'] ?? ''),
+            'credited'
+        );
+
         redirect('/inicio');
     }
 

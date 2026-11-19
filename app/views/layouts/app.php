@@ -88,7 +88,7 @@ $isAdmin = $currentUser !== null && ($currentUser['rol'] ?? 'user') === 'admin';
         <div hidden data-money-fx="<?= e($moneyFx['kind']) ?>"
              data-level="<?= (int) $moneyFx['level'] ?>"
              data-label="<?= e($moneyFx['label']) ?>"
-             data-message="<?= e(__('moneyfx.' . $moneyFx['kind'] . ($moneyFx['level'] >= 4 ? '_big' : ''))) ?>"
+             data-message="<?= e(__('moneyfx.' . ($moneyFx['message'] ?? ($moneyFx['kind'] . ($moneyFx['level'] >= 4 ? '_big' : ''))))) ?>"
              data-close="<?= e(__('common.actions.close')) ?>"></div>
     <?php endif; ?>
 

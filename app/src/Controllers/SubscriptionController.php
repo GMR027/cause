@@ -156,6 +156,10 @@ final class SubscriptionController
         }
 
         Flash::success(isset($existing) ? 'reports.subscriptions.flash.updated' : 'reports.subscriptions.flash.created');
+
+        if (!isset($existing)) {
+            \Cauce\Services\MoneyFxService::queue($user, 'remind', (int) ($amount ?? 0), (string) input('moneda', ''), 'remind_subscription');
+        }
         redirect(self::BACK);
     }
 

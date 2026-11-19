@@ -141,6 +141,7 @@ final class RecurringController
                 $nextUtc
             );
             Flash::success('expenses.flash.recurring_created');
+            \Cauce\Services\MoneyFxService::queue($user, 'remind', (int) $amount, (string) input('moneda', ''), 'remind_recurring');
         } else {
             $repo->update(
                 $id,

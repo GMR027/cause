@@ -50,6 +50,7 @@ final class MoveController
             );
 
             Flash::success('moves.flash.created');
+            \Cauce\Services\MoneyFxService::queue($user, 'transfer', $amount, null, 'move_category');
 
             if (!empty($result['warning'])) {
                 Flash::warning('moves.flash.large_move');

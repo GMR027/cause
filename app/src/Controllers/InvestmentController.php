@@ -117,6 +117,7 @@ final class InvestmentController
                 (string) input('institucion', '')
             );
             Flash::success('investment.flash.portfolio_created');
+            \Cauce\Services\MoneyFxService::queue($user, 'new', 0, null, 'new_portfolio');
         } catch (Throwable $exception) {
             $this->flashFinanceError($exception);
         }
@@ -165,6 +166,7 @@ final class InvestmentController
         try {
             (new PortfolioService())->moveInstrument($user, (int) ($_POST['id'] ?? 0), (int) ($_POST['portafolio_id'] ?? 0));
             Flash::success('investment.flash.position_moved');
+            \Cauce\Services\MoneyFxService::queue($user, 'new', 0, null, 'new_position_moved');
         } catch (Throwable $exception) {
             $this->flashFinanceError($exception);
         }
@@ -177,11 +179,15 @@ final class InvestmentController
         $user = $this->user();
 
         try {
-            $result = (new PortfolioService())->recordYield($user, $this->yieldData() + [
+            $yield = $this->yieldData();
+            $result = (new PortfolioService())->recordYield($user, $yield + [
                 'portafolio_id' => (int) ($_POST['portafolio_id'] ?? 0),
                 'posicion_id' => (int) ($_POST['posicion_id'] ?? 0),
                 'destino' => (string) input('destino', 'reinvertido'),
             ]);
+            $down = in_array($yield['tipo'], ['baja', 'comision'], true);
+            \Cauce\Services\MoneyFxService::queue($user, $down ? 'out' : 'yield', (int) $yield['monto_centavos'], $yield['moneda'], $down ? 'yield_down' : null);
+
             if ($result['ingreso_id'] !== null) {
                 Flash::success('investment.flash.yield_paid');
                 redirect('/ingresos/acreditar?id=' . $result['ingreso_id']);
@@ -285,6 +291,7 @@ final class InvestmentController
         try {
             $this->service->createPosition($user, $this->positionData());
             Flash::success('investment.flash.position_created');
+            \Cauce\Services\MoneyFxService::queue($user, 'new', 0, null, 'new_position');
         } catch (Throwable $exception) {
             $this->flashFinanceError($exception);
         }

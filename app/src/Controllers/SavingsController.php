@@ -40,6 +40,7 @@ final class SavingsController
         try {
             $this->service->createMeta($user, $this->metaData());
             Flash::success('savings.flash.meta_created');
+            \Cauce\Services\MoneyFxService::queue($user, 'new', 0, null, 'new_meta');
         } catch (Throwable $exception) {
             $this->flashFinanceError($exception);
         }
@@ -137,6 +138,7 @@ final class SavingsController
         try {
             $this->service->createAccount($user, $this->accountData());
             Flash::success('savings.flash.account_created');
+            \Cauce\Services\MoneyFxService::queue($user, 'new', 0, null, 'new_bag');
         } catch (Throwable $exception) {
             $this->flashFinanceError($exception);
         }
@@ -187,6 +189,7 @@ final class SavingsController
                 input('nota')
             );
             Flash::success('savings.flash.transferred');
+            \Cauce\Services\MoneyFxService::queue($user, 'transfer', $amount);
         } catch (Throwable $exception) {
             $this->flashFinanceError($exception);
         }
@@ -208,6 +211,7 @@ final class SavingsController
                 (string) input('fecha', 'now')
             );
             Flash::success('savings.flash.assigned');
+            \Cauce\Services\MoneyFxService::queue($user, 'transfer', $amount, null, 'transfer_meta');
         } catch (Throwable $exception) {
             $this->flashFinanceError($exception);
         }
@@ -227,6 +231,7 @@ final class SavingsController
                 (string) input('fecha', 'now')
             );
             Flash::success('savings.flash.meta_moved');
+            \Cauce\Services\MoneyFxService::queue($user, 'new', 0, null, 'new_meta_moved');
         } catch (Throwable $exception) {
             $this->flashFinanceError($exception);
         }

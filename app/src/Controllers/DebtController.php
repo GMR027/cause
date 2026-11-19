@@ -40,12 +40,21 @@ final class DebtController
 
         try {
             $source = $this->paymentSource((string) input('origen_bolsa', ''), 0);
-            $this->service->create($user, $this->dataFromPost() + [
-                'origen' => (string) input('origen_deuda', 'otro'),
+            $data = $this->dataFromPost();
+            $origin = (string) input('origen_deuda', 'otro');
+            $this->service->create($user, $data + [
+                'origen' => $origin,
                 'origen_cuenta_id' => $source['cuenta_id'],
                 'origen_meta_id' => $source['meta_id'],
             ]);
             Flash::success('debts.flash.created');
+            MoneyFxService::queue(
+                $user,
+                $origin === 'ahorro' ? 'loan' : 'debt',
+                (int) $data['saldo_actual_centavos'],
+                (string) $data['moneda'],
+                $origin === 'tarjeta' ? 'debt_card' : null
+            );
         } catch (Throwable $exception) {
             $this->flashError($exception);
         }
@@ -150,6 +159,7 @@ final class DebtController
                 (string) input('parte_metodo', '')
             );
             Flash::success('debts.flash.reminder_saved');
+            MoneyFxService::queue($user, 'remind', parse_money_cents((string) input('monto', '')) ?? 0, null, 'remind_debt');
         } catch (Throwable $exception) {
             $this->flashError($exception);
         }
