@@ -7,6 +7,7 @@
 }
 
 .debt-card {
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: .5rem;
@@ -342,6 +343,39 @@
 
 // Entrada de las tarjetas de deuda: aparecen en cascada y la barra de
 // progreso se llena hasta lo pagado.
+// El nombre largo de una deuda o de la bolsa que la prestó no debe ensanchar
+// la tarjeta más allá de la pantalla.
+.debt-card .card-head-body {
+    min-width: 0;
+    overflow-wrap: break-word;
+}
+
+.debt-origin-badge {
+    max-width: 100%;
+    white-space: normal;
+    text-align: left;
+    line-height: 1.3;
+    overflow-wrap: break-word;
+}
+
+// En celular el saldo baja a su propio renglón para que el nombre y las
+// etiquetas tengan todo el ancho.
+@media (max-width: 575.98px) {
+    .debt-card .card-head {
+        flex-wrap: wrap;
+    }
+
+    .debt-card .card-head > .card-head-body {
+        flex: 1 1 0;
+    }
+
+    .debt-card-balance {
+        order: 3;
+        flex-basis: 100%;
+        font-size: 1.15rem;
+    }
+}
+
 .debts-grid .debt-card {
     animation: debt-card-in .5s cubic-bezier(.2, .7, .3, 1) both;
 

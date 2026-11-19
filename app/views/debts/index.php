@@ -156,7 +156,7 @@ $dateLabel = static function (?string $value): string {
                             <?php endif; ?>
                             <?php $debtOrigin = (string) ($debt['origen'] ?? 'otro'); ?>
                             <?php if ($debtOrigin !== 'otro'): ?>
-                                <span class="badge text-bg-light border">
+                                <span class="badge text-bg-light border debt-origin-badge">
                                     <i class="bi <?= e($debtOrigins[$debtOrigin] ?? 'bi-three-dots') ?> me-1" aria-hidden="true"></i>
                                     <?= e($debtOrigin === 'ahorro' && !empty($debt['origen_bolsa_nombre'])
                                         ? __('debts.origin.from_bag', [':bag' => (string) $debt['origen_bolsa_nombre']
@@ -166,7 +166,7 @@ $dateLabel = static function (?string $value): string {
                             <?php endif; ?>
                         </div>
                     </div>
-                    <span class="fw-semibold text-nowrap"><?= money_html((int) $debt['saldo_actual_centavos'], (string) $debt['moneda']) ?></span>
+                    <span class="fw-semibold text-nowrap debt-card-balance"><?= money_html((int) $debt['saldo_actual_centavos'], (string) $debt['moneda']) ?></span>
                 </div>
 
                 <div class="finance-progress mb-2" aria-hidden="true">
